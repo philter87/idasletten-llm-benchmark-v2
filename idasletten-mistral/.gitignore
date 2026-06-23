@@ -1,0 +1,63 @@
+# Git ignore file for Idasletten
+
+# Build outputs
+bin/
+obj/
+
+# NuGet packages
+packages/
+
+# Test results
+TestResults/
+
+# IDE
+.idea/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+*.local
+
+# User secrets
+secrets.json
+appsettings.Development.json
+
+# Project user files
+*.csproj.user
+
+# Visual Studio temporary files
+_UpgradeReport_Files/
+upgrade.log
+
+# Node modules (if using any frontend tooling)
+node_modules/
+
+# EF Core migration history
+Migrations/*.Designer.cs
+Migrations/*_Info.cs
+
+# Publish outputs
+publish/
+
+# Docker
+.docker/
+
+# Fly.io local files
+.fly/

@@ -1,0 +1,45 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# NuGet packages
+**/packages/
+**/*.nupkg
+**/project.assets.json
+
+# Visual Studio
+**/.vs/
+**/*.suo
+**/*.user
+**/*.userosscache
+**/*.sln.docstates
+
+# Test results
+**/TestResults/
+**/coverage/
+
+# SQLite databases
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Logs
+**/*.log
+**/logs/
+
+# Environment files
+**/.env
+**/.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Playwright MCP session files
+**/.playwright-mcp/
+
+# Node modules
+**/node_modules/
+
+# Publish outputs
+**/publish/

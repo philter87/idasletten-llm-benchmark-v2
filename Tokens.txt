@@ -1,0 +1,23 @@
+idasletten-cp-sonnet
+20min Session, 569 AIC used
+
+idasletten-sonnet
+Total cost:            $4.78
+  Total duration (API):  16m 5s
+  Total duration (wall): 23m 49s
+  Total code changes:    3043 lines added, 78 lines removed
+  Usage by model:
+      claude-haiku-4-5:  4.0k input, 20 output, 0 cache read, 0 cache write ($0.0041)
+     claude-sonnet-4-6:  112 input, 65.1k output, 10.3m cache read, 119.3k cache write ($4.77)
+
+
+Mistral
+20 minutes, 61
+status
+Agent Statistics
+Steps: 68
+Session Prompt Tokens: 4,463,213
+Session Completion Tokens: 56,286
+Session Total LLM Tokens: 4,519,499
+Last Turn Tokens: 121,952
+Cost: $7.1170

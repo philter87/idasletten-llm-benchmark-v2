@@ -1,0 +1,59 @@
+@page "/users/{userId:guid}"
+@model Idasletten.Pages.Users.UserDetailModel
+@{
+    ViewData["Title"] = Model.AppUser?.Name ?? "Spiller";
+    var u = Model.AppUser;
+    if (u is null) { <p>Spiller ikke fundet.</p> return; }
+}
+
+<div class="flex items-center gap-3 mb-4">
+    @if (!string.IsNullOrEmpty(u.ImageUrl))
+    {
+        <img src="@u.ImageUrl" alt="@u.Name" style="width:64px;height:64px;border-radius:50%;object-fit:cover" />
+    }
+    else
+    {
+        <div class="score-initials" style="width:64px;height:64px;font-size:1.5rem">@u.Username</div>
+    }
+    <div>
+        <h1 class="section-title" style="margin:0">@u.Name</h1>
+        <p class="text-muted" style="margin:0">@u.Username · @u.Email</p>
+    </div>
+</div>
+
+<h2 class="section-title" style="font-size:1rem">Turneringshistorik</h2>
+
+@if (!u.TournamentPlayers.Any())
+{
+    <p class="text-muted">Ingen turneringer endnu.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Turnering</th>
+                <th>Score</th>
+                <th>V</th>
+                <th>N</th>
+                <th>Kampe</th>
+                <th>Mål+</th>
+                <th>Mål-</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tp in u.TournamentPlayers.OrderByDescending(p => p.Tournament.CreatedAt))
+            {
+                <tr>
+                    <td><a href="/tournaments/@tp.TournamentId">@tp.Tournament.Name</a></td>
+                    <td>@tp.Score.ToString("F0")</td>
+                    <td>@tp.WinCount</td>
+                    <td>@tp.LoseCount</td>
+                    <td>@tp.MatchCount</td>
+                    <td>@tp.PointsWon</td>
+                    <td>@tp.PointsLost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

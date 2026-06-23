@@ -1,0 +1,38 @@
+@page
+@model Idasletten.Pages.LoginModel
+@{
+    ViewData["Title"] = "Log ind";
+}
+
+<div style="max-width: 400px; margin: 4rem auto; text-align: center;">
+    <h1 style="margin-bottom: 0.5rem;">Log ind</h1>
+    <p style="color: #6b7280; margin-bottom: 2rem;">Log ind for at oprette turneringer og redigere afsluttede kampe.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <a href="/MicrosoftIdentity/Account/SignIn" 
+           class="btn-primary" 
+           style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; text-decoration: none; padding: 0.75rem 1rem;">
+            <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+            </svg>
+            Log ind med Microsoft
+        </a>
+
+        @if (Model.TestUserEnabled)
+        {
+            <form method="post" asp-page-handler="TestLogin">
+                <button type="submit" class="btn-secondary" style="width: 100%; padding: 0.75rem 1rem;">
+                    🧪 Log ind som testbruger
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ReturnUrl) && Model.ReturnUrl != "/")
+    {
+        <p style="color: #9ca3af; font-size: 0.8rem; margin-top: 1rem;">Du vil blive sendt tilbage til den side du besøgte.</p>
+    }
+</div>

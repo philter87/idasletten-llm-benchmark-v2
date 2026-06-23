@@ -1,0 +1,69 @@
+@page "/tournaments/create"
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Opret turnering";
+}
+
+<div class="page-header">
+    <h1>Opret turnering</h1>
+</div>
+
+<div style="max-width: 500px;">
+    <form method="post">
+        <div class="form-group">
+            <label class="form-label">Navn *</label>
+            <input type="text" name="Name" class="form-input" placeholder="f.eks. Valhalla Cup 2024" required />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label">Holdstørrelse</label>
+                <input type="number" name="TeamSize" class="form-input" value="2" min="1" max="10" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mål for at vinde</label>
+                <input type="number" name="PointsToWin" class="form-input" value="5" min="1" max="50" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                Scoresystem
+                <span title="Elo: klassisk ratingsystem. TrueSkill: Microsofts system. Liv: mister liv ved tab. Wins: antal sejre."
+                      style="cursor: help; color: #9ca3af; margin-left: 0.25rem;">ⓘ</span>
+            </label>
+            <select name="ScoreSystem" class="form-input">
+                <option value="Elo">Elo — Klassisk ratingsystem</option>
+                <option value="TrueSkill">TrueSkill — Microsofts ratingsystem</option>
+                <option value="Lives">Liv — Mister et liv pr. kamp man taber</option>
+                <option value="WinCount">Sejre — Antal sejre</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Maks antal spillere (valgfrit)</label>
+            <input type="number" name="MaxPlayerCount" class="form-input" placeholder="Ingen begrænsning" min="2" />
+        </div>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="IsPublic" value="true" checked />
+                <span class="form-label" style="margin: 0;">Offentlig turnering</span>
+            </label>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div style="background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem;">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;">
+            <button type="submit" class="btn-primary">Opret turnering</button>
+            <button type="submit" name="redirectTo" value="plan" class="btn-secondary">
+                Opret og planlæg kampe →
+            </button>
+        </div>
+    </form>
+</div>

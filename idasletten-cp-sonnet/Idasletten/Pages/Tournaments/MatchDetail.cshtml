@@ -1,0 +1,52 @@
+@page "/tournaments/{id}/matches/{matchId}"
+@model Idasletten.Pages.Tournaments.MatchDetailModel
+@{
+    ViewData["Title"] = "Kamp detaljer";
+}
+
+@if (Model.Match == null)
+{
+    <p>Kamp ikke fundet.</p>
+    return;
+}
+
+<div class="page-header">
+    <div>
+        <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem;">
+            <a href="/tournaments/@Model.TournamentId/matches" style="color: #6b7280; text-decoration: none;">Kampe</a> /
+        </div>
+        <h1>Kamp #@Model.Match.Order</h1>
+    </div>
+    @if (User.Identity?.IsAuthenticated == true && Model.Match.State == Idasletten.Features.Matches.Entities.MatchState.Done)
+    {
+        <a class="btn-secondary" href="/tournaments/@Model.TournamentId/create-match?matchId=@Model.Match.Id" style="text-decoration: none;">
+            Rediger kamp
+        </a>
+    }
+</div>
+
+<div style="max-width: 500px;">
+    @foreach (var team in Model.Match.Teams)
+    {
+        <div class="card" style="@(team.Won ? "border-color: #16a34a;" : "")">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; font-size: 1.1rem;">
+                        @string.Join(" + ", team.PlayerUsernames)
+                    </div>
+                    <div style="color: #6b7280; font-size: 0.875rem;">@team.TeamName</div>
+                </div>
+                <div class="score-badge @(team.Won ? "score-badge-win" : "score-badge-loss")">
+                    @team.Goals
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.Match.PlayedAt.HasValue)
+    {
+        <p style="color: #9ca3af; font-size: 0.875rem; margin-top: 0.5rem;">
+            Spillet: @Model.Match.PlayedAt.Value.LocalDateTime.ToString("dd/MM/yyyy HH:mm")
+        </p>
+    }
+</div>

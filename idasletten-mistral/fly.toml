@@ -1,0 +1,30 @@
+app = "idasletten"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  ASPNETCORE_URLS = "http://+:8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+
+[[statics]]
+  guest_path = "/app/wwwroot"
+  url_prefix = "/"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 1024
+
+[deploy]
+  release_command = "dotnet ef database update --connection 'Data Source=/data/idasletten.db'"
+
+[[mounts]]
+  source = "idasletten_data"
+  destination = "/data"

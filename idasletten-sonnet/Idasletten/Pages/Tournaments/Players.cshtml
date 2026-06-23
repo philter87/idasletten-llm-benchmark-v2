@@ -1,0 +1,104 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@model Idasletten.Pages.Tournaments.PlayersPageModel
+@{
+    ViewData["Title"] = "Spillere";
+    var t = Model.Tournament;
+    if (t is null) { <p>Turnering ikke fundet.</p> return; }
+}
+
+<div class="flex justify-between items-center mb-4">
+    <h1 class="section-title" style="margin:0">Spillere — @t.Name</h1>
+    <a href="/tournaments/@t.Id" class="text-muted">← Tilbage</a>
+</div>
+
+<div class="flex gap-2 mb-4">
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('add-player-dialog').classList.add('open')">+ Tilføj spiller</button>
+</div>
+
+<table class="mb-4">
+    <thead><tr><th>Initialer</th><th>Navn</th><th>Score</th><th>V</th><th>N</th><th>Kampe</th></tr></thead>
+    <tbody>
+        @foreach (var p in Model.Players)
+        {
+            <tr>
+                <td><a href="/users/@p.UserId" style="text-decoration:none"><strong>@p.User.Username</strong></a></td>
+                <td>@p.User.Name</td>
+                <td>@p.Score.ToString("F0")</td>
+                <td>@p.WinCount</td>
+                <td>@p.LoseCount</td>
+                <td>@p.MatchCount</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.SeedTournamentPlayers.Any())
+{
+    <div>
+        <h2 class="section-title" style="font-size:1rem">Tilføj fra tidligere turnering</h2>
+        @if (!Model.SeedTournamentSelected)
+        {
+            <form method="post" asp-page-handler="SetSeed">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="TournamentId" value="@t.Id" />
+                <div class="form-group">
+                    <label>Vælg kildturnering</label>
+                    <select name="SeedTournamentId">
+                        @foreach (var st in Model.AllTournaments.Where(x => x.Id != t.Id))
+                        {
+                            <option value="@st.Id">@st.Name</option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm">Vælg</button>
+            </form>
+        }
+        else
+        {
+            <div>
+                <p class="text-muted mb-3">Fra: <strong>@Model.SeedTournamentName</strong></p>
+                @foreach (var sp in Model.SeedTournamentPlayers)
+                {
+                    bool alreadyAdded = Model.Players.Any(p => p.UserId == sp.UserId);
+                    <div class="flex items-center gap-2 mb-2" style="@(alreadyAdded ? "opacity:0.5" : "")">
+                        <span style="@(alreadyAdded ? "text-decoration:line-through" : "")">
+                            <strong>@sp.User.Username</strong> — @sp.Score.ToString("F0") point
+                        </span>
+                        @if (!alreadyAdded)
+                        {
+                            <form method="post" asp-page-handler="AddFromSeed" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="TournamentId" value="@t.Id" />
+                                <input type="hidden" name="Initials" value="@sp.User.Username" />
+                                <button type="submit" class="btn btn-primary btn-sm">+</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+<!-- Add player dialog -->
+<div class="dialog-backdrop" id="add-player-dialog" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="dialog">
+        <h2>Tilføj spiller</h2>
+        <form method="post" asp-page-handler="AddPlayer">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="TournamentId" value="@t.Id" />
+            <div class="form-group">
+                <label>Initialer</label>
+                <input name="Initials" type="text" maxlength="5" required />
+            </div>
+            <div class="form-group">
+                <label>Navn (valgfri)</label>
+                <input name="PlayerName" type="text" />
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary">Tilføj</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-player-dialog').classList.remove('open')">Annuller</button>
+            </div>
+        </form>
+    </div>
+</div>

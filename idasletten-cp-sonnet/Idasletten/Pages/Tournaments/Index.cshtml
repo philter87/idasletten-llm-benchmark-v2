@@ -1,0 +1,45 @@
+@page
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Turneringer";
+}
+
+<div class="page-header">
+    <h1>Turneringer</h1>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a class="btn-primary" href="/tournaments/create">+ Opret turnering</a>
+    }
+    else
+    {
+        <a href="/login" style="font-size: 0.875rem; color: #6b7280;">Log ind for at oprette turnering</a>
+    }
+</div>
+
+@if (!Model.Tournaments.Any())
+{
+    <p style="color: #6b7280;">Ingen turneringer endnu.</p>
+}
+else
+{
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+        @foreach (var t in Model.Tournaments)
+        {
+            <a class="tournament-card" href="/tournaments/@t.Id">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <div style="font-weight: 600; font-size: 1.05rem;">@t.Name</div>
+                    <div style="display: flex; gap: 0.25rem;">
+                        @if (t.IsArchived) { <span class="badge badge-cancelled">Arkiveret</span> }
+                        @if (!t.IsPublic) { <span class="badge" style="background:#fef3c7;color:#92400e;">Privat</span> }
+                        @if (t.RoundNumber.HasValue) { <span class="badge badge-planned">Runde @t.RoundNumber</span> }
+                    </div>
+                </div>
+                <div style="color: #6b7280; font-size: 0.875rem; display: flex; gap: 1rem;">
+                    <span>👥 @t.PlayerCount</span>
+                    <span>⚔ @t.MatchCount kampe</span>
+                    <span>📊 @t.ScoreSystem</span>
+                </div>
+            </a>
+        }
+    </div>
+}

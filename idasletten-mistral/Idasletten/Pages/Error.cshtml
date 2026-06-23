@@ -1,0 +1,28 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Fejl - Idasletten";
+}
+
+<div class="bc-grid">
+    <div class="bc-grid__item bc-grid__item--1-2">
+        <div class="tournament-card">
+            <h1 class="text-danger">Fejl</h1>
+            <p>Beklager, der opstod en fejl under behandlingen af din anmodning.</p>
+            
+            @if (Model.ShowRequestId)
+            {
+                <p>
+                    <strong>Request ID:</strong> <code>@Model.RequestId</code>
+                </p>
+            }
+            
+            <h4>Fejldetaljer:</h4>
+            <p>@Model.Message</p>
+            
+            <div style="margin-top: 2rem;">
+                <a href="/" class="bc-btn bc-btn--primary">Gå tilbage til forsiden</a>
+            </div>
+        </div>
+    </div>
+</div>

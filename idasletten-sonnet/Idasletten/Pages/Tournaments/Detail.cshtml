@@ -1,0 +1,162 @@
+@page "/tournaments/{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.TournamentDetailModel
+@{
+    ViewData["Title"] = Model.Tournament?.Name ?? "Turnering";
+    var t = Model.Tournament;
+    if (t is null) { <p>Turnering ikke fundet.</p> return; }
+}
+
+<div class="flex justify-between items-center mb-4">
+    <div>
+        <h1 class="section-title" style="margin:0">@t.Name</h1>
+        <span class="text-muted">@t.ScoreSystem · @t.TeamSize vs @t.TeamSize</span>
+        @if (t.RoundNumber.HasValue)
+        {
+            <span class="badge badge-blue" style="margin-left:0.5rem">Runde @t.RoundNumber</span>
+        }
+    </div>
+</div>
+
+<div class="main-layout">
+    <div class="main-content">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="section-title" style="margin:0;font-size:1rem">Scoreboard</h2>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('add-player-dialog').classList.add('open')">+ Tilføj spiller</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Spiller</th>
+                    <th>Score</th>
+                    <th>Δ</th>
+                    <th>V</th>
+                    <th>N</th>
+                    <th>Kampe</th>
+                    <th>Mål+</th>
+                    <th>Mål-</th>
+                    @if (t.ScoreSystem == Idasletten.Shared.Enums.ScoreSystem.Lives)
+                    {
+                        <th>Lives</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @{ int rank = 1; }
+                @foreach (var p in Model.Players)
+                {
+                    <tr>
+                        <td>@rank</td>
+                        <td>
+                            <a href="/users/@p.UserId" style="text-decoration:none;color:inherit">
+                                <strong>@p.User.Username</strong>
+                                @if (!string.IsNullOrEmpty(p.User.Name))
+                                {
+                                    <span class="text-muted"> @p.User.Name</span>
+                                }
+                            </a>
+                        </td>
+                        <td>@p.Score.ToString("F0")</td>
+                        <td>
+                            @if (p.ScoreDiff > 0)
+                            {
+                                <span class="score-diff-pos">+@p.ScoreDiff.ToString("F0")</span>
+                            }
+                            else if (p.ScoreDiff < 0)
+                            {
+                                <span class="score-diff-neg">@p.ScoreDiff.ToString("F0")</span>
+                            }
+                            else { <span class="text-muted">0</span> }
+                        </td>
+                        <td>@p.WinCount</td>
+                        <td>@p.LoseCount</td>
+                        <td>@p.MatchCount</td>
+                        <td>@p.PointsWon</td>
+                        <td>@p.PointsLost</td>
+                        @if (t.ScoreSystem == Idasletten.Shared.Enums.ScoreSystem.Lives)
+                        {
+                            <td>@p.Lives ❤️</td>
+                        }
+                    </tr>
+                    rank++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sidebar">
+        <a href="/tournaments/@t.Id/create-match" class="btn btn-primary w-full" style="justify-content:center">⚡ Registrer kamp</a>
+
+        @if (Model.PlannedMatches.Any())
+        {
+            <div class="card">
+                <h3>Næste kampe</h3>
+                @foreach (var m in Model.PlannedMatches.Take(5))
+                {
+                    var teams = m.TeamResults.ToList();
+                    <a href="/tournaments/@t.Id/create-match?matchId=@m.Id" style="text-decoration:none;color:inherit">
+                        <div class="match-item">
+                            <span class="text-muted" style="font-size:0.8rem">#@m.Order</span>
+                            @if (teams.Count >= 2)
+                            {
+                                <span>@string.Join(", ", teams[0].Team.Players.Select(p => p.User.Username))</span>
+                                <span class="text-muted">vs</span>
+                                <span>@string.Join(", ", teams[1].Team.Players.Select(p => p.User.Username))</span>
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+
+        @if (Model.RecentMatches.Any())
+        {
+            <div class="card">
+                <h3>Seneste kampe</h3>
+                @foreach (var m in Model.RecentMatches.Take(5))
+                {
+                    var teams = m.TeamResults.ToList();
+                    <a href="/tournaments/@t.Id/matches#match-@m.Id" style="text-decoration:none;color:inherit">
+                        <div class="match-item">
+                            @if (teams.Count >= 2)
+                            {
+                                var r1 = teams[0];
+                                var r2 = teams[1];
+                                <span>@string.Join(",", r1.Team.Players.Select(p => p.User.Username))</span>
+                                <span class="badge @(r1.GoalsWon > r1.GoalsLost ? "badge-green" : "badge-red")">@r1.GoalsWon – @r2.GoalsWon</span>
+                                <span>@string.Join(",", r2.Team.Players.Select(p => p.User.Username))</span>
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+
+        <a href="/tournaments/@t.Id/matches" class="text-muted" style="text-align:center">Vis alle kampe →</a>
+        <a href="/tournaments/@t.Id/players" class="text-muted" style="text-align:center">Administrer spillere →</a>
+    </div>
+</div>
+
+<!-- Add player dialog -->
+<div class="dialog-backdrop" id="add-player-dialog" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="dialog">
+        <h2>Tilføj spiller</h2>
+        <form method="post" asp-page-handler="AddPlayer">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="TournamentId" value="@t.Id" />
+            <div class="form-group">
+                <label>Initialer</label>
+                <input name="Initials" type="text" maxlength="5" placeholder="F.eks. MJS" required />
+            </div>
+            <div class="form-group">
+                <label>Navn (valgfri)</label>
+                <input name="PlayerName" type="text" placeholder="Fulde navn" />
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary">Tilføj</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-player-dialog').classList.remove('open')">Annuller</button>
+            </div>
+        </form>
+    </div>
+</div>

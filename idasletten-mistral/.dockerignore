@@ -1,0 +1,58 @@
+# Docker ignore file for Idasletten
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vs
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+bin
+obj
+
+# NuGet packages
+packages
+
+# Test results
+TestResults
+
+# Node modules
+node_modules
+
+# Logs
+*.log
+logs
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+*.local
+
+# Project specific
+*.db
+*.db-shm
+*.db-wal
+
+# Docker
+Dockerfile
+docker-compose.yml
+.docker
+
+# GitHub Actions
+.github
+
+# Fly.io
+fly.toml
+
+# Solution files
+*.sln
+*.csproj.user

@@ -1,0 +1,158 @@
+@page "/tournaments/{id}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Kampe";
+    var t = Model.Tournament;
+}
+
+@if (t == null)
+{
+    <p>Turnering ikke fundet.</p>
+    return;
+}
+
+<div class="page-header">
+    <div>
+        <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem;">
+            <a href="/tournaments/@t.Id" style="color: #6b7280; text-decoration: none;">@t.Name</a> /
+        </div>
+        <h1>Kampe</h1>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <button class="btn-secondary" onclick="openDialog('plan-match-dialog')">+ Planlæg kamp</button>
+        <button class="btn-secondary" onclick="openDialog('plan-several-dialog')">📋 Planlæg flere kampe</button>
+        <a class="btn-primary" href="/tournaments/@t.Id/create-match" style="text-decoration: none; padding: 0.5rem 1rem;">⚔ Registrer kamp</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <div>
+        <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem;">Planlagte kampe (@Model.Matches?.PlannedMatches.Count)</h2>
+        @if (!(Model.Matches?.PlannedMatches.Any() ?? false))
+        {
+            <p style="color: #6b7280; font-size: 0.875rem;">Ingen planlagte kampe.</p>
+        }
+        else
+        {
+            @foreach (var m in Model.Matches!.PlannedMatches.OrderBy(m => m.Order))
+            {
+                <a class="match-item" href="/tournaments/@t.Id/create-match?matchId=@m.Id">
+                    <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                        @string.Join(" vs ", m.Teams.Select(tm => string.Join("+", tm.PlayerUsernames)))
+                    </div>
+                    <span class="badge badge-planned" style="font-size: 0.7rem;">Planlagt</span>
+                </a>
+            }
+        }
+    </div>
+    <div>
+        <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem;">Kampe spillet (@Model.Matches?.DoneMatches.Count)</h2>
+        @if (!(Model.Matches?.DoneMatches.Any() ?? false))
+        {
+            <p style="color: #6b7280; font-size: 0.875rem;">Ingen kampe registreret endnu.</p>
+        }
+        else
+        {
+            @foreach (var m in Model.Matches!.DoneMatches.OrderByDescending(m => m.PlayedAt))
+            {
+                <a class="match-item" href="/tournaments/@t.Id/matches/@m.Id">
+                    <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                        @foreach (var team in m.Teams)
+                        {
+                            <span style="@(team.Won ? "font-weight:600;" : "color:#6b7280;")">
+                                @string.Join("+", team.PlayerUsernames) (@team.Goals)
+                            </span>
+                            @if (team != m.Teams.Last()) { <span> vs </span> }
+                        }
+                    </div>
+                    @if (m.PlayedAt.HasValue)
+                    {
+                        <span style="font-size: 0.75rem; color: #9ca3af;">@m.PlayedAt.Value.LocalDateTime.ToString("dd/MM HH:mm")</span>
+                    }
+                </a>
+            }
+        }
+    </div>
+</div>
+
+<!-- Plan single match dialog -->
+<div id="plan-match-dialog" class="dialog-overlay">
+    <div class="dialog-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Planlæg kamp</h3>
+            <button onclick="closeDialog('plan-match-dialog')" style="background: none; border: none; cursor: pointer; font-size: 1.25rem;">×</button>
+        </div>
+        <form method="post" asp-page-handler="PlanMatch">
+            <input type="hidden" name="TournamentId" value="@t.Id" />
+            @for (int i = 0; i < t.TeamSize; i++)
+            {
+                <div class="form-group">
+                    <label class="form-label">Hold @(i+1) (initialer, kommasepareret)</label>
+                    <input type="text" name="Teams[@i]" class="form-input" placeholder="f.eks. ALK, BNS" style="text-transform: uppercase;" />
+                </div>
+            }
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                <button type="button" class="btn-secondary" onclick="closeDialog('plan-match-dialog')">Annuller</button>
+                <button type="submit" class="btn-primary">Planlæg</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Plan several matches dialog -->
+<div id="plan-several-dialog" class="dialog-overlay">
+    <div class="dialog-content" style="max-width: 550px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Planlæg flere kampe</h3>
+            <button onclick="closeDialog('plan-several-dialog')" style="background: none; border: none; cursor: pointer; font-size: 1.25rem;">×</button>
+        </div>
+        <form method="post" asp-page-handler="PlanSeveral">
+            <input type="hidden" name="TournamentId" value="@t.Id" />
+            <div class="form-group">
+                <label class="form-label">Kampe pr. spiller</label>
+                <input type="number" name="GamesPerPlayer" class="form-input" value="2" min="1" style="width: 80px;" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Seedingtype</label>
+                <select name="SeedingType" class="form-input">
+                    <option value="Random">Tilfældig</option>
+                    <option value="Equality">Ligelig (bedst mod dårligst)</option>
+                    <option value="Fair">Fair (top halvdel mod bundhalvdel)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="FixedTeams" value="true" />
+                    <span class="form-label" style="margin: 0;">Faste hold (hold blandes ikke mellem kampe)</span>
+                </label>
+            </div>
+            @if (t.SeedTournamentId.HasValue || Model.AvailableSeedTournaments.Any())
+            {
+                <div class="form-group">
+                    <label class="form-label">Seed turnering (valgfrit)</label>
+                    <select name="SeedTournamentId" class="form-input">
+                        <option value="">-- Ingen seed --</option>
+                        @foreach (var st in Model.AvailableSeedTournaments)
+                        {
+                            <option value="@st.Id" selected="@(st.Id == t.SeedTournamentId)">@st.Name</option>
+                        }
+                    </select>
+                </div>
+            }
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                <button type="button" class="btn-secondary" onclick="closeDialog('plan-several-dialog')">Annuller</button>
+                <button type="submit" class="btn-primary">Planlæg kampe</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openDialog(id) { document.getElementById(id).classList.add('open'); }
+        function closeDialog(id) { document.getElementById(id).classList.remove('open'); }
+        document.querySelectorAll('.dialog-overlay').forEach(d => {
+            d.addEventListener('click', (e) => { if (e.target === d) d.classList.remove('open'); });
+        });
+    </script>
+}

@@ -1,0 +1,137 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Kampe";
+    var t = Model.Tournament;
+    if (t is null) { <p>Turnering ikke fundet.</p> return; }
+}
+
+<div class="flex justify-between items-center mb-4">
+    <h1 class="section-title" style="margin:0">Kampe — @t.Name</h1>
+    <a href="/tournaments/@t.Id" class="text-muted">← Tilbage</a>
+</div>
+
+<div class="flex gap-2 mb-4">
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('plan-match-dialog').classList.add('open')">Planlæg kamp</button>
+    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('plan-many-dialog').classList.add('open')">Planlæg flere kampe</button>
+</div>
+
+<h2 class="section-title" style="font-size:1rem">Planlagte kampe</h2>
+@if (!Model.PlannedMatches.Any())
+{
+    <p class="text-muted mb-4">Ingen planlagte kampe.</p>
+}
+else
+{
+    <table class="mb-4">
+        <thead><tr><th>#</th><th>Hold 1</th><th>vs</th><th>Hold 2</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var m in Model.PlannedMatches)
+            {
+                var teams = m.TeamResults.ToList();
+                <tr id="match-@m.Id">
+                    <td>@m.Order</td>
+                    <td>@(teams.Count > 0 ? string.Join(", ", teams[0].Team.Players.Select(p => p.User.Username)) : "—")</td>
+                    <td class="text-muted">vs</td>
+                    <td>@(teams.Count > 1 ? string.Join(", ", teams[1].Team.Players.Select(p => p.User.Username)) : "—")</td>
+                    <td><a href="/tournaments/@t.Id/create-match?matchId=@m.Id" class="btn btn-secondary btn-sm">Udfyld</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h2 class="section-title" style="font-size:1rem">Resultater</h2>
+@if (!Model.DoneMatches.Any())
+{
+    <p class="text-muted">Ingen spilte kampe endnu.</p>
+}
+else
+{
+    <table>
+        <thead><tr><th>#</th><th>Hold 1</th><th>Score</th><th>Hold 2</th><th>Dato</th></tr></thead>
+        <tbody>
+            @foreach (var m in Model.DoneMatches)
+            {
+                var teams = m.TeamResults.ToList();
+                if (teams.Count < 2) continue;
+                var r1 = teams[0]; var r2 = teams[1];
+                <tr id="match-@m.Id">
+                    <td>@m.Order</td>
+                    <td>@string.Join(", ", r1.Team.Players.Select(p => p.User.Username))</td>
+                    <td>
+                        <span class="badge @(r1.GoalsWon > r1.GoalsLost ? "badge-green" : "badge-red")">@r1.GoalsWon</span>
+                        –
+                        <span class="badge @(r2.GoalsWon > r2.GoalsLost ? "badge-green" : "badge-red")">@r2.GoalsWon</span>
+                    </td>
+                    <td>@string.Join(", ", r2.Team.Players.Select(p => p.User.Username))</td>
+                    <td class="text-muted">@m.PlayedAt?.ToString("dd/MM HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Plan single match dialog -->
+<div class="dialog-backdrop" id="plan-match-dialog" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="dialog">
+        <h2>Planlæg kamp</h2>
+        <form method="post" asp-page-handler="PlanMatch">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="TournamentId" value="@t.Id" />
+            @for (int i = 0; i < t.TeamSize; i++)
+            {
+                <div class="form-group">
+                    <label>Hold 1 – Spiller @(i+1)</label>
+                    <input name="Team1[@i]" type="text" placeholder="Initialer" required />
+                </div>
+            }
+            @for (int i = 0; i < t.TeamSize; i++)
+            {
+                <div class="form-group">
+                    <label>Hold 2 – Spiller @(i+1)</label>
+                    <input name="Team2[@i]" type="text" placeholder="Initialer" required />
+                </div>
+            }
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary">Planlæg</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('plan-match-dialog').classList.remove('open')">Annuller</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Plan many matches dialog -->
+<div class="dialog-backdrop" id="plan-many-dialog" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="dialog">
+        <h2>Planlæg flere kampe</h2>
+        <form method="post" asp-page-handler="PlanMany">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="TournamentId" value="@t.Id" />
+            <div class="form-group">
+                <label>Antal kampe per spiller</label>
+                <input name="GamesPerPlayer" type="number" min="1" value="3" required />
+            </div>
+            <div class="form-group" style="display:flex;gap:0.5rem;align-items:center">
+                <input id="FixedTeams" name="FixedTeams" type="checkbox" style="width:auto" />
+                <label for="FixedTeams" style="margin:0">Fastlåste hold</label>
+            </div>
+            <div class="form-group">
+                <label>Seedning</label>
+                <select name="SeedingType">
+                    <option value="Random">Tilfældig</option>
+                    <option value="Equality">Lighed (bedst + dårligst)</option>
+                    <option value="Fair">Fair (top-halvdel mod bund-halvdel)</option>
+                </select>
+            </div>
+            @if (t.SeedTournamentId.HasValue)
+            {
+                <input type="hidden" name="SeedTournamentId" value="@t.SeedTournamentId" />
+            }
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary">Opret</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('plan-many-dialog').classList.remove('open')">Annuller</button>
+            </div>
+        </form>
+    </div>
+</div>

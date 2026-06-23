@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Idasletten</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@latest/dist/basecoat.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header style="border-bottom: 1px solid var(--bc-border); padding: 0.75rem 0; margin-bottom: 1.5rem;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between;">
+            <a href="/" style="font-size: 1.4rem; font-weight: bold; text-decoration: none; color: var(--bc-primary);">⚔ Idasletten</a>
+            <nav style="display: flex; gap: 1.5rem; align-items: center;">
+                <a class="bc-link" asp-page="/Index">Hjem</a>
+                <a class="bc-link" asp-page="/Tournaments/Index">Turneringer</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span style="color: var(--bc-muted-foreground); font-size: 0.9rem;">@User.Identity.Name</span>
+                    <a class="bc-btn bc-btn-outline bc-btn-sm" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Log ud</a>
+                }
+                else
+                {
+                    <a class="bc-btn bc-btn-sm" asp-page="/Login">Log ind</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer style="border-top: 1px solid var(--bc-border); margin-top: 3rem; padding: 1.5rem 0; color: var(--bc-muted-foreground); font-size: 0.875rem;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem; text-align: center;">
+            Idasletten — Det er her vikingerne udkæmper deres slag
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

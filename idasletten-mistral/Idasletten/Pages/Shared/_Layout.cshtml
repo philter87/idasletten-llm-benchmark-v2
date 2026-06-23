@@ -1,0 +1,52 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Idasletten</title>
+    <link rel="stylesheet" href="https://cdn.basecoatui.com/latest/basecoat.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="~/favicon.ico" rel="icon" type="image/x-icon" />
+</head>
+<body>
+    <header class="bc-header">
+        <div class="bc-header__inner">
+            <a href="/" class="bc-header__logo">
+                <span class="bc-header__logo-text">Idasletten</span>
+            </a>
+            <nav class="bc-header__nav">
+                <a href="/" class="bc-header__nav-link">Hjem</a>
+                <a href="/tournaments" class="bc-header__nav-link">Turneringer</a>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <a href="/tournaments/create" class="bc-header__nav-link">Opret turnering</a>
+                    <a href="#" class="bc-header__nav-link">@UserManager.GetUserName(User)</a>
+                    <form class="bc-header__nav-form" asp-area="" asp-page="/Auth/Logout">
+                        <button type="submit" class="bc-btn bc-btn--secondary">Log ud</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/login" class="bc-header__nav-link">Log ind</a>
+                }
+            </nav>
+        </div>
+    </header>
+    
+    <main role="main" class="bc-container">
+        @RenderBody()
+    </main>
+
+    <footer class="bc-footer">
+        <div class="bc-footer__inner">
+            <p>&copy; @DateTime.Now.Year - Idasletten. Norse mythology themed foosball tournament app.</p>
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

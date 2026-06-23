@@ -1,0 +1,54 @@
+@page "/tournaments"
+@model Idasletten.Pages.Tournaments.TournamentsIndexModel
+@{
+    ViewData["Title"] = "Alle turneringer";
+}
+
+<div class="flex justify-between items-center mb-4">
+    <h1 class="section-title" style="margin:0">Alle turneringer</h1>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a href="/tournaments/create" class="btn btn-primary">+ Ny turnering</a>
+    }
+    else
+    {
+        <a href="/login" class="btn btn-secondary btn-sm">Log ind for at oprette</a>
+    }
+</div>
+
+@if (!Model.Tournaments.Any())
+{
+    <p class="text-muted">Ingen turneringer endnu.</p>
+}
+else
+{
+    <div class="tournament-grid">
+        @foreach (var t in Model.Tournaments)
+        {
+            <a href="/tournaments/@t.Id" style="text-decoration:none;color:inherit">
+                <div class="card tournament-card">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 style="margin:0">@t.Name</h3>
+                        @if (t.IsArchived)
+                        {
+                            <span class="badge badge-gray">Arkiveret</span>
+                        }
+                        else if (t.IsPublic)
+                        {
+                            <span class="badge badge-green">Offentlig</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-blue">Privat</span>
+                        }
+                    </div>
+                    <p class="text-muted" style="margin:0">@t.Players.Count spillere · @t.ScoreSystem</p>
+                    @if (t.RoundNumber.HasValue)
+                    {
+                        <p class="text-muted" style="margin:0.25rem 0 0">Runde @t.RoundNumber</p>
+                    }
+                </div>
+            </a>
+        }
+    </div>
+}

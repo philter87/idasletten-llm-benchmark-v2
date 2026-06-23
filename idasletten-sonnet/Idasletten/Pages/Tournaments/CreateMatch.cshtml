@@ -1,0 +1,70 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchPageModel
+@{
+    ViewData["Title"] = "Registrer kamp";
+    var t = Model.Tournament;
+    if (t is null) { <p>Turnering ikke fundet.</p> return; }
+    int teamSize = t.TeamSize;
+}
+
+<div style="max-width:600px">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="section-title" style="margin:0">Registrer kamp</h1>
+        <a href="/tournaments/@t.Id" class="text-muted">← @t.Name</a>
+    </div>
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="TournamentId" value="@t.Id" />
+        @if (Model.ExistingMatchId.HasValue)
+        {
+            <input type="hidden" name="ExistingMatchId" value="@Model.ExistingMatchId" />
+        }
+
+        <div class="card mb-3">
+            <h3>Hold 1</h3>
+            @for (int i = 0; i < teamSize; i++)
+            {
+                string key = $"Team1Players[{i}]";
+                string val = Model.Team1Players.ElementAtOrDefault(i) ?? string.Empty;
+                <div class="form-group">
+                    <label>Spiller @(i + 1) (initialer)</label>
+                    <input name="@key" type="text" maxlength="5" placeholder="F.eks. MJS" required value="@val" list="player-list" />
+                </div>
+            }
+            <div class="form-group">
+                <label>Mål</label>
+                <input name="Team1Goals" type="number" min="0" value="@Model.Team1Goals" required />
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <h3>Hold 2</h3>
+            @for (int i = 0; i < teamSize; i++)
+            {
+                string key = $"Team2Players[{i}]";
+                string val = Model.Team2Players.ElementAtOrDefault(i) ?? string.Empty;
+                <div class="form-group">
+                    <label>Spiller @(i + 1) (initialer)</label>
+                    <input name="@key" type="text" maxlength="5" placeholder="F.eks. PCH" required value="@val" list="player-list" />
+                </div>
+            }
+            <div class="form-group">
+                <label>Mål</label>
+                <input name="Team2Goals" type="number" min="0" value="@Model.Team2Goals" required />
+            </div>
+        </div>
+
+        <datalist id="player-list">
+            @foreach (var p in Model.ExistingPlayers)
+            {
+                <option value="@p.User.Username">@p.User.Name</option>
+            }
+        </datalist>
+
+        <div class="flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Registrer</button>
+            <a href="/tournaments/@t.Id" class="btn btn-secondary">Annuller</a>
+        </div>
+    </form>
+</div>

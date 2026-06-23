@@ -1,0 +1,291 @@
+/* Idasletten custom styles - light theme with Norse-inspired accents */
+
+body {
+    background-color: #fff;
+    color: #1a1a1a;
+    font-family: system-ui, -apple-system, sans-serif;
+    margin-bottom: 60px;
+}
+
+/* Hero section */
+.hero-section {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    padding: 4rem 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.hero-section p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    max-width: 700px;
+    margin: 0 auto;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* Scoreboards and tables */
+.scoreboard {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.scoreboard th {
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--bc-border, #e5e7eb);
+    color: var(--bc-muted-foreground, #6b7280);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.scoreboard td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--bc-border, #e5e7eb);
+}
+
+.scoreboard tr:hover td {
+    background-color: #f9fafb;
+}
+
+.score-diff-positive {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.score-diff-negative {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* Layout helpers */
+.page-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.page-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.page-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-layout {
+        flex-direction: column;
+    }
+    .page-sidebar {
+        width: 100%;
+    }
+}
+
+/* Tournament cards */
+.tournament-card {
+    border: 1px solid var(--bc-border, #e5e7eb);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.tournament-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: var(--bc-primary, #3b82f6);
+}
+
+/* Match cards */
+.match-item {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--bc-border, #e5e7eb);
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.match-item:hover {
+    background-color: #f9fafb;
+}
+
+/* Score badges */
+.score-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.score-badge-win {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.score-badge-loss {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Page headers */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: bold;
+}
+
+/* Card utility */
+.card {
+    border: 1px solid var(--bc-border, #e5e7eb);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background: #fff;
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Dialog/Modal overlay */
+.dialog-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.dialog-overlay.open {
+    display: flex;
+}
+
+.dialog-content {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Form helpers */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+    color: #374151;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Buttons */
+.btn-primary {
+    background: #1e40af;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #374151;
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-secondary:hover {
+    background: #f9fafb;
+}
+
+/* Status badges */
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-planned {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.badge-done {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-cancelled {
+    background: #f3f4f6;
+    color: #6b7280;
+}

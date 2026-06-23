@@ -1,0 +1,83 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Alle Turneringer - Idasletten";
+}
+
+<h1>Alle turneringer</h1>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <div class="mb-3">
+        <a href="/tournaments/create" class="bc-btn bc-btn--primary">
+            <i class="fas fa-plus"></i> Opret ny turnering
+        </a>
+    </div>
+}
+
+<div class="mb-3">
+    <div class="bc-form-group">
+        <label for="search" class="bc-form-label">Søg turneringer</label>
+        <input type="text" id="search" class="bc-form-input" 
+               placeholder="Søg efter turneringsnavn..." 
+               value="@Model.SearchTerm" />
+    </div>
+</div>
+
+@if (Model.Tournaments.Any())
+{
+    <div class="bc-grid">
+        @foreach (var tournament in Model.Tournaments)
+        {
+            <div class="bc-grid__item bc-grid__item--1">
+                <div class="tournament-card">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <h3 style="margin: 0;">@tournament.Name</h3>
+                        <span class="match-state-@GetStatusClass(tournament)">
+                            @GetStatusText(tournament)
+                        </span>
+                    </div>
+                    <p>
+                        <strong>Spillere:</strong> @tournament.Players.Count 
+                        | <strong>Hold:</strong> @tournament.TeamSize
+                        | <strong>Scoring:</strong> @tournament.ScoreSystem
+                    </p>
+                    @if (tournament.ParentTournamentId.HasValue)
+                    {
+                        <p><small><em>Runde @tournament.RoundNumber</em></small></p>
+                    }
+                    <div style="margin-top: 1rem;">
+                        <a href="/tournaments/@tournament.Id" class="bc-btn bc-btn--small bc-btn--primary">
+                            Vis detaljer
+                        </a>
+                        @if (!tournament.IsArchived && User.Identity.IsAuthenticated)
+                        {
+                            <a href="/tournaments/@tournament.Id/edit" class="bc-btn bc-btn--small bc-btn--secondary">
+                                Rediger
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p class="bc-alert bc-alert--info">Der er ingen turneringer endnu.</p>
+}
+
+@functions {
+    string GetStatusClass(Tournament tournament)
+    {
+        if (tournament.IsArchived) return "cancelled";
+        return "planned";
+    }
+    
+    string GetStatusText(Tournament tournament)
+    {
+        if (tournament.IsArchived) return "Afsluttet";
+        if (!tournament.IsPublic) return "Privat";
+        return "Aktiv";
+    }
+}

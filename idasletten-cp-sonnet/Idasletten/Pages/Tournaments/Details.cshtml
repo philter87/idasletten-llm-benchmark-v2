@@ -1,0 +1,180 @@
+@page "/tournaments/{id:guid}"
+@model Idasletten.Pages.Tournaments.DetailsModel
+@{
+    ViewData["Title"] = Model.Tournament?.Name ?? "Turnering";
+    var t = Model.Tournament;
+}
+
+@if (t == null)
+{
+    <p>Turnering ikke fundet.</p>
+    return;
+}
+
+<div class="page-header">
+    <div>
+        <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem;">
+            <a href="/tournaments" style="color: #6b7280; text-decoration: none;">Turneringer</a> /
+        </div>
+        <h1>@t.Name</h1>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+            @if (t.RoundNumber.HasValue) { <span class="badge badge-planned">Runde @t.RoundNumber</span> }
+            @if (!t.IsPublic) { <span class="badge" style="background:#fef3c7;color:#92400e;">Privat</span> }
+            <span class="badge" style="background:#f3f4f6;color:#374151;">@t.ScoreSystem</span>
+        </div>
+    </div>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn-secondary" onclick="openDialog('add-player-dialog')">+ Tilføj spiller</button>
+    </div>
+</div>
+
+<div class="page-layout">
+    <div class="page-main">
+        <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem;">Scoreboard</h2>
+        @if (!t.Players.Any())
+        {
+            <p style="color: #6b7280;">Ingen spillere tilmeldt endnu.</p>
+        }
+        else
+        {
+            <table class="scoreboard">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Spiller</th>
+                        <th>Score</th>
+                        <th>Δ</th>
+                        <th>V</th>
+                        <th>N</th>
+                        <th>Kampe</th>
+                        @if (t.ScoreSystem.ToString() == "Lives") { <th>Liv</th> }
+                        <th>Mål+</th>
+                        <th>Mål-</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int rank = 1; }
+                    @foreach (var p in t.Players.OrderByDescending(p => p.Score).ThenByDescending(p => p.WinCount - p.LoseCount))
+                    {
+                        <tr>
+                            <td style="color: #9ca3af; font-size: 0.875rem;">@rank</td>
+                            <td>
+                                <a href="/users/@p.UserId" style="font-weight: 500; text-decoration: none; color: inherit;">@p.Username</a>
+                                @if (!string.IsNullOrEmpty(p.Name) && p.Name != p.Username)
+                                {
+                                    <span style="color: #9ca3af; font-size: 0.8rem; margin-left: 0.25rem;">@p.Name</span>
+                                }
+                            </td>
+                            <td style="font-weight: 600;">@p.Score.ToString("F0")</td>
+                            <td>
+                                @if (p.ScoreDiff > 0)
+                                {
+                                    <span class="score-diff-positive">+@p.ScoreDiff.ToString("F0")</span>
+                                }
+                                else if (p.ScoreDiff < 0)
+                                {
+                                    <span class="score-diff-negative">@p.ScoreDiff.ToString("F0")</span>
+                                }
+                                else
+                                {
+                                    <span style="color:#9ca3af;">—</span>
+                                }
+                            </td>
+                            <td>@p.WinCount</td>
+                            <td>@p.LoseCount</td>
+                            <td>@p.MatchCount</td>
+                            @if (t.ScoreSystem.ToString() == "Lives") { <td>@p.Lives</td> }
+                            <td>@p.PointsWon</td>
+                            <td>@p.PointsLost</td>
+                        </tr>
+                        rank++;
+                    }
+                </tbody>
+            </table>
+        }
+
+        <div style="margin-top: 1rem;">
+            <a href="/tournaments/@t.Id/players" style="font-size: 0.875rem; color: #6b7280; text-decoration: none;">Administrer spillere →</a>
+        </div>
+    </div>
+
+    <div class="page-sidebar">
+        <div style="margin-bottom: 1rem;">
+            <a class="btn-primary" href="/tournaments/@t.Id/create-match" style="display: block; text-align: center; text-decoration: none; padding: 0.625rem 1rem;">
+                ⚔ Registrer kamp
+            </a>
+        </div>
+
+        @if (t.Next5PlannedMatches.Any())
+        {
+            <div class="card">
+                <div class="card-title">Planlagte kampe</div>
+                @foreach (var m in t.Next5PlannedMatches)
+                {
+                    <a class="match-item" href="/tournaments/@t.Id/create-match?matchId=@m.Id">
+                        <div style="font-size: 0.875rem;">
+                            @string.Join(" vs ", m.Teams.Select(tm => string.Join("+", tm.PlayerUsernames)))
+                        </div>
+                        <span class="badge badge-planned" style="font-size: 0.7rem;">Planlagt</span>
+                    </a>
+                }
+            </div>
+        }
+
+        @if (t.Recent5DoneMatches.Any())
+        {
+            <div class="card">
+                <div class="card-title">Seneste kampe</div>
+                @foreach (var m in t.Recent5DoneMatches)
+                {
+                    <a class="match-item" href="/tournaments/@t.Id/matches/@m.Id">
+                        <div style="font-size: 0.875rem;">
+                            @foreach (var team in m.Teams)
+                            {
+                                <span style="@(team.Won ? "font-weight:600;" : "color:#6b7280;")">@string.Join("+", team.PlayerUsernames) (@team.Goals)</span>
+                                @if (team != m.Teams.Last()) { <span> vs </span> }
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+
+        <a href="/tournaments/@t.Id/matches" style="font-size: 0.875rem; color: #6b7280; text-decoration: none;">Se alle kampe →</a>
+    </div>
+</div>
+
+<!-- Add Player Dialog -->
+<div id="add-player-dialog" class="dialog-overlay">
+    <div class="dialog-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Tilføj spiller</h3>
+            <button onclick="closeDialog('add-player-dialog')" style="background: none; border: none; cursor: pointer; font-size: 1.25rem;">×</button>
+        </div>
+        <form method="post" asp-page-handler="AddPlayer">
+            <input type="hidden" name="TournamentId" value="@t.Id" />
+            <div class="form-group">
+                <label class="form-label">Initialer *</label>
+                <input type="text" name="Username" class="form-input" placeholder="f.eks. ALK" required maxlength="10" style="text-transform: uppercase;" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Navn (valgfrit)</label>
+                <input type="text" name="Name" class="form-input" placeholder="Fuldt navn" />
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                <button type="button" class="btn-secondary" onclick="closeDialog('add-player-dialog')">Annuller</button>
+                <button type="submit" class="btn-primary">Tilføj</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openDialog(id) { document.getElementById(id).classList.add('open'); }
+        function closeDialog(id) { document.getElementById(id).classList.remove('open'); }
+        document.querySelectorAll('.dialog-overlay').forEach(d => {
+            d.addEventListener('click', (e) => { if (e.target === d) d.classList.remove('open'); });
+        });
+    </script>
+}

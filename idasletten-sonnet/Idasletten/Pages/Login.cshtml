@@ -1,0 +1,43 @@
+@page "/login"
+@model Idasletten.Pages.LoginModel
+@{
+    ViewData["Title"] = "Log ind";
+}
+
+<div style="max-width:420px;margin:3rem auto">
+    <h1 class="section-title" style="text-align:center;margin-bottom:2rem">Log ind</h1>
+
+    <div class="card" style="padding:2rem">
+        <a href="/MicrosoftIdentity/Account/SignIn" class="btn btn-primary w-full" style="justify-content:center;margin-bottom:1rem">
+            🏢 Log ind med Microsoft (Azure AD)
+        </a>
+
+        @if (Model.TestUserEnabled)
+        {
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0" />
+            <p class="text-muted" style="margin-bottom:1rem;text-align:center">Test-login (kun i dev)</p>
+
+            @if (Request.Query["error"] == "invalid")
+            {
+                <div class="alert alert-info" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;margin-bottom:1rem">
+                    Forkert e-mail eller adgangskode.
+                </div>
+            }
+
+            <form method="post" action="/login/test">
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input id="email" name="email" type="email" required value="@Model.TestEmail" />
+                </div>
+                <div class="form-group">
+                    <label for="password">Adgangskode</label>
+                    <input id="password" name="password" type="password" required />
+                </div>
+                <button type="submit" class="btn btn-secondary w-full" style="justify-content:center">
+                    🔑 Log ind som testbruger
+                </button>
+            </form>
+        }
+    </div>
+</div>

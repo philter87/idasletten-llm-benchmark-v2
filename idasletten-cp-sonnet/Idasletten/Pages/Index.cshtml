@@ -1,0 +1,41 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Idasletten";
+}
+
+<div class="hero-section">
+    <h1>⚔ Idasletten</h1>
+    <p>Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. Hver aften er Idasletten rød af blod.</p>
+</div>
+
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1rem;">Aktive turneringer</h2>
+    @if (!Model.PublicTournaments.Any())
+    {
+        <p style="color: #6b7280;">Ingen aktive offentlige turneringer.</p>
+    }
+    else
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+            @foreach (var t in Model.PublicTournaments)
+            {
+                <a class="tournament-card" href="/tournaments/@t.Id">
+                    <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem;">@t.Name</div>
+                    <div style="color: #6b7280; font-size: 0.875rem;">
+                        <span>@t.PlayerCount spillere</span> ·
+                        <span>@t.MatchCount kampe</span> ·
+                        <span>@t.ScoreSystem</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+<div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+    <a href="/tournaments" style="color: #6b7280; font-size: 0.875rem; text-decoration: none;">
+        Se alle turneringer (inkl. arkiverede og private) →
+    </a>
+</div>
+

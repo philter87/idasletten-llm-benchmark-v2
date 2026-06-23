@@ -1,0 +1,72 @@
+@page "/users/{id}"
+@model Idasletten.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = Model.UserInfo?.Username ?? "Spiller";
+}
+
+@if (Model.UserInfo == null)
+{
+    <p>Spiller ikke fundet.</p>
+    return;
+}
+
+<div class="page-header">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        @if (!string.IsNullOrEmpty(Model.UserInfo.ImageUrl))
+        {
+            <img src="@Model.UserInfo.ImageUrl" alt="@Model.UserInfo.Name"
+                 style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" />
+        }
+        else
+        {
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; color: #6b7280;">
+                @Model.UserInfo.Username[..Math.Min(2, Model.UserInfo.Username.Length)]
+            </div>
+        }
+        <div>
+            <h1 style="margin: 0;">@Model.UserInfo.Name</h1>
+            <div style="color: #6b7280; font-size: 0.9rem;">@Model.UserInfo.Username</div>
+        </div>
+    </div>
+</div>
+
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem;">Turneringshistorik</h2>
+
+@if (!Model.TournamentStats.Any())
+{
+    <p style="color: #6b7280;">Ingen turneringsdeltagelse endnu.</p>
+}
+else
+{
+    <table class="scoreboard">
+        <thead>
+            <tr>
+                <th>Turnering</th>
+                <th>Score</th>
+                <th>V</th>
+                <th>N</th>
+                <th>Kampe</th>
+                <th>Mål+</th>
+                <th>Mål-</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var stat in Model.TournamentStats)
+            {
+                <tr>
+                    <td>
+                        <a href="/tournaments/@stat.TournamentId" style="text-decoration: none; color: inherit;">
+                            @stat.TournamentName
+                        </a>
+                    </td>
+                    <td style="font-weight: 600;">@stat.Score.ToString("F0")</td>
+                    <td>@stat.WinCount</td>
+                    <td>@stat.LoseCount</td>
+                    <td>@stat.MatchCount</td>
+                    <td>@stat.PointsWon</td>
+                    <td>@stat.PointsLost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
