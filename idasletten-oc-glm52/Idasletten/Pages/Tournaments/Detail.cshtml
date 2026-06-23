@@ -1,0 +1,100 @@
+@page
+@model DetailModel
+@{
+    ViewData["Title"] = Model.Board.Tournament.Name;
+    var t = Model.Board.Tournament;
+}
+
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <h1 class="section-title" style="margin:0">@t.Name</h1>
+    <div style="display:flex;gap:8px">
+        <a asp-page="/Tournaments/Players" asp-route-id="@t.Id" class="bc-btn-ghost">Players</a>
+        <a asp-page="/Tournaments/Matches" asp-route-id="@t.Id" class="bc-btn-ghost">All matches</a>
+        <a asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" class="bc-btn-primary">+ Create match</a>
+    </div>
+</div>
+<div class="dim" style="margin:6px 0 18px">
+    @t.ScoreSystem system · @t.TeamSize v @t.TeamSize · first to @t.PointsToWin · @Model.Board.Players.Count players
+    @if (t.SeedTournamentId.HasValue)
+    {
+        <span>· seeded from <a asp-page="/Tournaments/Detail" asp-route-id="@t.SeedTournamentId">previous</a></span>
+    }
+</div>
+
+<div class="layout-detail">
+    <div class="layout-main">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h2 class="section-title" style="margin:0">Scoreboard</h2>
+            <button class="bc-btn-ghost" data-dialog="addPlayerDlg">+ Add player</button>
+        </div>
+        <table class="bc-table">
+            <thead><tr><th>#</th><th>Player</th><th>W</th><th>L</th><th>Pts</th><th>Score</th><th>Δ</th></tr></thead>
+            <tbody>
+                @if (Model.Board.Players.Count == 0) { <tr><td colspan="7" class="dim" style="text-align:center">No players yet.</td></tr> }
+                @for (int i = 0; i < Model.Board.Players.Count; i++)
+                {
+                    var p = Model.Board.Players[i];
+                    var diffClass = p.ScoreDiff > 0 ? "score-diff-pos" : p.ScoreDiff < 0 ? "score-diff-neg" : "score-diff-zero";
+                    var diffText = p.ScoreDiff == 0 ? "—" : (p.ScoreDiff > 0 ? "+" : "") + p.ScoreDiff.ToString("0");
+                    <tr>
+                        <td class="dim">@(i + 1)</td>
+                        <td>
+                            <a asp-page="/Users/Detail" asp-route-id="@p.UserId">@p.Username</a>
+                            <span class="dim">· @p.Name</span>
+                        </td>
+                        <td>@p.WinCount</td>
+                        <td>@p.LoseCount</td>
+                        <td>@p.PointsWon-@p.PointsLost</td>
+                        <td>@(t.ScoreSystem == ScoreSystem.Lives ? $"{p.Lives}❤" : p.Score.ToString("0.##"))</td>
+                        <td><span class="score-chip @diffClass">@diffText</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <aside class="layout-aside">
+        <div class="bc-card">
+            <h3 class="section-title" style="margin-top:0">Next 5 planned</h3>
+            @if (Model.Board.Planned.Count == 0) { <p class="dim">None planned.</p> }
+            else
+            {
+                <ul style="list-style:none;padding:0;margin:0">
+                    @foreach (var m in Model.Board.Planned)
+                    {
+                        <li><a asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" asp-route-matchId="@m.Id">@m.Display</a></li>
+                    }
+                </ul>
+            }
+        </div>
+        <div class="bc-card">
+            <h3 class="section-title" style="margin-top:0">Recent 5 played</h3>
+            @if (Model.Board.Played.Count == 0) { <p class="dim">None played yet.</p> }
+            else
+            {
+                <ul style="list-style:none;padding:0;margin:0">
+                    @foreach (var m in Model.Board.Played)
+                    {
+                        <li><a asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" asp-route-matchId="@m.Id" asp-route-view="true">@m.Display</a></li>
+                    }
+                </ul>
+            }
+        </div>
+        <a asp-page="/Tournaments/Matches" asp-route-id="@t.Id" class="bc-link dim">View all matches →</a>
+    </aside>
+</div>
+
+<dialog id="addPlayerDlg" class="bc-dialog">
+    <h3>Add player</h3>
+    <form method="post" asp-page="/Tournaments/Players" asp-page-handler="Add" asp-route-id="@t.Id">
+        <input type="hidden" name="returnUrl" value="@Request.Path" />
+        <label class="bc-label">Initials</label>
+        <input name="username" class="bc-input" placeholder="e.g. PHI" maxlength="4" required style="text-transform:uppercase" />
+        <label class="bc-label" style="margin-top:10px">Name (optional)</label>
+        <input name="name" class="bc-input" />
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+            <button type="button" class="bc-btn-ghost bc-dialog-close">Cancel</button>
+            <button type="submit" class="bc-btn-primary">Add</button>
+        </div>
+    </form>
+</dialog>

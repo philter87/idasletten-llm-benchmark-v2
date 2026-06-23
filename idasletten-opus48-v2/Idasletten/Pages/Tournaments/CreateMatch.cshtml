@@ -1,0 +1,109 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    var t = Model.Tournament;
+    var readOnly = !Model.CanEdit;
+    ViewData["Title"] = readOnly ? "Match" : "Create match";
+}
+
+<div class="max-w-2xl mx-auto">
+    <a class="text-sm text-muted-foreground hover:underline" asp-page="/Tournaments/Detail" asp-route-id="@t.Id">← @t.Name</a>
+    <h1 class="text-2xl font-bold mt-2 mb-1">
+        @(Model.ExistingState == MatchState.Done ? "Match result" : Model.ExistingState == MatchState.Planned ? "Play planned match" : "Create match")
+    </h1>
+    <p class="text-sm text-muted-foreground mb-6">No login required to record a result. First to @t.PointsToWin wins.</p>
+
+    @if (readOnly)
+    {
+        <div class="alert mb-4">
+            <span>This match is completed. Log in to edit the result.</span>
+        </div>
+    }
+
+    <form method="post" class="flex flex-col gap-5">
+        <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+        <input type="hidden" name="MatchId" value="@Model.MatchId" />
+
+        <div class="grid sm:grid-cols-2 gap-5">
+            <fieldset class="card p-4" @(readOnly ? "disabled" : "")>
+                <legend class="font-semibold px-1">Team A</legend>
+                <div class="flex flex-col gap-2 mt-2">
+                    @for (var i = 0; i < Model.TeamAInitials.Count; i++)
+                    {
+                        <input type="text" class="input team-input" name="TeamAInitials[@i]" value="@Model.TeamAInitials[i]" placeholder="Initials" maxlength="8" />
+                    }
+                </div>
+                <div class="grid gap-1 mt-3">
+                    <label class="label">Goals</label>
+                    <input class="input" name="GoalsA" type="number" min="0" value="@(Model.GoalsA?.ToString())" placeholder="—" />
+                </div>
+            </fieldset>
+
+            <fieldset class="card p-4" @(readOnly ? "disabled" : "")>
+                <legend class="font-semibold px-1">Team B</legend>
+                <div class="flex flex-col gap-2 mt-2">
+                    @for (var i = 0; i < Model.TeamBInitials.Count; i++)
+                    {
+                        <input type="text" class="input team-input" name="TeamBInitials[@i]" value="@Model.TeamBInitials[i]" placeholder="Initials" maxlength="8" />
+                    }
+                </div>
+                <div class="grid gap-1 mt-3">
+                    <label class="label">Goals</label>
+                    <input class="input" name="GoalsB" type="number" min="0" value="@(Model.GoalsB?.ToString())" placeholder="—" />
+                </div>
+            </fieldset>
+        </div>
+
+        @if (!readOnly)
+        {
+            <div>
+                <button type="button" class="text-sm text-muted-foreground hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                        onclick="document.getElementById('select-players').showModal()">
+                    Select from list
+                </button>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="btn">Save</button>
+                <a class="btn-outline" asp-page="/Tournaments/Detail" asp-route-id="@t.Id">Cancel</a>
+            </div>
+            <p class="text-xs text-muted-foreground">Leave goals empty to save this as a planned match.</p>
+        }
+    </form>
+</div>
+
+@if (!readOnly)
+{
+    <dialog id="select-players" class="dialog">
+        <article>
+            <header>
+                <h2 class="text-lg font-semibold">Select players</h2>
+                <p class="text-sm text-muted-foreground">Click a player to drop them into the next empty slot.</p>
+            </header>
+            <div class="flex flex-wrap gap-2 mt-3">
+                @foreach (var p in t.Scoreboard)
+                {
+                    <button type="button" class="btn-sm-outline" onclick="fillInitials('@p.Initials')">@p.Initials</button>
+                }
+                @if (t.Scoreboard.Count == 0)
+                {
+                    <p class="text-sm text-muted-foreground">No players yet.</p>
+                }
+            </div>
+            <footer class="flex justify-end mt-4">
+                <button type="button" class="btn" onclick="document.getElementById('select-players').close()">Done</button>
+            </footer>
+        </article>
+    </dialog>
+
+    @section Scripts {
+        <script>
+            function fillInitials(value) {
+                const inputs = document.querySelectorAll('.team-input');
+                for (const el of inputs) {
+                    if (!el.value.trim()) { el.value = value; return; }
+                }
+            }
+        </script>
+    }
+}

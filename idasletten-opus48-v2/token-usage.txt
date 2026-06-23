@@ -1,0 +1,9 @@
+Total cost:            $19.89
+   Total duration (API):  36m 31s
+   Total duration (wall): 1h 14m 10s
+   Total code changes:    3774 lines added, 65 lines removed
+   Usage by model:
+       claude-haiku-4-5:  7.5k input, 269 output, 0 cache read, 0 cache
+   write ($0.0088)
+        claude-opus-4-8:  19.9k input, 141.7k output, 27.9m cache read,
+   229.8k cache write ($19.88)

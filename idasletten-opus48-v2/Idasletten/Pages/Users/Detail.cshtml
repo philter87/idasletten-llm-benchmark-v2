@@ -1,0 +1,50 @@
+@page "/users/{userId:guid}"
+@model Idasletten.Pages.Users.DetailModel
+@{
+    var s = Model.Stats;
+    ViewData["Title"] = s.Name;
+}
+
+<div class="flex items-center gap-4 mb-6">
+    @if (!string.IsNullOrEmpty(s.ImageUrl))
+    {
+        <img src="@s.ImageUrl" class="w-16 h-16 rounded-full object-cover" alt="" />
+    }
+    else
+    {
+        <span class="avatar-initials" style="width:4rem;height:4rem;font-size:1.1rem">@s.Initials</span>
+    }
+    <div>
+        <h1 class="text-2xl font-bold">@s.Name</h1>
+        <p class="text-muted-foreground">@s.Initials @(string.IsNullOrEmpty(s.Email) ? "" : "· " + s.Email)</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-3 gap-4 mb-8 max-w-md">
+    <div class="card p-4 text-center"><div class="text-2xl font-bold">@s.TotalWins</div><div class="text-xs text-muted-foreground">Wins</div></div>
+    <div class="card p-4 text-center"><div class="text-2xl font-bold">@s.TotalLosses</div><div class="text-xs text-muted-foreground">Losses</div></div>
+    <div class="card p-4 text-center"><div class="text-2xl font-bold">@s.TotalMatches</div><div class="text-xs text-muted-foreground">Matches</div></div>
+</div>
+
+<h2 class="text-lg font-semibold mb-3">Tournaments</h2>
+<div class="overflow-x-auto rounded-md border">
+    <table class="table w-full">
+        <thead><tr><th>Tournament</th><th class="text-right">Won</th><th class="text-right">Lost</th><th class="text-right">Matches</th><th class="text-right">Score</th></tr></thead>
+        <tbody>
+            @foreach (var ts in s.Tournaments)
+            {
+                <tr>
+                    <td><a class="hover:underline" asp-page="/Tournaments/Detail" asp-route-id="@ts.TournamentId">@ts.TournamentName</a></td>
+                    <td class="text-right">@ts.WinCount</td>
+                    <td class="text-right">@ts.LoseCount</td>
+                    <td class="text-right">@ts.MatchCount</td>
+                    <td class="text-right tabular-nums">@ts.Score.ToString("0.#")</td>
+                </tr>
+            }
+            @if (s.Tournaments.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted-foreground py-6">No tournaments yet.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

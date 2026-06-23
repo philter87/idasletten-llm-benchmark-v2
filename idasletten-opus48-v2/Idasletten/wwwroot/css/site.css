@@ -1,0 +1,62 @@
+/* Idasletten — Norse-themed light overrides on top of Basecoat. */
+:root {
+    --primary: oklch(0.45 0.16 28);          /* blood crimson */
+    --primary-foreground: oklch(0.98 0.01 90);
+    --ring: oklch(0.45 0.16 28);
+    --accent-gold: #b08d2e;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.site-header {
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, oklch(0.27 0.06 28), oklch(0.18 0.03 28));
+    color: #f5efe6;
+}
+
+.site-header a { color: #f5efe6; }
+.site-header .brand { letter-spacing: .04em; }
+
+.hero {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    color: #f6efe3;
+    background:
+        linear-gradient(180deg, rgba(20,8,8,.55), rgba(40,10,10,.75)),
+        radial-gradient(circle at 30% 20%, oklch(0.45 0.16 28), oklch(0.20 0.05 28));
+    min-height: 320px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.hero-quote {
+    font-style: italic;
+    max-width: 60ch;
+    text-shadow: 0 1px 6px rgba(0,0,0,.6);
+}
+
+.score-up { color: oklch(0.55 0.15 145); font-variant-numeric: tabular-nums; }
+.score-down { color: oklch(0.55 0.18 28); font-variant-numeric: tabular-nums; }
+
+.avatar-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    background: var(--muted);
+    font-size: .7rem;
+    font-weight: 600;
+}
+
+.struck { text-decoration: line-through; opacity: .5; }

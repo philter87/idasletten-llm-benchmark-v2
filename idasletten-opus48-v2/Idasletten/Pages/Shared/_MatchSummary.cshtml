@@ -1,0 +1,28 @@
+@model Idasletten.Features.Matches.MatchView
+@{
+    var teams = Model.Teams;
+}
+<div class="flex items-center justify-between gap-2 text-sm">
+    <div class="flex-1 flex flex-col gap-1">
+        @for (var i = 0; i < teams.Count; i++)
+        {
+            var team = teams[i];
+            var isWinner = Model.State == MatchState.Done && Model.Winner?.TeamId == team.TeamId;
+            <div class="flex items-center justify-between gap-3 @(isWinner ? "font-semibold" : "")">
+                <span>@string.Join(" · ", team.PlayerInitials)</span>
+                @if (Model.State == MatchState.Done)
+                {
+                    <span class="tabular-nums">@team.Goals</span>
+                }
+            </div>
+        }
+    </div>
+    @if (Model.State == MatchState.Planned)
+    {
+        <span class="badge-outline">Planned</span>
+    }
+    else if (Model.IsDraw)
+    {
+        <span class="badge-secondary">Draw</span>
+    }
+</div>

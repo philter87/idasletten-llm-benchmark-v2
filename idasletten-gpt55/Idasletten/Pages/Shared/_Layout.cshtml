@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Idasletten</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.2/dist/basecoat.cdn.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header">
+        <nav class="shell nav-bar">
+            <a class="brand" asp-page="/Index">Idasletten</a>
+            <div class="nav-links">
+                <a asp-page="/Index">Home</a>
+                <a asp-page="/Tournaments/Index">Tournaments</a>
+            </div>
+            <div class="auth-links">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span>@User.Identity.Name</span>
+                    <form method="post" asp-page="/Logout"><button class="btn btn-ghost btn-sm" type="submit">Logout</button></form>
+                }
+                else
+                {
+                    <a class="btn btn-outline btn-sm" asp-page="/Login">Login</a>
+                }
+            </div>
+        </nav>
+    </header>
+    <main>@RenderBody()</main>
+    <footer class="shell footer">Idasletten table-football tournament app</footer>
+    <script>window.lucide && lucide.createIcons();</script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,35 @@
+@page "/tournaments/{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.DetailsModel
+@{
+    ViewData["Title"] = Model.Tournament.Name;
+}
+<section class="shell section detail-layout">
+    <div class="main-column">
+        <div class="section-heading">
+            <div><p class="eyebrow">@Model.Tournament.ScoreSystem · first to @Model.Tournament.PointsToWin</p><h1>@Model.Tournament.Name</h1></div>
+            <button class="btn btn-outline" onclick="document.getElementById('add-player').showModal()"><i data-lucide="user-plus"></i>Add player</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Player</th><th>Won</th><th>Lost</th><th>Goals</th><th>Score</th><th>Delta</th></tr></thead>
+                <tbody>
+                @foreach (var player in Model.Tournament.Players)
+                {
+                    <tr>
+                        <td><a asp-page="/Users/Details" asp-route-userId="@player.UserId"><strong>@player.Initials</strong> @player.Name</a></td>
+                        <td>@player.Wins</td><td>@player.Losses</td><td>@player.PointsWon - @player.PointsLost</td><td>@player.Score.ToString("0.#")</td><td class="@(player.ScoreDiff >= 0 ? "positive" : "negative")">@(player.ScoreDiff >= 0 ? "+" : "")@player.ScoreDiff.ToString("0.#")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <aside class="side-column">
+        <a class="btn btn-primary wide" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id"><i data-lucide="swords"></i>Create match</a>
+        <section class="panel"><h2>Next matches</h2>@foreach (var match in Model.Tournament.PlannedMatches){<a class="match-row" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" asp-route-matchId="@match.Id"><span>#@match.Order</span><strong>@match.Summary</strong></a>}</section>
+        <section class="panel"><h2>Recent results</h2>@foreach (var match in Model.Tournament.RecentMatches){<a class="match-row" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" asp-route-matchId="@match.Id"><span>@match.Score</span><strong>@match.Summary</strong></a>}</section>
+        <a class="muted-link" asp-page="/Tournaments/Matches" asp-route-tournamentId="@Model.Tournament.Id">View all matches</a>
+        <a class="muted-link" asp-page="/Tournaments/Players" asp-route-tournamentId="@Model.Tournament.Id">Manage players</a>
+    </aside>
+</section>
+<dialog id="add-player"><form method="post" asp-page-handler="AddPlayer" class="dialog-body"><h2>Add player</h2><label>Initials<input asp-for="Initials" required maxlength="16" /></label><label>Name<input asp-for="Name" /></label><div class="actions"><button class="btn btn-primary" type="submit">Add</button><button class="btn btn-ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button></div></form></dialog>

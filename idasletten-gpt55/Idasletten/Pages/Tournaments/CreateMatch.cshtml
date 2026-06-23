@@ -1,0 +1,19 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = "Match";
+}
+<section class="shell section compact form-page">
+    <p class="eyebrow">@Model.Editor.TournamentName</p><h1>@(Model.Editor.IsDone ? "Match result" : "Create match")</h1>
+    <form method="post" class="panel match-form">
+        <input type="hidden" asp-for="MatchId" />
+        <div class="team-inputs">
+            <label>Team 1 initials<input asp-for="Team1Initials" placeholder="ODN THR" required /></label>
+            <label>Team 1 score<input asp-for="Team1Goals" type="number" min="0" /></label>
+            <label>Team 2 initials<input asp-for="Team2Initials" placeholder="LOK FRG" required /></label>
+            <label>Team 2 score<input asp-for="Team2Goals" type="number" min="0" /></label>
+        </div>
+        <a class="muted-link" href="#players">Select from list</a>
+        <div class="actions"><button class="btn btn-primary" type="submit">Save result</button><a class="btn btn-ghost" asp-page="/Tournaments/Details" asp-route-tournamentId="@Model.Editor.TournamentId">Back</a></div>
+    </form>
+</section>

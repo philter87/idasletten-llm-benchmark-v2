@@ -1,0 +1,28 @@
+@page "/tournaments"
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Tournaments";
+}
+<section class="shell section compact">
+    <div class="section-heading">
+        <div><p class="eyebrow">Archive</p><h1>Tournaments</h1></div>
+        <a class="btn btn-primary" asp-page="/Tournaments/Create"><i data-lucide="plus"></i>Create tournament</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Name</th><th>Scoring</th><th>Players</th><th>Matches</th><th>Status</th></tr></thead>
+            <tbody>
+            @foreach (var tournament in Model.Tournaments)
+            {
+                <tr>
+                    <td><a asp-page="/Tournaments/Details" asp-route-tournamentId="@tournament.Id">@tournament.Name</a></td>
+                    <td>@tournament.ScoreSystem</td>
+                    <td>@tournament.PlayerCount</td>
+                    <td>@tournament.DoneMatchCount</td>
+                    <td>@(tournament.IsArchived ? "Archived" : tournament.IsPublic ? "Public" : "Private")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

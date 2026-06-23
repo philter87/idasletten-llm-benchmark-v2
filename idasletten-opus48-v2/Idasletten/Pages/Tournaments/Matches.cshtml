@@ -1,0 +1,136 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    var t = Model.Tournament;
+    ViewData["Title"] = $"Matches · {t.Name}";
+    var hasSeed = t.SeedTournamentId is not null;
+}
+
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div>
+        <a class="text-sm text-muted-foreground hover:underline" asp-page="/Tournaments/Detail" asp-route-id="@t.Id">← @t.Name</a>
+        <h1 class="text-2xl font-bold">Matches</h1>
+    </div>
+    <div class="flex gap-2">
+        <button type="button" class="btn-outline" onclick="document.getElementById('add-planned').showModal()">Add planned match</button>
+        <button type="button" class="btn" onclick="document.getElementById('plan-several').showModal()">Plan several matches</button>
+    </div>
+</div>
+
+<div class="flex flex-col lg:flex-row gap-6">
+    <section class="flex-1">
+        <h2 class="text-lg font-semibold mb-3">Planned matches</h2>
+        @if (Model.Matches.Planned.Count == 0)
+        {
+            <p class="text-muted-foreground text-sm">Nothing planned.</p>
+        }
+        else
+        {
+            <div class="flex flex-col gap-2">
+                @foreach (var m in Model.Matches.Planned)
+                {
+                    <a class="card p-3 no-underline hover:shadow-sm"
+                       asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@t.Id" asp-route-matchId="@m.Id">
+                        <partial name="_MatchSummary" model="m" />
+                    </a>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="flex-1">
+        <h2 class="text-lg font-semibold mb-3">Match results</h2>
+        @if (Model.Matches.Results.Count == 0)
+        {
+            <p class="text-muted-foreground text-sm">No results yet.</p>
+        }
+        else
+        {
+            <div class="flex flex-col gap-2">
+                @foreach (var m in Model.Matches.Results)
+                {
+                    <a class="card p-3 no-underline hover:shadow-sm"
+                       asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@t.Id" asp-route-matchId="@m.Id">
+                        <partial name="_MatchSummary" model="m" />
+                    </a>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+<!-- Add planned match dialog -->
+<dialog id="add-planned" class="dialog">
+    <article>
+        <header><h2 class="text-lg font-semibold">Add planned match</h2></header>
+        <form method="post" asp-page-handler="AddPlanned" asp-route-tournamentId="@t.Id" class="flex flex-col gap-3 mt-3">
+            <div class="grid gap-1">
+                <label class="label">Team A initials</label>
+                <input type="text" class="input" name="PlannedTeamA" placeholder="THO, ODI" />
+            </div>
+            <div class="grid gap-1">
+                <label class="label">Team B initials</label>
+                <input type="text" class="input" name="PlannedTeamB" placeholder="LOK, FRE" />
+            </div>
+            <footer class="flex justify-end gap-2 mt-2">
+                <button type="button" class="btn-outline" onclick="document.getElementById('add-planned').close()">Cancel</button>
+                <button type="submit" class="btn">Add</button>
+            </footer>
+        </form>
+    </article>
+</dialog>
+
+<!-- Plan several matches dialog -->
+<dialog id="plan-several" class="dialog">
+    <article>
+        <header>
+            <h2 class="text-lg font-semibold">Plan several matches</h2>
+            <p class="text-sm text-muted-foreground">Generate a batch of planned matches.</p>
+        </header>
+        <form method="post" asp-page-handler="PlanSeveral" asp-route-tournamentId="@t.Id" class="flex flex-col gap-3 mt-3">
+            <div class="grid gap-1">
+                <label class="label">Based on a previous tournament</label>
+                @if (hasSeed)
+                {
+                    var seed = Model.SeedCandidates.FirstOrDefault(c => c.Id == t.SeedTournamentId);
+                    <input type="hidden" name="SeedTournamentId" value="@t.SeedTournamentId" />
+                    <input type="text" class="input" value="@(seed?.Name ?? "Seed tournament")" disabled />
+                }
+                else
+                {
+                    <select class="select" name="SeedTournamentId">
+                        <option value="">— none —</option>
+                        @foreach (var c in Model.SeedCandidates)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                }
+            </div>
+
+            <div class="grid gap-1">
+                <label class="label">Games per player</label>
+                <input class="input" name="GamesPerPlayer" type="number" min="1" value="@Model.GamesPerPlayer" />
+            </div>
+
+            <label class="flex items-center gap-2">
+                <input type="checkbox" name="FixedTeam" value="true" class="input w-4 h-4" />
+                <span>Fixed teams (don't reshuffle between matches)</span>
+            </label>
+
+            <div class="grid gap-1">
+                <label class="label">Seeding type</label>
+                <select class="select" name="Seeding">
+                    <option value="Random">Random — teams chosen randomly</option>
+                    <option value="Equality">Equality — pair best with worst</option>
+                    <option value="Fair">Fair — split into halves, pair across</option>
+                </select>
+            </div>
+
+            <footer class="flex justify-end gap-2 mt-2">
+                <button type="button" class="btn-outline" onclick="document.getElementById('plan-several').close()">Cancel</button>
+                <button type="submit" class="btn">Plan</button>
+            </footer>
+        </form>
+    </article>
+</dialog>

@@ -1,0 +1,41 @@
+@page
+@model DetailModel
+@{
+    ViewData["Title"] = Model.UserView.Name;
+    var u = Model.UserView;
+}
+
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+    @if (!string.IsNullOrEmpty(u.ImageUrl))
+    {
+        <img src="@u.ImageUrl" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--line)" />
+    }
+    else
+    {
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.4em">@u.Username</div>
+    }
+    <div>
+        <h1 class="section-title" style="margin:0">@u.Name</h1>
+        <div class="dim">@u.Username @if (!string.IsNullOrEmpty(u.Email)) { <text>· @u.Email</text> }</div>
+    </div>
+</div>
+
+<h2 class="section-title">Tournaments</h2>
+<table class="bc-table">
+    <thead><tr><th>Tournament</th><th>System</th><th>W</th><th>L</th><th>Played</th><th>Pts</th><th>Score</th></tr></thead>
+    <tbody>
+    @if (u.Tournaments.Count == 0) { <tr><td colspan="7" class="dim" style="text-align:center">No tournament history.</td></tr> }
+    @foreach (var ts in u.Tournaments)
+    {
+        <tr>
+            <td><a asp-page="/Tournaments/Detail" asp-route-id="@ts.TournamentId">@ts.TournamentName</a></td>
+            <td>@ts.ScoreSystem</td>
+            <td>@ts.WinCount</td>
+            <td>@ts.LoseCount</td>
+            <td>@ts.MatchCount</td>
+            <td>@ts.PointsWon-@ts.PointsLost</td>
+            <td>@(ts.ScoreSystem == ScoreSystem.Lives ? "--" : ts.Score.ToString("0.##"))</td>
+        </tr>
+    }
+    </tbody>
+</table>

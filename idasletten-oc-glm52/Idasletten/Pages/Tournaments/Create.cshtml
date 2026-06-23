@@ -1,0 +1,48 @@
+@page
+@model CreateModel
+@{
+    ViewData["Title"] = "Create tournament";
+}
+
+<h1 class="section-title">Create tournament</h1>
+
+<form method="post" class="bc-card" style="max-width:620px">
+    <div class="field-grid">
+        <div>
+            <label class="bc-label">Name</label>
+            <input asp-for="Name" class="bc-input" required />
+        </div>
+        <div>
+            <label class="bc-label">Max players (optional)</label>
+            <input asp-for="MaxPlayerCount" type="number" min="0" class="bc-input" />
+        </div>
+        <div>
+            <label class="bc-label">Team size</label>
+            <input asp-for="TeamSize" type="number" min="1" class="bc-input" />
+        </div>
+        <div>
+            <label class="bc-label">Points to win</label>
+            <input asp-for="PointsToWin" type="number" min="1" class="bc-input" />
+        </div>
+        <div style="grid-column:1/-1">
+            <label class="bc-label">
+                Score system
+                <span class="info-icon" title="Elo: average team ELO rating. TrueSkill: Microsoft TrueSkill via Moserware.Skills. Lives: lose a life on match loss. WinCount: score = wins, tie-break by goal difference.">i</span>
+            </label>
+            <select asp-for="ScoreSystem" class="bc-select">
+                @foreach (var s in Enum.GetValues<ScoreSystem>())
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="bc-label"><input asp-for="IsPublic" type="checkbox" /> Public</label>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:18px;align-items:center">
+        <button type="submit" name="action" value="create" class="bc-btn-primary">Create</button>
+        <button type="submit" name="action" value="plan" class="bc-btn-ghost">Create and Plan</button>
+    </div>
+</form>

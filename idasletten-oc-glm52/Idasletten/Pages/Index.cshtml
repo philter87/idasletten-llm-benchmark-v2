@@ -1,0 +1,43 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Idasletten";
+}
+
+<div class="hero">
+    <div class="hero-text">
+        <h1>Idasletten</h1>
+        <p>
+            Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne
+            som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok.
+            Hver aften er Idasletten rød af blod.
+        </p>
+    </div>
+</div>
+
+<section class="section-title-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <h2 class="section-title" style="margin:0">Active tournaments</h2>
+    <a asp-page="/Tournaments/Index" class="bc-link dim">Historical tournaments →</a>
+</section>
+
+@if (Model.PublicTournaments.Count == 0)
+{
+    <p class="dim">No public tournaments yet. <a asp-page="/Tournaments/Create">Create one</a> (login required).</p>
+}
+else
+{
+    <div class="tournament-grid">
+        @foreach (var t in Model.PublicTournaments)
+        {
+            <a class="tournament-card" asp-page="/Tournaments/Detail" asp-route-id="@t.Id">
+                <div style="display:flex;justify-content:space-between;align-items:baseline">
+                    <strong>@t.Name</strong>
+                    <span class="bc-badge @(t.IsPublic ? "state-done":"state-planned")">@t.ScoreSystem</span>
+                </div>
+                <div class="dim" style="margin-top:8px;font-size:.9em">
+                    @t.PlayerCount players · @t.TeamSize v@t.TeamSize · to @t.PointsToWin
+                </div>
+            </a>
+        }
+    </div>
+}

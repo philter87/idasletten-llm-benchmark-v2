@@ -1,0 +1,30 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+<section class="hero">
+    <div class="shell hero-inner">
+        <div>
+            <p class="eyebrow">Iðavöllr</p>
+            <h1>Idasletten</h1>
+            <p class="hero-copy"><em>"Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. Hver aften er Idasletten rød af blod."</em></p>
+        </div>
+    </div>
+</section>
+<section class="shell section">
+    <div class="section-heading">
+        <div><p class="eyebrow">Public tournaments</p><h2>Open battlefields</h2></div>
+        <a class="muted-link" asp-page="/Tournaments/Index">Historical tournaments</a>
+    </div>
+    <div class="card-grid">
+        @foreach (var tournament in Model.Tournaments)
+        {
+            <a class="tournament-card" asp-page="/Tournaments/Details" asp-route-tournamentId="@tournament.Id">
+                <span>@tournament.ScoreSystem</span>
+                <strong>@tournament.Name</strong>
+                <small>@tournament.PlayerCount players · @tournament.DoneMatchCount completed matches</small>
+            </a>
+        }
+    </div>
+</section>

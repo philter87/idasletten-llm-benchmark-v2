@@ -1,0 +1,22 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h1 class="section-title">Sign in</h1>
+<p class="dim">Login is optional — anyone can browse and record matches. Sign in only to create tournaments or edit completed matches.</p>
+
+<div class="login-btns" style="margin-top:20px">
+    <form method="post" asp-page-handler="Microsoft">
+        <button class="ms-btn" type="submit">
+             Sign in with Microsoft (Azure AD)
+        </button>
+    </form>
+    @if (Model.ShowTestLogin)
+    {
+        <form method="post" asp-page-handler="Test">
+            <button class="test-btn" type="submit">Sign in as test user</button>
+        </form>
+    }
+</div>

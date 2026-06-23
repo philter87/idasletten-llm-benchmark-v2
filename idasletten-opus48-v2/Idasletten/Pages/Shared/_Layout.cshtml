@@ -1,0 +1,47 @@
+@using Microsoft.AspNetCore.Authentication
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Idasletten</title>
+    <script src="https://cdn.jsdelivr.net/npm/@@tailwindcss/browser@@4"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@@0.3.11/dist/basecoat.cdn.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@@0.3.11/dist/js/all.min.js" defer></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="bg-background text-foreground">
+    <header class="site-header">
+        <nav class="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
+            <a asp-page="/Index" class="brand font-bold text-lg no-underline">⚔ Iðavöllr</a>
+            <div class="flex items-center gap-4 text-sm">
+                <a asp-page="/Index" class="no-underline hover:underline">Home</a>
+                <a asp-page="/Tournaments/Index" class="no-underline hover:underline">Tournaments</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="opacity-80">@User.Identity!.Name</span>
+                    <form method="post" asp-page="/Login" asp-page-handler="Logout" class="inline">
+                        <button type="submit" class="btn-sm-outline">Log out</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-page="/Login" class="btn-sm-outline no-underline">Log in</a>
+                }
+            </div>
+        </nav>
+    </header>
+
+    <main class="mx-auto max-w-6xl w-full px-4 py-6">
+        @RenderBody()
+    </main>
+
+    <footer class="border-t mt-8">
+        <div class="mx-auto max-w-6xl px-4 py-4 text-sm text-muted-foreground">
+            © 2026 Idasletten — table football among the einherjar.
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

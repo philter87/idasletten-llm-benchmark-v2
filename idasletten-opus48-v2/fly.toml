@@ -1,0 +1,27 @@
+# Fly.io config for Idasletten. App name = folder name.
+app = "idasletten-opus48-v2"
+primary_region = "arn"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  ASPNETCORE_URLS = "http://+:8080"
+  ConnectionStrings__Default = "Data Source=/data/idasletten.db"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+# Persistent volume for the SQLite file (create with: fly volumes create idasletten_data -s 1).
+[mounts]
+  source = "idasletten_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

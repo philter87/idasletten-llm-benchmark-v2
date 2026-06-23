@@ -1,0 +1,18 @@
+@page "/login"
+@model Idasletten.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+<section class="shell section compact form-page">
+    <p class="eyebrow">Restricted actions</p><h1>Login</h1>
+    <div class="login-grid">
+        @if (Model.IsAzureLoginEnabled)
+        {
+            <form method="post" asp-page-handler="Microsoft" class="panel"><h2>Microsoft Azure AD</h2><button class="btn btn-primary wide" type="submit">Continue with Microsoft</button></form>
+        }
+        @if (Model.IsTestLoginEnabled)
+        {
+            <form method="post" asp-page-handler="Test" class="panel"><h2>Test user</h2><label>Email<input asp-for="Email" type="email" /></label><label>Password<input asp-for="Password" type="password" /></label><button class="btn btn-outline wide" type="submit">Login as test user</button>@if(Model.Error is not null){<p class="negative">@Model.Error</p>}</form>
+        }
+    </div>
+</section>

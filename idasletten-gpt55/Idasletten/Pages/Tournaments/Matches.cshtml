@@ -1,0 +1,12 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Matches";
+}
+<section class="shell section compact">
+    <div class="section-heading"><div><p class="eyebrow">@Model.Matches.TournamentName</p><h1>Matches</h1></div><div class="actions"><button class="btn btn-outline" onclick="document.getElementById('add-planned').showModal()">Add planned match</button><button class="btn btn-primary" onclick="document.getElementById('plan-several').showModal()">Plan several matches</button></div></div>
+    <h2>Planned matches</h2><div class="table-wrap"><table><thead><tr><th>#</th><th>Teams</th><th></th></tr></thead><tbody>@foreach(var match in Model.Matches.Planned){<tr><td>@match.Order</td><td>@match.Summary</td><td><a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Matches.TournamentId" asp-route-matchId="@match.Id">Open</a></td></tr>}</tbody></table></div>
+    <h2>Match results</h2><div class="table-wrap"><table><thead><tr><th>#</th><th>Teams</th><th>Score</th><th></th></tr></thead><tbody>@foreach(var match in Model.Matches.Done){<tr><td>@match.Order</td><td>@match.Summary</td><td>@match.Score</td><td><a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Matches.TournamentId" asp-route-matchId="@match.Id">View</a></td></tr>}</tbody></table></div>
+</section>
+<dialog id="add-planned"><form method="post" asp-page-handler="AddPlanned" class="dialog-body"><h2>Add planned match</h2><label>Team 1<input asp-for="Team1Initials" /></label><label>Team 2<input asp-for="Team2Initials" /></label><div class="actions"><button class="btn btn-primary" type="submit">Add</button><button class="btn btn-ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button></div></form></dialog>
+<dialog id="plan-several"><form method="post" asp-page-handler="PlanSeveral" class="dialog-body"><h2>Plan several matches</h2><label>Games per player<input asp-for="GamesPerPlayer" type="number" min="1" /></label><label>Seeding<select asp-for="SeedingType"><option>Random</option><option>Equality</option><option>Fair</option></select></label><label class="checkbox"><input asp-for="FixedTeams" /> Fixed team</label><div class="actions"><button class="btn btn-primary" type="submit">Plan</button><button class="btn btn-ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button></div></form></dialog>

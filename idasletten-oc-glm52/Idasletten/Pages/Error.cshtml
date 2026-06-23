@@ -1,0 +1,18 @@
+@page
+@using Microsoft.AspNetCore.Mvc
+@model ErrorViewModel
+@{
+    var showError = Model.ShowRequestId;
+    string? requestId = Model.RequestId;
+}
+
+<h1 class="section-title">Something went wrong</h1>
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <p><strong>Error:</strong> @Model.ErrorMessage</p>
+}
+@if (Model.ShowRequestId)
+{
+    <p class="dim"><strong>Request ID:</strong> <code>@Model.RequestId</code></p>
+}
+<a asp-page="/Index" class="bc-btn-ghost">Back home</a>

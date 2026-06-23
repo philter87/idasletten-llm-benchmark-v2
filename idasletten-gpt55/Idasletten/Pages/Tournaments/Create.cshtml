@@ -1,0 +1,17 @@
+@page "/tournaments/create"
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Create tournament";
+}
+<section class="shell section compact form-page">
+    <p class="eyebrow">New tournament</p><h1>Create tournament</h1>
+    <form method="post" class="panel form-grid">
+        <label>Name<input asp-for="Name" required /></label>
+        <label>Team size<input asp-for="TeamSize" type="number" min="1" /></label>
+        <label>Points to win<input asp-for="PointsToWin" type="number" min="1" /></label>
+        <label>Score system<select asp-for="ScoreSystem" asp-items="Html.GetEnumSelectList<ScoreSystem>()"></select></label>
+        <label>Max player count<input asp-for="MaxPlayerCount" type="number" min="1" /></label>
+        <label class="checkbox"><input asp-for="IsPublic" /> Public</label>
+        <div class="actions"><button class="btn btn-primary" type="submit">Create</button><button class="btn btn-ghost" name="intent" value="plan" type="submit">Create and plan</button></div>
+    </form>
+</section>

@@ -1,0 +1,9 @@
+@page "/users/{userId:guid}"
+@model Idasletten.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = Model.UserDetail.Initials;
+}
+<section class="shell section compact">
+    <p class="eyebrow">Player</p><h1>@Model.UserDetail.Initials · @Model.UserDetail.Name</h1>
+    <div class="table-wrap"><table><thead><tr><th>Tournament</th><th>Score</th><th>Won</th><th>Lost</th><th>Matches</th><th>Goals</th></tr></thead><tbody>@foreach(var stat in Model.UserDetail.Stats){<tr><td>@stat.TournamentName</td><td>@stat.Score.ToString("0.#")</td><td>@stat.Wins</td><td>@stat.Losses</td><td>@stat.Matches</td><td>@stat.PointsWon - @stat.PointsLost</td></tr>}</tbody></table></div>
+</section>

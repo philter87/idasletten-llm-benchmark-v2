@@ -1,0 +1,151 @@
+@page "/tournaments/{id:guid}"
+@model Idasletten.Pages.Tournaments.DetailModel
+@{
+    var t = Model.Tournament;
+    ViewData["Title"] = t.Name;
+}
+
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold flex items-center gap-2">
+            @t.Name
+            @if (t.RoundNumber is int r) { <span class="badge-secondary">Round @r</span> }
+        </h1>
+        <p class="text-sm text-muted-foreground mt-1">
+            @t.ScoreSystem scoring · teams of @t.TeamSize · first to @t.PointsToWin
+            @if (t.IsArchived) { <span class="badge-outline ml-1">Archived</span> }
+        </p>
+    </div>
+    <div class="flex gap-2">
+        <a class="btn-outline" asp-page="/Tournaments/Players" asp-route-tournamentId="@t.Id">Players</a>
+        <a class="btn-outline" asp-page="/Tournaments/Matches" asp-route-tournamentId="@t.Id">Matches</a>
+    </div>
+</div>
+
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Scoreboard -->
+    <section class="flex-1">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Scoreboard</h2>
+            <button type="button" class="btn-sm" onclick="document.getElementById('add-player').showModal()">Add player</button>
+        </div>
+
+        <div class="overflow-x-auto rounded-md border">
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th class="text-right">Won</th>
+                        <th class="text-right">Lost</th>
+                        @if (t.ScoreSystem == ScoreSystem.Lives) { <th class="text-right">Lives</th> }
+                        <th class="text-right">Score</th>
+                        <th class="text-right">Δ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var rank = 1; }
+                    @foreach (var p in t.Scoreboard)
+                    {
+                        <tr>
+                            <td class="text-muted-foreground">@rank</td>
+                            <td>
+                                <a class="flex items-center gap-2 hover:underline" asp-page="/Users/Detail" asp-route-userId="@p.UserId">
+                                    @if (!string.IsNullOrEmpty(p.ImageUrl))
+                                    {
+                                        <img src="@p.ImageUrl" class="w-8 h-8 rounded-full object-cover" alt="" />
+                                    }
+                                    else
+                                    {
+                                        <span class="avatar-initials">@p.Initials</span>
+                                    }
+                                    <span><span class="font-medium">@p.Initials</span> <span class="text-muted-foreground text-xs">@p.Name</span></span>
+                                </a>
+                            </td>
+                            <td class="text-right">@p.WinCount</td>
+                            <td class="text-right">@p.LoseCount</td>
+                            @if (t.ScoreSystem == ScoreSystem.Lives) { <td class="text-right">@p.Lives</td> }
+                            <td class="text-right font-semibold tabular-nums">@p.Score.ToString("0.#")</td>
+                            <td class="text-right text-xs">
+                                @if (Math.Abs(p.ScoreDiff) > 0.05)
+                                {
+                                    <span class="@(p.ScoreDiff >= 0 ? "score-up" : "score-down")">
+                                        @(p.ScoreDiff >= 0 ? "+" : "")@p.ScoreDiff.ToString("0.#")
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                        rank++;
+                    }
+                    @if (t.Scoreboard.Count == 0)
+                    {
+                        <tr><td colspan="7" class="text-center text-muted-foreground py-6">No players yet. Add the first warrior.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Right column -->
+    <aside class="w-full lg:w-1/4 flex flex-col gap-4">
+        <a class="btn w-full" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@t.Id">Create match</a>
+
+        @if (t.PlannedMatches.Count > 0)
+        {
+            <div class="card">
+                <div class="card-header"><h3 class="card-title text-base">Next matches</h3></div>
+                <div class="card-content flex flex-col gap-3">
+                    @foreach (var m in t.PlannedMatches)
+                    {
+                        <a class="block no-underline border-b last:border-0 pb-2 last:pb-0 hover:opacity-80"
+                           asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@t.Id" asp-route-matchId="@m.Id">
+                            <partial name="_MatchSummary" model="m" />
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (t.RecentMatches.Count > 0)
+        {
+            <div class="card">
+                <div class="card-header"><h3 class="card-title text-base">Recent results</h3></div>
+                <div class="card-content flex flex-col gap-3">
+                    @foreach (var m in t.RecentMatches)
+                    {
+                        <a class="block no-underline border-b last:border-0 pb-2 last:pb-0 hover:opacity-80"
+                           asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@t.Id" asp-route-matchId="@m.Id">
+                            <partial name="_MatchSummary" model="m" />
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        <a class="text-sm text-muted-foreground hover:underline text-center" asp-page="/Tournaments/Matches" asp-route-tournamentId="@t.Id">View all matches →</a>
+    </aside>
+</div>
+
+<!-- Add player dialog -->
+<dialog id="add-player" class="dialog">
+    <article>
+        <header>
+            <h2 class="text-lg font-semibold">Add player</h2>
+            <p class="text-sm text-muted-foreground">Enter the player's initials. New initials create a new warrior.</p>
+        </header>
+        <form method="post" asp-page-handler="AddPlayer" asp-route-id="@t.Id" class="flex flex-col gap-3 mt-3">
+            <div class="grid gap-1">
+                <label class="label" for="initials">Initials</label>
+                <input type="text" class="input" id="initials" name="Initials" maxlength="8" placeholder="THO" required />
+            </div>
+            <div class="grid gap-1">
+                <label class="label" for="name">Name (optional)</label>
+                <input type="text" class="input" id="name" name="PlayerName" placeholder="Thor" />
+            </div>
+            <footer class="flex justify-end gap-2 mt-2">
+                <button type="button" class="btn-outline" onclick="document.getElementById('add-player').close()">Cancel</button>
+                <button type="submit" class="btn">Add</button>
+            </footer>
+        </form>
+    </article>
+</dialog>

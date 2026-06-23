@@ -1,0 +1,96 @@
+@page
+@model MatchesModel
+@{
+    ViewData["Title"] = $"Matches — {Model.MatchesView.Tournament.Name}";
+    var mv = Model.MatchesView;
+}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <h1 class="section-title" style="margin:0">Matches</h1>
+    <a asp-page="/Tournaments/CreateMatch" asp-route-id="@mv.Tournament.Id" class="bc-btn-primary">+ Create match</a>
+</div>
+<div class="dim" style="margin-bottom:18px">@mv.Tournament.Name · @mv.Tournament.ScoreSystem</div>
+
+<h2 class="section-title">Planned matches</h2>
+<table class="bc-table" style="margin-bottom:10px">
+    <thead><tr><th>Order</th><th>State</th><th></th></tr></thead>
+    <tbody>
+    @if (mv.Planned.Count == 0) { <tr><td colspan="3" class="dim" style="text-align:center">No planned matches.</td></tr> }
+    @foreach (var m in mv.Planned)
+    {
+        <tr>
+            <td>#@m.Order</td>
+            <td><span class="bc-badge state-planned">@m.State</span></td>
+            <td><a asp-page="/Tournaments/CreateMatch" asp-route-id="@mv.Tournament.Id" asp-route-matchId="@m.Id">Open →</a></td>
+        </tr>
+    }
+    </tbody>
+</table>
+<div style="display:flex;gap:8px;margin-bottom:26px">
+    <button class="bc-btn-ghost" data-dialog="addPlannedDlg">Add planned match</button>
+    <button class="bc-btn-ghost" data-dialog="planSeveralDlg">Plan several matches</button>
+</div>
+
+<h2 class="section-title">Match results</h2>
+<table class="bc-table">
+    <thead><tr><th>Order</th><th>State</th><th></th></tr></thead>
+    <tbody>
+    @if (mv.Played.Count == 0) { <tr><td colspan="3" class="dim" style="text-align:center">No results yet.</td></tr> }
+    @foreach (var m in mv.Played)
+    {
+        <tr>
+            <td>#@m.Order</td>
+            <td><span class="bc-badge state-done">@m.State</span></td>
+            <td><a asp-page="/Tournaments/CreateMatch" asp-route-id="@mv.Tournament.Id" asp-route-matchId="@m.Id" asp-route-view="true">View →</a></td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<dialog id="addPlannedDlg" class="bc-dialog">
+    <h3>Add a planned match</h3>
+    <form method="post" asp-page-handler="AddPlanned" asp-route-id="@mv.Tournament.Id">
+        <label class="bc-label">Team 1 initials (comma separated)</label>
+        <input asp-for="Team1Initials" class="bc-input" placeholder="PHI, JNK" />
+        <label class="bc-label" style="margin-top:8px">Team 2 initials</label>
+        <input asp-for="Team2Initials" class="bc-input" placeholder="ODN, THR" />
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+            <button type="button" class="bc-btn-ghost bc-dialog-close">Cancel</button>
+            <button type="submit" class="bc-btn-primary">Plan</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="planSeveralDlg" class="bc-dialog">
+    <h3>Plan several matches</h3>
+    <form method="post" asp-page-handler="PlanSeveral" asp-route-id="@mv.Tournament.Id">
+        <label class="bc-label">
+            Seed-based planning
+            <span class="info-icon" title="Uses the tournament's seed tournament rankings if set; otherwise uses current scores. Toggle Fixed team to keep best-worst pairs stable each match.">i</span>
+        </label>
+        <div class="dim" style="margin-bottom:8px">
+            @if (mv.Tournament.SeedTournamentId.HasValue)
+            {
+                <span>Seeded from tournament @mv.Tournament.SeedTournamentId.</span>
+            }
+            else { <span>No seed set — players seeded by current score. <a asp-page="/Tournaments/Players" asp-route-id="@mv.Tournament.Id">Set a seed</a>.</span> }
+        </div>
+
+        <label class="bc-label">Games per player</label>
+        <input asp-for="GamesPerPlayer" type="number" min="1" class="bc-input" />
+
+        <label class="bc-label" style="margin-top:8px"><input asp-for="FixedTeam" type="checkbox" /> Fixed team (no reshuffle)</label>
+
+        <label class="bc-label" style="margin-top:8px">Seeding type</label>
+        <select asp-for="SeedingType" class="bc-select">
+            <option value="Random">Random</option>
+            <option value="Equality">Equality (1+N, 2+(N−1))</option>
+            <option value="Fair">Fair (top half + bottom half, 1+6, 2+7, …)</option>
+        </select>
+
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+            <button type="button" class="bc-btn-ghost bc-dialog-close">Cancel</button>
+            <button type="submit" class="bc-btn-primary">Plan</button>
+        </div>
+    </form>
+</dialog>

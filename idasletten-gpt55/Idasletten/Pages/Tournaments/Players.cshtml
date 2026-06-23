@@ -1,0 +1,11 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    ViewData["Title"] = "Players";
+}
+<section class="shell section compact">
+    <div class="section-heading"><div><p class="eyebrow">@Model.Tournament.Name</p><h1>Players</h1></div><button class="btn btn-primary" onclick="document.getElementById('add-player').showModal()">Add a player</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Initials</th><th>Name</th><th>Score</th><th>Matches</th></tr></thead><tbody>@foreach(var player in Model.Tournament.Players){<tr><td>@player.Initials</td><td>@player.Name</td><td>@player.Score.ToString("0.#")</td><td>@player.Matches</td></tr>}</tbody></table></div>
+    <section class="panel seed-panel"><h2>Add players based on a previous tournament</h2><p class="muted">Choose a historical tournament from the archive, then add players from its ranking.</p><div class="chip-row">@foreach(var tournament in Model.SeedTournaments.Where(t => t.Id != Model.Tournament.Id).Take(8)){<a class="chip" asp-page="/Tournaments/Details" asp-route-tournamentId="@tournament.Id">@tournament.Name</a>}</div></section>
+</section>
+<dialog id="add-player"><form method="post" asp-page-handler="AddPlayer" class="dialog-body"><h2>Add player</h2><label>Initials<input asp-for="Initials" required /></label><label>Name<input asp-for="Name" /></label><div class="actions"><button class="btn btn-primary" type="submit">Add</button><button class="btn btn-ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button></div></form></dialog>

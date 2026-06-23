@@ -1,0 +1,59 @@
+@page "/tournaments/create"
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Create tournament";
+}
+
+<h1 class="text-2xl font-bold mb-6">Create tournament</h1>
+
+<form method="post" class="max-w-xl flex flex-col gap-4">
+    <div asp-validation-summary="All" class="text-sm text-destructive"></div>
+
+    <div class="grid gap-1">
+        <label class="label" for="Name">Name</label>
+        <input type="text" class="input" id="Name" name="Name" value="@Model.Name" required />
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="grid gap-1">
+            <label class="label" for="MaxPlayerCount">Max players (optional)</label>
+            <input class="input" id="MaxPlayerCount" name="MaxPlayerCount" type="number" min="1" value="@(Model.MaxPlayerCount?.ToString())" placeholder="No limit" />
+        </div>
+        <div class="grid gap-1">
+            <label class="label" for="TeamSize">Team size</label>
+            <input class="input" id="TeamSize" name="TeamSize" type="number" min="1" value="@Model.TeamSize" />
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="grid gap-1">
+            <label class="label" for="PointsToWin">Points to win</label>
+            <input class="input" id="PointsToWin" name="PointsToWin" type="number" min="1" value="@Model.PointsToWin" />
+        </div>
+        <div class="grid gap-1">
+            <label class="label flex items-center gap-1" for="ScoreSystem">
+                Score system
+                <span class="text-muted-foreground cursor-help"
+                      title="Elo: chess-style ratings (team = average). TrueSkill: Bayesian skill (Moserware). Lives: lose a life when you lose. WinCount: ranked by wins, goal difference breaks ties.">ⓘ</span>
+            </label>
+            <select class="select" id="ScoreSystem" name="ScoreSystem">
+                @foreach (var s in Enum.GetValues<ScoreSystem>())
+                {
+                    <option value="@s" selected="@(s == Model.ScoreSystem)">@s</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <label class="flex items-center gap-2">
+        <input type="checkbox" name="IsPublic" value="true" checked="@Model.IsPublic" class="input w-4 h-4" />
+        <span>Public — show on the home page</span>
+    </label>
+
+    <div class="flex flex-col items-start gap-2 mt-2">
+        <button type="submit" asp-page-handler="Create" class="btn">Create</button>
+        <button type="submit" asp-page-handler="CreateAndPlan" class="text-sm text-muted-foreground hover:underline bg-transparent border-0 p-0 cursor-pointer">
+            Create and plan matches →
+        </button>
+    </div>
+</form>

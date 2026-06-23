@@ -1,0 +1,16 @@
+# .NET build output
+bin/
+obj/
+*.user
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Playwright MCP scratch output
+**/.playwright-mcp/
+
+# Rider / VS
+.idea/
+.vs/

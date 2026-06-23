@@ -1,0 +1,59 @@
+@page
+@model CreateMatchModel
+@{
+    ViewData["Title"] = "Record match";
+    var t = Model.Tournament;
+}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <h1 class="section-title" style="margin:0">@(Model.MatchId.HasValue ? (Model.ReadOnly ? "Match" : "Edit match") : "Create match")</h1>
+    <a asp-page="/Tournaments/Detail" asp-route-id="@t.Id" class="bc-btn-ghost">← Back</a>
+</div>
+<div class="dim" style="margin-bottom:16px">@t.Name · @t.TeamSize v @t.TeamSize · first to @t.PointsToWin goals</div>
+
+@if (Model.ReadOnly)
+{
+    <div class="bc-badge state-planned" style="margin-bottom:14px">Read only — match is already recorded</div>
+}
+
+<form method="post">
+    <input type="hidden" name="tournamentId" value="@t.Id" />
+    <input type="hidden" name="matchId" value="@Model.MatchId" />
+    <div id="teams">
+        @for (int i = 0; i < Model.TeamsInitials.Count; i++)
+        {
+            <div class="match-team-row">
+                <div style="flex:1">
+                    <label class="bc-label">Team @(i + 1) initials (comma separated)</label>
+                    <input name="teamsInitials[@i]" value="@string.Join(", ", Model.TeamsInitials[i])" class="bc-input" placeholder="PHI, JNK" @(Model.ReadOnly ? "readonly" : "") />
+                </div>
+                <div style="width:80px">
+                    <label class="bc-label">Goals</label>
+                    <input name="scores[@i]" value="@(i < Model.Scores.Count ? Model.Scores[i] : 0)" type="number" min="0" class="bc-input" @(Model.ReadOnly ? "readonly" : "") />
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.ReadOnly)
+    {
+        <p><a class="bc-link" data-dialog="listDlg">Select from list…</a></p>
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button type="submit" class="bc-btn-primary">Save match</button>
+            <button type="button" class="bc-btn-ghost" onclick="history.back()">Cancel</button>
+        </div>
+    }
+</form>
+
+<dialog id="listDlg" class="bc-dialog">
+    <h3>Select existing players</h3>
+    <div class="dim">Copy initials into the field above once chosen.</div>
+    <ul style="list-style:none;padding:0;margin-top:10px">
+        @if (Model.AvailablePlayers.Count == 0) { <li class="dim">No players in tournament yet.</li> }
+        @foreach (var p in Model.AvailablePlayers)
+        {
+            <li><strong>@p.Username</strong> — @p.Name</li>
+        }
+    </ul>
+    <button class="bc-btn-ghost bc-dialog-close" style="margin-top:10px">Close</button>
+</dialog>

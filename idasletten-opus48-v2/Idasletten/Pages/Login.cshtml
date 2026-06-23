@@ -1,0 +1,51 @@
+@page "/login"
+@model Idasletten.Pages.LoginModel
+@{
+    ViewData["Title"] = "Log in";
+    var returnUrl = Request.Query["returnUrl"].ToString();
+}
+
+<div class="max-w-md mx-auto">
+    <h1 class="text-2xl font-bold mb-1">Log in</h1>
+    <p class="text-sm text-muted-foreground mb-6">
+        Logging in is only needed to create tournaments and edit completed matches.
+    </p>
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert-destructive mb-4"><span>@Model.Error</span></div>
+    }
+
+    <div class="flex flex-col gap-4">
+        <form method="post" asp-page-handler="Microsoft">
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <button type="submit" class="btn w-full" @(Model.AzureEnabled ? "" : "disabled")>
+                Sign in with Microsoft
+            </button>
+            @if (!Model.AzureEnabled)
+            {
+                <p class="text-xs text-muted-foreground mt-1">Azure AD is not configured in this environment.</p>
+            }
+        </form>
+
+        @if (Model.TestLoginEnabled)
+        {
+            <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                <div class="flex-1 border-t"></div><span>or test login</span><div class="flex-1 border-t"></div>
+            </div>
+
+            <form method="post" asp-page-handler="Test" class="flex flex-col gap-3">
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <div class="grid gap-1">
+                    <label class="label">Email</label>
+                    <input class="input" name="Email" type="email" required />
+                </div>
+                <div class="grid gap-1">
+                    <label class="label">Password</label>
+                    <input class="input" name="Password" type="password" required />
+                </div>
+                <button type="submit" class="btn-secondary w-full">Sign in as test user</button>
+            </form>
+        }
+    </div>
+</div>
