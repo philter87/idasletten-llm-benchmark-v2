@@ -1,4 +1,5 @@
 using Idasletten.Shared.Data;
+using Idasletten.Shared.Data.Entities;
 using Idasletten.Shared.Scoring;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -40,7 +41,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Add Cookie Authentication for test user
+// Configure Cookie Authentication for test user
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "Idasletten.Cookies";
@@ -48,6 +49,15 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
+
+// Add Azure AD Authentication as an additional scheme
+var azureAdConfig = builder.Configuration.GetSection("AzureAd");
+
+if (azureAdConfig.Exists() && !string.IsNullOrEmpty(azureAdConfig["ClientId"]))
+{
+    builder.Services.AddAuthentication()
+        .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+}
 
 // Add MediatR
 builder.Services.AddMediatR(cfg => 
@@ -60,12 +70,13 @@ builder.Services.AddScoped<ITrueSkillScoringSystem, TrueSkillScoringSystem>();
 builder.Services.AddScoped<ILivesScoringSystem, LivesScoringSystem>();
 builder.Services.AddScoped<IWinCountScoringSystem, WinCountScoringSystem>();
 
-// Add Azure AD Authentication
+// Add Azure AD Authentication as an additional scheme
 var azureAdConfig = builder.Configuration.GetSection("AzureAd");
 
 if (azureAdConfig.Exists() && !string.IsNullOrEmpty(azureAdConfig["ClientId"]))
 {
-    builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddCookie()
         .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 }
 
