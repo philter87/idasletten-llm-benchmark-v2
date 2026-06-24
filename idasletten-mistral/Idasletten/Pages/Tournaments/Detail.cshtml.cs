@@ -1,79 +1,29 @@
-using Idasletten.Features.Tournaments;
-using Idasletten.Shared;
-using MediatR;
+using Idasletten.Shared.Data;
+using Idasletten.Shared.Data.Entities;
+using Idasletten.Shared.Data.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace Idasletten.Pages.Tournaments;
 
 public class DetailModel : PageModel
 {
-    private readonly IMediator _mediator;
-
-    public DetailModel(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
-    public Tournament Tournament { get; set; } = null!;
-    public ICollection<TournamentPlayer> Players { get; set; } = new List<TournamentPlayer>();
-    public ICollection<TournamentMatch> Matches { get; set; } = new List<TournamentMatch>();
-    public ICollection<TournamentMatch> PlannedMatches { get; set; } = new List<TournamentMatch>();
-    public ICollection<TournamentMatch> RecentMatches { get; set; } = new List<TournamentMatch>();
-
-    public async Task<IActionResult> OnGetAsync(Guid tournamentId)
-    {
-        var result = await _mediator.Send(new GetTournamentDetailQuery(tournamentId));
-        
-        if (result.Tournament == null)
-        {
-            return NotFound();
-        }
-        
-        Tournament = result.Tournament;
-        Players = result.Players;
-        Matches = result.Matches;
-        PlannedMatches = result.PlannedMatches;
-        RecentMatches = result.RecentMatches;
-        
-        return Page();
-    }
-}
-
-public class GetTournamentDetailQuery : IRequest<TournamentDetailResult>
-{
-    public Guid TournamentId { get; }
+    private readonly ApplicationDbContext _context;
     
-    public GetTournamentDetailQuery(Guid tournamentId)
-    {
-        TournamentId = tournamentId;
-    }
-}
-
-public class TournamentDetailResult
-{
-    public Tournament Tournament { get; set; } = null!;
-    public ICollection<TournamentPlayer> Players { get; set; } = new List<TournamentPlayer>();
-    public ICollection<TournamentMatch> Matches { get; set; } = new List<TournamentMatch>();
-    public ICollection<TournamentMatch> PlannedMatches { get; set; } = new List<TournamentMatch>();
-    public ICollection<TournamentMatch> RecentMatches { get; set; } = new List<TournamentMatch>();
-}
-
-public class GetTournamentDetailHandler : IRequestHandler<GetTournamentDetailQuery, TournamentDetailResult>
-{
-    private readonly AppDbContext _context;
-    private readonly IPublisher _publisher;
-
-    public GetTournamentDetailHandler(AppDbContext context, IPublisher publisher)
+    public DetailModel(ApplicationDbContext context)
     {
         _context = context;
-        _publisher = publisher;
     }
-
-    public async Task<TournamentDetailResult> Handle(GetTournamentDetailQuery request, CancellationToken cancellationToken)
+    
+    public Tournament Tournament { get; set; } = default!;
+    public List<TournamentMatch> NextMatches { get; set; } = new List<TournamentMatch>();
+    public List<TournamentMatch> RecentMatches { get; set; } = new List<TournamentMatch>();
+    
+    public async Task<IActionResult> OnGetAsync(Guid id)
     {
-        var tournament = await _context.Tournaments
-            .Include(t => t.Players)
+        Tournament = await _context.Tournaments
+            .Include(t => t.TournamentPlayers)
                 .ThenInclude(tp => tp.User)
             .Include(t => t.Matches)
                 .ThenInclude(m => m.Teams)
@@ -81,30 +31,36 @@ public class GetTournamentDetailHandler : IRequestHandler<GetTournamentDetailQue
                         .ThenInclude(tp => tp.User)
             .Include(t => t.Matches)
                 .ThenInclude(m => m.Results)
-            .FirstOrDefaultAsync(t => t.Id == request.TournamentId, cancellationToken);
-
-        if (tournament == null)
+                    .ThenInclude(r => r.Team)
+            .FirstOrDefaultAsync(t => t.Id == id);
+        
+        if (Tournament == null)
         {
-            return new TournamentDetailResult { Tournament = null! };
+            return NotFound();
         }
-
-        var players = tournament.Players.ToList();
-        var matches = tournament.Matches.ToList();
-        var plannedMatches = matches.Where(m => m.State == MatchState.Planned).ToList();
-        var recentMatches = matches.Where(m => m.State == MatchState.Done).OrderByDescending(m => m.Order).Take(5).ToList();
-
-        // Publish event
-        await _publisher.Publish(new TournamentViewed(request.TournamentId), cancellationToken);
-
-        return new TournamentDetailResult
-        {
-            Tournament = tournament,
-            Players = players,
-            Matches = matches,
-            PlannedMatches = plannedMatches,
-            RecentMatches = recentMatches
-        };
+        
+        // Get next 5 planned matches
+        NextMatches = await _context.TournamentMatches
+            .Where(m => m.TournamentId == id && m.State == MatchState.Planned)
+            .Include(m => m.Teams)
+                .ThenInclude(t => t.Players)
+                    .ThenInclude(p => p.User)
+            .OrderBy(m => m.Order)
+            .Take(5)
+            .ToListAsync();
+        
+        // Get recent 5 played matches
+        RecentMatches = await _context.TournamentMatches
+            .Where(m => m.TournamentId == id && m.State == MatchState.Done)
+            .Include(m => m.Teams)
+                .ThenInclude(t => t.Players)
+                    .ThenInclude(p => p.User)
+            .Include(m => m.Results)
+                .ThenInclude(r => r.Team)
+            .OrderByDescending(m => m.CompletedAt)
+            .Take(5)
+            .ToListAsync();
+        
+        return Page();
     }
 }
-
-public record TournamentViewed(Guid TournamentId) : INotification;

@@ -1,145 +1,111 @@
 @page
-@model CreateModel
+@model Tournaments.CreateModel
 @{
-    ViewData["Title"] = "Opret Turnering - Idasletten";
+    ViewData["Title"] = "Create Tournament";
 }
 
-<h1>Opret ny turnering</h1>
-
-<div class="bc-grid">
-    <div class="bc-grid__item bc-grid__item--1">
-        <form method="post" class="bc-form">
-            <div class="bc-form-group">
-                <label for="Name" class="bc-form-label">Turneringsnavn *</label>
-                <input type="text" id="Name" name="Name" class="bc-form-input" required 
-                       value="@Model.Command.Name" placeholder="Indtast turneringsnavn" />
-                <span class="bc-form-hint">Navnet skal være unikt og beskrive turneringen</span>
+<div class="card">
+    <h2 class="card-title">Create New Tournament</h2>
+    
+    <form method="post" style="max-width: 500px;">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 1rem;"></div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Tournament.Name" class="form-label">Tournament Name *</label>
+            <input asp-for="Tournament.Name" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+            <span asp-validation-for="Tournament.Name" class="text-danger"></span>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Tournament.MaxPlayerCount" class="form-label">Maximum Players (optional)</label>
+            <input asp-for="Tournament.MaxPlayerCount" type="number" class="form-control" 
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" 
+                   placeholder="Leave empty for no limit" />
+            <span asp-validation-for="Tournament.MaxPlayerCount" class="text-danger"></span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <label asp-for="Tournament.TeamSize" class="form-label">Players per Team</label>
+                <input asp-for="Tournament.TeamSize" type="number" min="1" max="10" class="form-control" 
+                       style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+                <span asp-validation-for="Tournament.TeamSize" class="text-danger"></span>
             </div>
-
-            <div class="bc-grid">
-                <div class="bc-grid__item bc-grid__item--1-2">
-                    <div class="bc-form-group">
-                        <label for="TeamSize" class="bc-form-label">Holdstørrelse</label>
-                        <select id="TeamSize" name="TeamSize" class="bc-form-select">
-                            <option value="1" @(Model.Command.TeamSize == 1 ? "selected" : "")>1 spiller pr hold</option>
-                            <option value="2" @(Model.Command.TeamSize == 2 ? "selected" : "")>2 spillere pr hold</option>
-                            <option value="3" @(Model.Command.TeamSize == 3 ? "selected" : "")>3 spillere pr hold</option>
-                            <option value="4" @(Model.Command.TeamSize == 4 ? "selected" : "")>4 spillere pr hold</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="bc-grid__item bc-grid__item--1-2">
-                    <div class="bc-form-group">
-                        <label for="PointsToWin" class="bc-form-label">Point til sejr</label>
-                        <select id="PointsToWin" name="PointsToWin" class="bc-form-select">
-                            <option value="3" @(Model.Command.PointsToWin == 3 ? "selected" : "")>3 point</option>
-                            <option value="5" @(Model.Command.PointsToWin == 5 ? "selected" : "")>5 point</option>
-                            <option value="7" @(Model.Command.PointsToWin == 7 ? "selected" : "")>7 point</option>
-                            <option value="10" @(Model.Command.PointsToWin == 10 ? "selected" : "")>10 point</option>
-                        </select>
-                    </div>
-                </div>
+            <div>
+                <label asp-for="Tournament.PointsToWin" class="form-label">Points to Win</label>
+                <input asp-for="Tournament.PointsToWin" type="number" min="1" max="20" class="form-control" 
+                       style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+                <span asp-validation-for="Tournament.PointsToWin" class="text-danger"></span>
             </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label asp-for="Tournament.ScoreSystem" class="form-label">Scoring System</label>
+            <select asp-for="Tournament.ScoreSystem" class="form-control" 
+                    style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" 
+                    asp-items="Html.GetEnumSelectList<ScoreSystem>()">
+            </select>
+            <span asp-validation-for="Tournament.ScoreSystem" class="text-danger"></span>
+            <small style="color: #666; display: block; margin-top: 0.25rem;">
+                @GetScoringSystemDescription(Model.Tournament.ScoreSystem)
+            </small>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                <input asp-for="Tournament.IsPublic" style="width: auto;" />
+                <span>Public Tournament (visible to all users)</span>
+            </label>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" name="action" value="create" class="btn btn-primary">Create Tournament</button>
+            <button type="submit" name="action" value="createAndPlan" class="btn btn-secondary">Create and Plan Matches</button>
+            <a asp-page="/Tournaments" class="btn btn-secondary" style="color: #666;">Cancel</a>
+        </div>
+    </form>
+</div>
 
-            <div class="bc-form-group">
-                <label for="ScoreSystem" class="bc-form-label">Scoring system</label>
-                <select id="ScoreSystem" name="ScoreSystem" class="bc-form-select" 
-                        onchange="showScoreSystemInfo(this.value)">
-                    <option value="@ScoreSystem.Elo" @(Model.Command.ScoreSystem == ScoreSystem.Elo ? "selected" : "")>Elo</option>
-                    <option value="@ScoreSystem.TrueSkill" @(Model.Command.ScoreSystem == ScoreSystem.TrueSkill ? "selected" : "")>TrueSkill</option>
-                    <option value="@ScoreSystem.Lives" @(Model.Command.ScoreSystem == ScoreSystem.Lives ? "selected" : "")>Lives</option>
-                    <option value="@ScoreSystem.WinCount" @(Model.Command.ScoreSystem == ScoreSystem.WinCount ? "selected" : "")>WinCount</option>
-                </select>
-                <div id="scoreSystemInfo" class="bc-alert bc-alert--info" style="margin-top: 0.5rem;">
-                    <p><em>Vælg et scoringsystem for at se beskrivelse.</em></p>
-                </div>
-            </div>
-
-            <div class="bc-grid">
-                <div class="bc-grid__item bc-grid__item--1-2">
-                    <div class="bc-form-group">
-                        <label for="MaxPlayerCount" class="bc-form-label">Maks antallet af spillere (valgfrit)</label>
-                        <input type="number" id="MaxPlayerCount" name="MaxPlayerCount" 
-                               class="bc-form-input" min="2" max="100" 
-                               value="@Model.Command.MaxPlayerCount" placeholder="Ingen grænse" />
-                    </div>
-                </div>
-                <div class="bc-grid__item bc-grid__item--1-2">
-                    <div class="bc-form-group">
-                        <label class="bc-form-label">
-                            <input type="checkbox" id="IsPublic" name="IsPublic" 
-                                   @(Model.Command.IsPublic ? "checked" : "") /> 
-                            Offentlig turnering
-                        </label>
-                        <span class="bc-form-hint">Hvis ikke markeret, er turneringen kun synlig for dig</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bc-form-group">
-                <label for="SeedTournamentId" class="bc-form-label">Seed fra forrige turnering (valgfrit)</label>
-                <select id="SeedTournamentId" name="SeedTournamentId" class="bc-form-select">
-                    <option value="">-- Ingen seed --</option>
-                    @foreach (var tournament in Model.AvailableTournaments)
-                    {
-                        if (!tournament.ParentTournamentId.HasValue) // Can only seed from tournaments without parents
-                        {
-                            <option value="@tournament.Id" @(Model.Command.SeedTournamentId == tournament.Id ? "selected" : "")>
-                                @tournament.Name (@tournament.Players.Count spillere)
-                            </option>
-                        }
-                    }
-                </select>
-                <span class="bc-form-hint">Brug en forrige turnering til at seede spillere og planlægge kampe</span>
-            </div>
-
-            <div class="bc-form-actions">
-                <button type="submit" class="bc-btn bc-btn--primary">
-                    <i class="fas fa-save"></i> Opret turnering
-                </button>
-                <a href="/tournaments" class="bc-btn bc-btn--secondary">Annuller</a>
-            </div>
-
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-            {
-                <div class="bc-alert bc-alert--danger">@Model.ErrorMessage</div>
-            }
-        </form>
+<div class="card" style="margin-top: 1rem;">
+    <h3 class="card-title">Scoring Systems Explained</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <h4 style="color: #1a237e; margin: 0 0 0.5rem 0;">TrueSkill</h4>
+            <p style="font-size: 0.875rem; color: #666; margin: 0;">
+                Microsoft's ranking system that accounts for uncertainty in player skills.
+            </p>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <h4 style="color: #1a237e; margin: 0 0 0.5rem 0;">Elo</h4>
+            <p style="font-size: 0.875rem; color: #666; margin: 0;">
+                Classic rating system where points are exchanged based on expected outcomes.
+            </p>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <h4 style="color: #1a237e; margin: 0 0 0.5rem 0;">Lives</h4>
+            <p style="font-size: 0.875rem; color: #666; margin: 0;">
+                Each player has a set number of lives. Losing a match costs a life.
+            </p>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <h4 style="color: #1a237e; margin: 0 0 0.5rem 0;">WinCount</h4>
+            <p style="font-size: 0.875rem; color: #666; margin: 0;">
+                Simple count of wins. Tie-breakers use goal difference.
+            </p>
+        </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        function showScoreSystemInfo(system) {
-            const infoDiv = document.getElementById('scoreSystemInfo');
-            let infoText = '';
-            
-            switch(system) {
-                case '@ScoreSystem.Elo':
-                    infoText = '<strong>Elo:</strong> Standard Elo scoringsystem. Holdets score er gennemsnit af spilleres Elo. Vinder holdet får point, taber holdet mister point.';
-                    break;
-                case '@ScoreSystem.TrueSkill':
-                    infoText = '<strong>TrueSkill:</strong> Microsofts TrueSkill system. Beregner spiller færdigheder baseret på kampresultater. Nøjagtig og fair.';
-                    break;
-                case '@ScoreSystem.Lives':
-                    infoText = '<strong>Lives:</strong> Hver spiller starter med 3 liv. Taber en kamp = mist 1 liv. Når livene er opbrugt, er spilleren ude af turneringen.';
-                    break;
-                case '@ScoreSystem.WinCount':
-                    infoText = '<strong>WinCount:</strong> Simpelt system. Score = antal vundne kampe. Ved uafgjort bruges målforskel som tie-breaker.';
-                    break;
-                default:
-                    infoText = 'Vælg et scoringsystem for at se beskrivelse.';
-            }
-            
-            infoDiv.innerHTML = `<p><em>${infoText}</em></p>`;
-        }
-        
-        // Show default info on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const scoreSystemSelect = document.getElementById('ScoreSystem');
-            if (scoreSystemSelect) {
-                showScoreSystemInfo(scoreSystemSelect.value);
-            }
-        });
-    </script>
+@functions {
+    string GetScoringSystemDescription(ScoreSystem scoreSystem)
+    {
+        return scoreSystem switch
+        {
+            ScoreSystem.TrueSkill => "Microsoft's TrueSkill algorithm with aggressive parameters",
+            ScoreSystem.Elo => "Classic Elo rating system",
+            ScoreSystem.Lives => "Players lose lives on defeats",
+            ScoreSystem.WinCount => "Simple win counting with goal difference tie-breaker",
+            _ => ""
+        };
+    }
 }

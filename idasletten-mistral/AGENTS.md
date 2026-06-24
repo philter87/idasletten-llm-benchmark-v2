@@ -1,288 +1,526 @@
-# Idasletten - Development Guide for AI Agents
+# Idasletten - Agent Instructions
 
 ## Overview
-Idasletten is a table football (foosball) tournament management web application with a Norse mythology theme. It tracks players, teams, matches, results, and provides a configurable scoreboard.
+
+Idasletten is a table football (foosball) tournament management web application with a Norse mythology theme. This document provides instructions for AI agents (like Mistral Vibe) working on this codebase.
+
+---
 
 ## Tech Stack
-- **Language**: C# 11+
-- **Framework**: ASP.NET Core 8.0 (Web)
-- **Database**: SQLite (in-memory locally, file-based in production)
-- **ORM**: Entity Framework Core 8.0
-- **UI**: Razor Pages with Basecoat UI via CDN
-- **Architecture**: CQRS + Vertical Slices with MediatR
-- **Authentication**: Azure AD (primary), Test User (development)
-- **Scoring**: Elo, TrueSkill (Moserware.Skills), Lives, WinCount
 
-## Project Structure
+| Component | Technology | Version |
+|-----------|------------|---------|
+| Runtime | .NET | 8.0 |
+| Framework | ASP.NET Core | 8.0 |
+| ORM | Entity Framework Core | 8.0 |
+| Database | SQLite | - |
+| Authentication | Azure AD (Microsoft.Identity.Web) | 2.15.0 |
+| Mediator | MediatR | 12.2.0 |
+| UI Framework | Razor Pages | - |
+| CSS Framework | Basecoat (via CDN) | - |
+| Layout | Flexbox | - |
+| Theme | Light (white) | - |
+| Testing | xUnit | 2.4.2 |
+
+---
+
+## Architecture
+
+### Project Structure
 
 ```
 Idasletten/
-├── Pages/                 # Razor Pages (minimal logic)
-├── Features/             # Vertical slices
-│   ├── Tournaments/       # Tournament-related commands/queries
-│   ├── Players/          # Player-related commands/queries
-│   ├── Matches/           # Match-related commands/queries
-│   ├── Users/            # User-related commands/queries
-│   └── Auth/             # Authentication commands/queries
-├── Shared/               # Cross-cutting concerns
-├── Migrations/           # EF Core migrations
-├── wwwroot/              # Static files
-└── Program.cs            # Application entry point
+├── Pages/                    # Razor Pages (minimal logic, only send commands/queries)
+├── Features/                 # Vertical slices (CQRS + MediatR)
+│   ├── Tournaments/
+│   │   ├── Commands/
+│   │   ├── Queries/
+│   │   └── Events/
+│   ├── Players/
+│   ├── Matches/
+│   ├── Users/
+│   └── Authentication/
+├── Shared/
+│   ├── Data/
+│   │   ├── Entities/       # Domain entities
+│   │   ├── ApplicationDbContext.cs
+│   │   └── Migrations/     # EF Core migrations
+│   ├── Scoring/            # Scoring system implementations
+│   └── UI/                 # Shared UI components, base layout
+├── Program.cs
+├── appsettings.json
+└── Idasletten.csproj
 
 Idasletten.Tests/
-├── Features/             # Integration tests mirroring main features
-├── TestInfrastructure/   # WebApplicationFactory, test helpers
-└── Any.cs               # Test data factories
+├── Features/                # Feature tests (mirror main Features structure)
+├── Infrastructure/
+│   └── CustomWebApplicationFactory.cs
+└── Any.cs                  # Test data factories
 ```
 
-## Architecture Rules
+### Key Principles
 
-### 1. Vertical Slices with CQRS
-- Each feature folder contains:
-  - `Commands/` - Command classes
-  - `Queries/` - Query classes  
-  - `Handlers/` - Command/query handlers
-  - `Events/` - Domain events
-- Pages send commands/queries via MediatR only
-- Handlers use DbContext directly (no repositories)
+1. **CQRS + Vertical Slices**: Each feature folder contains its own commands, queries, handlers, and events. Features are independent and self-contained.
 
-### 2. Event Publishing
-**CRITICAL**: Every command handler MUST publish a domain event at the end of successful execution.
+2. **MediatR Pattern**: All communication between Pages and Features goes through MediatR. Pages send commands/queries and receive results.
+
+3. **Minimal Logic in Pages**: Razor Pages contain only UI logic and MediatR calls. Business logic lives in Feature handlers.
+
+4. **Direct DbContext Usage**: Handlers may use `ApplicationDbContext` directly. Avoid repository/service abstraction layers.
+
+5. **Event Publishing**: Every command handler MUST publish at least one event at the end of successful execution (e.g., `CreateTournamentCommand` publishes `TournamentCreatedEvent`).
+
+6. **Auto-Apply Migrations**: Migrations are applied automatically on application startup. See Database section below.
+
+---
+
+## Database
+
+### Configuration
+
+- **Local Development**: SQLite in-memory mode (`Data Source=:memory:`)
+- **Production**: SQLite file-based database
+- **Connection String**: Configured in `appsettings.json` and environment variables
+
+### Migrations
+
+**IMPORTANT**: Migrations are applied automatically on app startup.
 
 ```csharp
-// Example pattern
-public class CreateTournamentHandler : IRequestHandler<CreateTournamentCommand, Guid>
+// In Program.cs
+if (app.Environment.IsDevelopment())
 {
-    private readonly AppDbContext _context;
-    private readonly IPublisher _publisher;
-    
-    public async Task<Guid> Handle(CreateTournamentCommand request, CancellationToken ct)
-    {
-        var tournament = new Tournament { /* ... */ };
-        _context.Tournaments.Add(tournament);
-        await _context.SaveChangesAsync(ct);
-        
-        // ALWAYS publish event
-        await _publisher.Publish(new TournamentCreated(tournament.Id), ct);
-        
-        return tournament.Id;
-    }
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
 }
 ```
 
-### 3. Database & Migrations
-- **Local**: SQLite in-memory mode
-- **Production**: SQLite file-based
-- **Migrations**: Always create with `dotnet ef migrations add <Name>`
-- **Auto-apply on startup**: Migrations are automatically applied when the application starts (see Program.cs)
+**Rules:**
+- Always create migrations with `dotnet ef migrations add <Name>` CLI
+- Never manually edit migration files
+- Apply migrations automatically on startup (as shown above)
+- Test migrations work with in-memory SQLite before committing
 
-### 4. Authentication
-- Azure AD via app registration (primary)
-- Test user login enabled when `TestUser__Email` and `TestUser__Password` env vars are set
-- Configure `UseForwardedHeaders` with cleared `KnownNetworks` and `KnownProxies` for Fly.io
-- Login required for: creating tournaments, editing completed matches
-- No login required for: browsing, recording new match results
+### Seeding
 
-### 5. Testing
-- **Framework**: xUnit with AAA pattern
-- **Test naming**: `Should_DoSomething_When_ConditionIsFulfilled`
-- **Test data**: Use static `Any` class with methods like `Any.User()`, `Any.Tournament()`
-- **Factory**: Custom `WebApplicationFactory` with in-memory database
-- **Seeding**: Factory seeds data for both tests and local development
-- **Preferences**: Simple stubs over mocking frameworks
+- Database is seeded on startup with test data
+- Seeding logic should handle both development and test environments
+- Use the `Any` class methods for generating test data
 
-## Running Locally
+---
 
-### Prerequisites
-- .NET 8.0 SDK
-- Node.js (for potential frontend tooling)
+## Authentication
 
-### Setup
-```bash
-# Restore packages
-dotnet restore
+### Azure AD Configuration
 
-# Build
-dotnet build
+- Uses Microsoft.Identity.Web package
+- App registration required in Azure Portal
+- Environment variables for configuration:
+  - `AzureAd__Instance`
+  - `AzureAd__Domain`
+  - `AzureAd__TenantId`
+  - `AzureAd__ClientId`
+  - `AzureAd__ClientSecret`
+  - `AzureAd__CallbackPath`
 
-# Run
-dotnet run --project Idasletten
+### Test User Authentication
 
-# Or with watch
-dotnet watch run --project Idasletten
+- Second login option enabled only when both `TestUser__Email` and `TestUser__Password` env vars are set
+- Test user is auto-seeded into the database
+- Use this for local development and testing without Azure AD
+
+### Required Login Actions
+
+- **Login required**: Creating tournaments, editing completed matches
+- **No login required**: Browsing, recording new match results
+
+### Forwarded Headers (Fly.io)
+
+```csharp
+// In Program.cs
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+// Note: KnownNetworks and KnownProxies are cleared to trust Fly's proxy
 ```
 
-The app will be available at:
-- Local: `http://localhost:5000`
-- HTTPS: `https://localhost:5001`
+---
 
-### Environment Variables
-For test user login:
-```bash
-# Required for test user to appear
-TestUser__Email=test@example.com
-TestUser__Password=TestPassword123!
-```
+## Scoring Systems
 
-For Azure AD:
-```bash
-AzureAd__ClientId=your-client-id
-AzureAd__ClientSecret=your-client-secret
-AzureAd__TenantId=your-tenant-id
-```
+Four scoring systems are supported, configured via `Tournament.ScoreSystem`:
 
-## Creating Migrations
+| System | Description | Default Parameters |
+|--------|-------------|-------------------|
+| `TrueSkill` | Microsoft's TrueSkill algorithm | mu=30, sigma=10 (Aggressive) |
+| `Elo` | Standard Elo rating system | K-factor configurable |
+| `Lives` | Lose a life on each loss | Initial lives=3 |
+| `WinCount` | Simple win counting | Score = WinCount |
 
-```bash
-# Add migration
-dotnet ef migrations add AddTournamentModel --project Idasletten
+**Default**: TrueSkill (as per user decision)
 
-# Apply migration (automatic on startup, but can be manual)
-dotnet ef database update --project Idasletten
-```
+### Implementation Location
+
+`Shared/Scoring/` directory contains:
+- `IScoringSystem.cs` - Interface
+- `TrueSkillScoringSystem.cs` - TrueSkill implementation using Moserware.Skills
+- `EloScoringSystem.cs` - Elo implementation
+- `LivesScoringSystem.cs` - Lives implementation
+- `WinCountScoringSystem.cs` - WinCount implementation
+- `ScoringSystemFactory.cs` - Factory to resolve correct system
+
+---
 
 ## Testing
+
+### Test Framework
+
+- **Framework**: xUnit
+- **Pattern**: AAA (Arrange, Act, Assert)
+- **Naming Convention**: `Should_DoSomething_When_ConditionIsFulfilled`
+- **Mocking**: Prefer simple stubs over mocking frameworks
+
+### Custom WebApplicationFactory
+
+Location: `Idasletten.Tests/Infrastructure/CustomWebApplicationFactory.cs`
+
+Configures:
+- In-memory SQLite database for tests
+- Test authentication (test user when env vars are set)
+- Seeded test data
+
+### Test Data Factories
+
+Location: `Idasletten.Tests/Any.cs`
+
+Static class with methods for generating test entities:
+
+```csharp
+public static class Any
+{
+    public static User User() => new() { ... };
+    public static Tournament Tournament() => new() { ... };
+    public static TournamentPlayer TournamentPlayer() => new() { ... };
+    // ... etc
+}
+```
+
+### Running Tests
 
 ```bash
 # Run all tests
 dotnet test
 
-# Run with coverage
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+# Run specific test project
+cd Idasletten.Tests
+dotnet test
+
+# Run with coverage (requires coverlet)
+dotnet test /p:CollectCoverage=true
 ```
+
+---
+
+## Running Locally
+
+### Prerequisites
+
+- .NET 8.0 SDK
+- Node.js (optional, for npm if needed)
+
+### Setup
+
+1. Clone the repository
+2. Ensure you're in the `idasletten-mistral` directory
+3. Restore dependencies:
+
+```bash
+cd Idasletten
+dotnet restore
+```
+
+### Environment Variables
+
+Create a `.env` file or set environment variables:
+
+```
+# Database
+ConnectionStrings__Default=Data Source=idasletten.db
+
+# Azure AD (optional for local dev without Azure)
+AzureAd__Instance=https://login.microsoftonline.com/
+AzureAd__Domain=your-domain.onmicrosoft.com
+AzureAd__TenantId=your-tenant-id
+AzureAd__ClientId=your-client-id
+AzureAd__ClientSecret=your-client-secret
+AzureAd__CallbackPath=/signin-oidc
+
+# Test User (for local development without Azure AD)
+TestUser__Email=test@idasletten.local
+TestUser__Password=Test@1234
+```
+
+### Run the Application
+
+```bash
+cd Idasletten
+dotnet run
+```
+
+Application will be available at:
+- `http://localhost:5000` (HTTP)
+- `https://localhost:5001` (HTTPS)
+
+### Create Migrations
+
+```bash
+cd Idasletten
+dotnet ef migrations add <MigrationName> --project Idasletten
+```
+
+### Apply Migrations
+
+Migrations are applied automatically on startup. To manually apply:
+
+```bash
+cd Idasletten
+dotnet ef database update
+```
+
+---
 
 ## Deployment
 
 ### Fly.io
+
+1. Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
+2. Authenticate: `fly auth login`
+3. Create app: `fly launch`
+4. Configure secrets:
+
 ```bash
-# Login
-fly auth login
+fly secrets set ConnectionStrings__Default=<connection-string>
+fly secrets set AzureAd__ClientId=<client-id>
+fly secrets set AzureAd__ClientSecret=<client-secret>
+# ... other Azure AD settings
+```
 
-# Create app
-fly create idasletten
+5. Deploy: `fly deploy`
 
-# Set secrets
-fly secrets set AzureAd__ClientId=<value> AzureAd__ClientSecret=<value> AzureAd__TenantId=<value>
+### fly.toml Configuration
 
-# Deploy
-fly deploy
+```toml
+app = "idasletten"
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 2
 ```
 
 ### GitHub Actions
-A workflow file should be created at `.github/workflows/deploy.yml` to deploy `main` branch to Fly.io on push.
+
+Workflow file: `.github/workflows/deploy.yml`
+
+Triggers on push to `main` branch, builds and deploys to Fly.io.
+
+---
 
 ## UI Guidelines
-- Use Basecoat UI via CDN: `https://cdn.basecoatui.com/latest/basecoat.min.css`
-- Do NOT install Tailwind (included in Basecoat CDN bundle)
-- Light/white theme only
-- Flexbox for layout
-- Components reference: https://basecoatui.com/kitchen-sink/
 
-## Scoring Systems
+### Basecoat CSS
 
-| System | Implementation | Notes |
-|--------|---------------|-------|
-| Elo | Custom implementation | Average team score, standard ELO calculations |
-| TrueSkill | Moserware.Skills library | Use for skill-based matchmaking |
-| Lives | Custom implementation | Lose a life on game loss, default 3 lives |
-| WinCount | Simple calculation | Score = WinCount, tie-break by goal difference |
+- Loaded via CDN in `_Layout.cshtml`
+- Documentation: https://basecoatui.com/kitchen-sink/
+- Do NOT install Tailwind (already included in CDN bundle)
 
-## Important Patterns
-
-### 1. Tournament Creation Flow
-```
-User creates tournament -> Seed from previous tournament (optional) -> 
-Add players -> Plan matches -> Start tournament
+```html
+<!-- In _Layout.cshtml -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat@1.0.0/dist/basecoat.min.css">
 ```
 
-### 2. Multi-round Tournaments
-- Each round is a separate tournament
-- `ParentTournamentId` links to previous round
-- `RoundNumber` auto-incremented
-- Scores reset between rounds
-- Players carry over from parent
+### Layout
 
-### 3. Seeding
-- `SeedTournamentId` references source tournament for initial player ordering
-- Used in match planning algorithms
-- Cannot seed from tournament with a parent
+- **Light theme** (white background)
+- **Flexbox** for layout (not CSS Grid)
+- **Responsive** design
+- Follow basecoat component patterns
 
-### 4. Match Planning Types
-- **Random**: Random team assignments
-- **Equality**: Best vs worst pairing
-- **Fair**: Top half vs bottom half pairing
+### Color Scheme
 
-## File Structure Conventions
+Use basecoat's default light theme. Custom colors if needed:
+- Primary: Norse mythology inspired colors (deep blues, golds)
+- Background: White
+- Text: Dark gray/black
+- Accents: Gold/orange
 
-### Commands/Queries
-```csharp
-// File: Features/Tournaments/Commands/CreateTournament.cs
-public record CreateTournamentCommand(
-    string Name,
-    int TeamSize = 2,
-    int PointsToWin = 5,
-    ScoreSystem ScoreSystem = ScoreSystem.Elo,
-    int? MaxPlayerCount = null,
-    bool IsPublic = true
-) : IRequest<Guid>;
-```
+---
 
-### Handlers
-```csharp
-// File: Features/Tournaments/Handlers/CreateTournamentHandler.cs
-public class CreateTournamentHandler : IRequestHandler<CreateTournamentCommand, Guid>
-{
-    private readonly AppDbContext _context;
-    private readonly IPublisher _publisher;
-    
-    public CreateTournamentHandler(AppDbContext context, IPublisher publisher)
-    {
-        _context = context;
-        _publisher = publisher;
-    }
-    
-    public async Task<Guid> Handle(CreateTournamentCommand request, CancellationToken ct)
-    {
-        // Implementation
-        await _publisher.Publish(new TournamentCreated(tournament.Id), ct);
-        return tournament.Id;
-    }
-}
-```
+## Git Workflow
 
-### Events
-```csharp
-// File: Features/Tournaments/Events/TournamentCreated.cs
-public record TournamentCreated(Guid TournamentId) : INotification;
-```
+### Branching
 
-## Helpful Commands
+- `main` - Production ready code
+- `develop` - Integration branch
+- `feature/*` - Feature branches
+- `fix/*` - Bug fix branches
+
+### Commit Messages
+
+Use conventional commits:
+- `feat: add new feature`
+- `fix: fix bug`
+- `docs: update documentation`
+- `refactor: refactor code`
+- `test: add tests`
+- `chore: maintenance tasks`
+
+### Pull Requests
+
+- All PRs require approval
+- All tests must pass
+- Code review required for all changes
+
+---
+
+## Common Tasks
+
+### Adding a New Feature
+
+1. Create folder in `Features/`
+2. Add Commands, Queries, Events subfolders
+3. Implement command/query handlers
+4. Publish events from command handlers
+5. Register with MediatR in Program.cs
+6. Add corresponding tests in `Tests/Features/`
+
+### Adding a New Page
+
+1. Create Razor Page in `Pages/` folder
+2. Add minimal logic (only MediatR calls)
+3. Use basecoat components for styling
+4. Follow existing page patterns
+
+### Adding a New Entity
+
+1. Create entity class in `Shared/Data/Entities/`
+2. Add DbSet to `ApplicationDbContext`
+3. Configure relationships in `OnModelCreating`
+4. Create migration: `dotnet ef migrations add Add<EntityName>`
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**"No database provider has been configured"**
+- Check `appsettings.json` connection string
+- Verify environment variables are set
+- Ensure SQLite package is installed
+
+**"Migrations not found"**
+- Ensure migrations are created in the correct project
+- Check `DbContext` namespace matches
+- Run `dotnet ef migrations add InitialCreate` if no migrations exist
+
+**"Cannot find MediatR handlers"**
+- Ensure handlers are registered: `builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(...))`
+- Check handler namespace
+
+**"Basecoat styles not loading"**
+- Verify CDN URL in `_Layout.cshtml`
+- Check internet connection (CDN requires online)
+- Clear browser cache
+
+### Debugging
 
 ```bash
-# Build and run
-dotnet run --project Idasletten
+# Run with logging
+dotnet run --verbose
 
-# Create migration
-dotnet ef migrations add <Name> --project Idasletten
+# Check environment variables
+set | grep AzureAd
+dotnet user-secrets list
 
-# Run tests
-dotnet test
-
-# Clean and rebuild
-dotnet clean && dotnet build
-
-# Check EF Core CLI version
-dotnet ef --version
+# View database (SQLite)
+sqlite3 idasletten.db
 ```
 
-## Known Issues & Workarounds
+---
 
-1. **SQLite in-memory with migrations**: Use connection string `Data Source=:memory:` and apply migrations on startup
-2. **Azure AD redirect URIs**: Configure `UseForwardedHeaders` for Fly.io proxy
-3. **Test user seeding**: Ensure test user exists before test runs
+## Contacts & Resources
 
-## Useful Links
-- [Basecoat UI](https://basecoatui.com/installation/#install-cdn)
-- [Moserware Skills (TrueSkill)](https://github.com/moserware/Skills)
-- [MediatR Documentation](https://github.com/jbogard/MediatR)
-- [Fly.io .NET Deployment](https://fly.io/docs/dotnet/)
+- **Repository**: https://github.com/mjolner-code/idasletten-llm-benchmark-v2
+- **Original Spec**: prompt.md
+- **Basecoat Docs**: https://basecoatui.com/
+- **MediatR Docs**: https://github.com/jbogard/MediatR
+- **EF Core Docs**: https://docs.microsoft.com/en-us/ef/core/
+- **Azure AD Docs**: https://docs.microsoft.com/en-us/azure/active-directory/
+
+---
+
+## Appendix: Entity Reference
+
+### Tournament
+- Name (string)
+- TeamSize (int, default: 2)
+- PointsToWin (int, default: 5)
+- ScoreSystem (enum: Elo, TrueSkill, Lives, WinCount, default: TrueSkill)
+- MaxPlayerCount (int?, optional)
+- IsArchived (bool)
+- IsPublic (bool)
+- SeedTournamentId (Guid?, optional)
+- ParentTournamentId (Guid?, optional)
+- RoundNumber (int?, auto-incremented)
+
+### TournamentPlayer
+- UserId (Guid)
+- TournamentId (Guid)
+- Score (double)
+- WinCount (int)
+- MatchCount (int)
+- LoseCount (int)
+- Lives (int, default: 3, only for Lives scoring)
+- PointsWon (int)
+- PointsLost (int)
+- ScoreDiff (double)
+
+### TournamentTeam
+- Name (string, auto-generated: "Team 1", "Team 2", ...)
+- Number (int, auto-generated: 1, 2, ...)
+
+### TournamentMatch
+- Order (int)
+- TournamentId (Guid)
+- State (enum: Planned, Done, Cancelled)
+
+### TournamentTeamMatchResult
+- MatchId (Guid)
+- TournamentId (Guid)
+- TeamId (Guid)
+- GoalsWon (int)
+- GoalsLost (int)
+
+### User
+- Username (string, 3 initials, unique)
+- Name (string)
+- Email (string, optional)
+- ImageUrl (string, fetched from Azure Graph API)
+
+---
+
+*Last updated: 2026-06-24*

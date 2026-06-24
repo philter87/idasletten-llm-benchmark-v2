@@ -1,83 +1,101 @@
 @page
-@model IndexModel
+@model Tournaments.IndexModel
 @{
-    ViewData["Title"] = "Alle Turneringer - Idasletten";
+    ViewData["Title"] = "All Tournaments";
 }
 
-<h1>Alle turneringer</h1>
-
-@if (User.Identity.IsAuthenticated)
-{
-    <div class="mb-3">
-        <a href="/tournaments/create" class="bc-btn bc-btn--primary">
-            <i class="fas fa-plus"></i> Opret ny turnering
-        </a>
-    </div>
-}
-
-<div class="mb-3">
-    <div class="bc-form-group">
-        <label for="search" class="bc-form-label">Søg turneringer</label>
-        <input type="text" id="search" class="bc-form-input" 
-               placeholder="Søg efter turneringsnavn..." 
-               value="@Model.SearchTerm" />
-    </div>
-</div>
-
-@if (Model.Tournaments.Any())
-{
-    <div class="bc-grid">
-        @foreach (var tournament in Model.Tournaments)
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 class="card-title" style="margin: 0;">All Tournaments</h2>
+        @if (User.Identity.IsAuthenticated)
         {
-            <div class="bc-grid__item bc-grid__item--1">
-                <div class="tournament-card">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3 style="margin: 0;">@tournament.Name</h3>
-                        <span class="match-state-@GetStatusClass(tournament)">
-                            @GetStatusText(tournament)
-                        </span>
-                    </div>
-                    <p>
-                        <strong>Spillere:</strong> @tournament.Players.Count 
-                        | <strong>Hold:</strong> @tournament.TeamSize
-                        | <strong>Scoring:</strong> @tournament.ScoreSystem
-                    </p>
-                    @if (tournament.ParentTournamentId.HasValue)
-                    {
-                        <p><small><em>Runde @tournament.RoundNumber</em></small></p>
-                    }
-                    <div style="margin-top: 1rem;">
-                        <a href="/tournaments/@tournament.Id" class="bc-btn bc-btn--small bc-btn--primary">
-                            Vis detaljer
-                        </a>
-                        @if (!tournament.IsArchived && User.Identity.IsAuthenticated)
-                        {
-                            <a href="/tournaments/@tournament.Id/edit" class="bc-btn bc-btn--small bc-btn--secondary">
-                                Rediger
-                            </a>
-                        }
-                    </div>
-                </div>
-            </div>
+            <a asp-page="/Tournaments/Create" class="btn btn-primary">➕ Create Tournament</a>
         }
     </div>
-}
-else
-{
-    <p class="bc-alert bc-alert--info">Der er ingen turneringer endnu.</p>
-}
-
-@functions {
-    string GetStatusClass(Tournament tournament)
-    {
-        if (tournament.IsArchived) return "cancelled";
-        return "planned";
-    }
     
-    string GetStatusText(Tournament tournament)
+    <p style="color: #666; margin-bottom: 1.5rem;">
+        Browse all tournaments, including archived and private ones.
+    </p>
+    
+    <div style="margin-bottom: 1rem;">
+        <a asp-page="/" style="color: #1a237e; text-decoration: none;">← Back to Home</a>
+    </div>
+    
+    @if (Model.Tournaments.Any())
     {
-        if (tournament.IsArchived) return "Afsluttet";
-        if (!tournament.IsPublic) return "Privat";
-        return "Aktiv";
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Players</th>
+                    <th>Matches</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tournament in Model.Tournaments)
+                {
+                    <tr>
+                        <td>
+                            <strong>
+                                @if (tournament.ParentTournamentId.HasValue)
+                                {
+                                    @for (int i = 0; i < (tournament.RoundNumber ?? 1) - 1; i++)
+                                    {
+                                        <span style="margin-right: 0.5rem;">→</span>
+                                    }
+                                }
+                                <a asp-page="/Tournaments/Detail" asp-route-id="@tournament.Id" style="color: #1a237e; text-decoration: none;">
+                                    @tournament.Name
+                                </a>
+                            </strong>
+                            @if (tournament.ParentTournamentId.HasValue)
+                            {
+                                <div style="font-size: 0.75rem; color: #999;">
+                                    Round @(tournament.RoundNumber ?? 1)
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge badge-info">@tournament.ScoreSystem</span>
+                        </td>
+                        <td>@tournament.TournamentPlayers.Count</td>
+                        <td>@tournament.Matches.Count</td>
+                        <td>
+                            @if (tournament.IsArchived)
+                            {
+                                <span class="badge badge-danger">Archived</span>
+                            }
+                            else if (tournament.IsPublic)
+                            {
+                                <span class="badge badge-success">Public</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-warning">Private</span>
+                            }
+                        </td>
+                        <td>@tournament.CreatedAt.ToShortDateString()</td>
+                        <td>
+                            <a asp-page="/Tournaments/Detail" asp-route-id="@tournament.Id" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">View</a>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <a asp-page="/Tournaments/Players" asp-route-id="@tournament.Id" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Players</a>
+                                <a asp-page="/Tournaments/Matches" asp-route-id="@tournament.Id" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Matches</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
-}
+    else
+    {
+        <p style="color: #999; text-align: center; padding: 2rem;">
+            No tournaments found. @if (User.Identity.IsAuthenticated) { <a asp-page="/Tournaments/Create">Create your first tournament</a>. }
+        </p>
+    }
+</div>

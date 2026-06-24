@@ -1,80 +1,87 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "Idasletten - Bordfodbold Turneringer";
+    ViewData["Title"] = "Home";
 }
 
-<div class="hero fade-in">
-    <h1>Velkommen til Idasletten</h1>
+<!-- Hero Section -->
+<div class="hero">
+    <h1>Idasletten</h1>
     <p>
-        <em>Idasletten (Iðavöllr)</em> findes i nordisk mytologi lige uden for Valhals porte. 
-        Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, 
-        som øvelse til Ragnarok. Hver aften er Idasletten rød af blod.
+        <strong>Idasletten (Iðavöllr)</strong> findes i nordisk mytologi lige uden for Valhals porte. 
+        Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. 
+        Hver aften er Idasletten rød af blod.
     </p>
 </div>
 
-<div class="bc-grid">
-    <div class="bc-grid__item bc-grid__item--2-3">
-        <h2>Offentlige turneringer</h2>
-        <p>Vælg en turnering for at se scoreboard og kampe.</p>
-        
-        @if (Model.PublicTournaments.Any())
-        {
-            <div class="tournament-list">
-                @foreach (var tournament in Model.PublicTournaments)
-                {
-                    <div class="tournament-card">
-                        <h3>@tournament.Name</h3>
-                        <p>
-                            <strong>Spillere:</strong> @tournament.Players.Count 
-                            | <strong>Holdstørrelse:</strong> @tournament.TeamSize 
-                            | <strong>Point til sejr:</strong> @tournament.PointsToWin
-                            | <strong>Scoring:</strong> @tournament.ScoreSystem
-                        </p>
-                        <p>
-                            <span class="match-state-@(tournament.IsArchived ? "cancelled" : "planned")">
-                                @(tournament.IsArchived ? "Afsluttet" : "Aktiv")
-                            </span>
-                        </p>
-                        <a href="/tournaments/@tournament.Id" class="bc-btn bc-btn--primary">Vis turnering</a>
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            <p class="bc-alert bc-alert--info">Der er ingen offentlige turneringer endnu.</p>
-        }
+<div class="flex-row" style="gap: 2rem;">
+    <!-- Public Tournaments -->
+    <div class="main-content">
+        <div class="card">
+            <h2 class="card-title">Active Tournaments</h2>
+            <p style="color: #666; margin-bottom: 1.5rem;">
+                Select a public tournament to view details and record match results.
+            </p>
+            
+            @if (Model.PublicTournaments.Any())
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+                    @foreach (var tournament in Model.PublicTournaments)
+                    {
+                        <div class="card" style="cursor: pointer; transition: transform 0.3s;" 
+                             onclick="window.location.href='/Tournaments/@tournament.Id'">
+                            <h3 style="margin: 0 0 0.5rem 0; color: #1a237e;">@tournament.Name</h3>
+                            <div style="display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap;">
+                                <span class="badge badge-info">@tournament.TeamSize Players/Team</span>
+                                <span class="badge badge-info">@tournament.PointsToWin Points to Win</span>
+                                <span class="badge badge-info">@tournament.ScoreSystem</span>
+                            </div>
+                            <div style="color: #666; font-size: 0.875rem;">
+                                <strong>@tournament.TournamentPlayers.Count</strong> players | 
+                                <strong>@tournament.Matches.Count(m => m.State == MatchState.Done)</strong> matches played
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="color: #999; text-align: center; padding: 2rem;">
+                    No public tournaments available. <a asp-page="/Tournaments">View all tournaments</a>.
+                </p>
+            }
+        </div>
     </div>
     
-    <div class="bc-grid__item bc-grid__item--1-3">
-        <div class="tournament-card">
-            <h3>Historiske turneringer</h3>
-            <p>Se alle turneringer, inklusiv private og afsluttede.</p>
-            <a href="/tournaments" class="bc-btn bc-btn--secondary">Se alle turneringer</a>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="card">
+            <h3 class="card-title">Quick Actions</h3>
+            <div class="flex-col">
+                <a asp-page="/Tournaments" class="btn btn-secondary" style="text-align: center;">
+                    📋 View All Tournaments
+                </a>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <a asp-page="/Tournaments/Create" class="btn btn-primary" style="text-align: center;">
+                        ➕ Create Tournament
+                    </a>
+                }
+                else
+                {
+                    <p style="text-align: center; color: #666; margin: 1rem 0;">
+                        <small>Login to create tournaments</small>
+                    </p>
+                }
+            </div>
         </div>
         
-        @if (!User.Identity.IsAuthenticated)
-        {
-            <div class="tournament-card">
-                <h3>Opret turnering</h3>
-                <p>Log ind for at oprette en ny turnering.</p>
-                <a href="/login" class="bc-btn bc-btn--primary">Log ind</a>
-            </div>
-        }
+        <div class="card">
+            <h3 class="card-title">About</h3>
+            <p style="font-size: 0.875rem; line-height: 1.5; color: #666;">
+                Idasletten is a tournament management system for table football (foosball) 
+                with support for multiple scoring systems including Elo, TrueSkill, Lives, and WinCount.
+            </p>
+        </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        // Simple fade-in animation on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const elements = document.querySelectorAll('.fade-in');
-            elements.forEach((el, index) => {
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                }, index * 100);
-            });
-        });
-    </script>
-}

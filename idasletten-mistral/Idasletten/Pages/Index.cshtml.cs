@@ -1,47 +1,29 @@
-using Idasletten.Features.Tournaments;
-using Idasletten.Shared;
-using MediatR;
+using Idasletten.Shared.Data;
+using Idasletten.Shared.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace Idasletten.Pages;
 
 public class IndexModel : PageModel
 {
-    private readonly IMediator _mediator;
-
-    public IndexModel(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
-    public ICollection<Tournament> PublicTournaments { get; set; } = new List<Tournament>();
-
-    public async Task OnGetAsync()
-    {
-        PublicTournaments = await _mediator.Send(new GetPublicTournamentsQuery());
-    }
-}
-
-public class GetPublicTournamentsQuery : IRequest<ICollection<Tournament>>
-{
-}
-
-public class GetPublicTournamentsHandler : IRequestHandler<GetPublicTournamentsQuery, ICollection<Tournament>>
-{
-    private readonly AppDbContext _context;
-
-    public GetPublicTournamentsHandler(AppDbContext context)
+    private readonly ApplicationDbContext _context;
+    
+    public IndexModel(ApplicationDbContext context)
     {
         _context = context;
     }
-
-    public async Task<ICollection<Tournament>> Handle(GetPublicTournamentsQuery request, CancellationToken cancellationToken)
+    
+    public List<Tournament> PublicTournaments { get; set; } = new List<Tournament>();
+    
+    public async Task OnGetAsync()
     {
-        return await _context.Tournaments
+        PublicTournaments = await _context.Tournaments
             .Where(t => t.IsPublic && !t.IsArchived)
-            .Include(t => t.Players)
-            .OrderBy(t => t.Name)
-            .ToListAsync(cancellationToken);
+            .Include(t => t.TournamentPlayers)
+            .Include(t => t.Matches)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
     }
 }

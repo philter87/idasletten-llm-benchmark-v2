@@ -1,52 +1,93 @@
-@page "{tournamentId:guid}"
-@model DetailModel
+@page
+@model Tournaments.DetailModel
 @{
     ViewData["Title"] = "@Model.Tournament.Name - Idasletten";
 }
 
-<div class="bc-grid">
-    <div class="bc-grid__item bc-grid__item--3-4">
-        <div class="scoreboard">
-            <h2>Scoreboard - @Model.Tournament.Name</h2>
-            <p>
-                <strong>Scoring:</strong> @Model.Tournament.ScoreSystem 
-                | <strong>Holdstørrelse:</strong> @Model.Tournament.TeamSize 
-                | <strong>Point til sejr:</strong> @Model.Tournament.PointsToWin
-            </p>
-            
-            @if (Model.Players.Any())
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 class="card-title" style="margin: 0;">@Model.Tournament.Name</h2>
+            <div style="margin-top: 0.5rem; color: #666;">
+                <span class="badge badge-info">@Model.Tournament.ScoreSystem</span>
+                <span class="badge badge-info">@Model.Tournament.TeamSize Players/Team</span>
+                <span class="badge badge-info">@Model.Tournament.PointsToWin Points to Win</span>
+                @if (Model.Tournament.IsArchived)
+                {
+                    <span class="badge badge-danger">Archived</span>
+                }
+                @if (!Model.Tournament.IsPublic)
+                {
+                    <span class="badge badge-warning">Private</span>
+                }
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            @if (User.Identity.IsAuthenticated)
             {
-                <table class="scoreboard-table">
+                <a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-primary">
+                    ➕ Create Match
+                </a>
+                <a asp-page="/Tournaments/Players" asp-route-id="@Model.Tournament.Id" class="btn btn-secondary">
+                    Manage Players
+                </a>
+                <a asp-page="/Tournaments/Matches" asp-route-id="@Model.Tournament.Id" class="btn btn-secondary">
+                    View All Matches
+                </a>
+            }
+            <a asp-page="/Tournaments" class="btn btn-secondary" style="color: #666;">Back to List</a>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="flex-row" style="gap: 2rem;">
+    <!-- Main Area - Scoreboard -->
+    <div class="main-content">
+        <div class="card">
+            <h3 class="card-title">Scoreboard</h3>
+            
+            @if (Model.Tournament.TournamentPlayers.Any())
+            {
+                <table class="table">
                     <thead>
                         <tr>
-                            <th>Plads</th>
-                            <th>Spiller</th>
-                            <th>Kampe</th>
-                            <th>Vundne</th>
-                            <th>Tabte</th>
-                            <th>Point</th>
-                            <th>Delta</th>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Score</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Matches</th>
+                            <th>Δ</th>
+                            @if (Model.Tournament.ScoreSystem == ScoreSystem.Lives)
+                            {
+                                <th>Lives</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var player in Model.Players.OrderByDescending(p => p.Score).ThenByDescending(p => p.WinCount))
+                        @foreach (var player in Model.Tournament.TournamentPlayers.OrderByDescending(p => p.Score).ThenByDescending(p => p.ScoreDiff))
                         {
                             <tr>
-                                <td>@(Model.Players.OrderByDescending(p => p.Score).ThenByDescending(p => p.WinCount).ToList().IndexOf(player) + 1)</td>
+                                <td>@(Model.Tournament.TournamentPlayers.OrderByDescending(p => p.Score).ThenByDescending(p => p.ScoreDiff).ToList().IndexOf(player) + 1)</td>
                                 <td>
-                                    <a href="/users/@player.UserId">@player.User.UserName</a>
+                                    <strong>@player.User.UserName</strong>
                                     @if (!string.IsNullOrEmpty(player.User.Name))
                                     {
-                                        <small>(@player.User.Name)</small>
+                                        <div style="font-size: 0.75rem; color: #999;">@player.User.Name</div>
                                     }
                                 </td>
-                                <td>@player.MatchCount</td>
+                                <td>@player.Score.ToString("N2")</td>
                                 <td>@player.WinCount</td>
                                 <td>@player.LoseCount</td>
-                                <td>@player.Score.ToString("F1")</td>
-                                <td class="score-diff-@(player.ScoreDiff >= 0 ? "positive" : "negative")">
-                                    @(player.ScoreDiff >= 0 ? "+" : "")@player.ScoreDiff.ToString("F1")
+                                <td>@player.MatchCount</td>
+                                <td class="@(player.ScoreDiff >= 0 ? "score-diff-positive" : "score-diff-negative")">
+                                    @(player.ScoreDiff >= 0 ? "+" : "")@player.ScoreDiff.ToString("N2")
                                 </td>
+                                @if (Model.Tournament.ScoreSystem == ScoreSystem.Lives)
+                                {
+                                    <td>@player.Lives</td>
+                                }
                             </tr>
                         }
                     </tbody>
@@ -54,200 +95,128 @@
             }
             else
             {
-                <p class="bc-alert bc-alert--info">Ingen spillere tilføjet endnu.</p>
-            }
-            
-            @if (User.Identity.IsAuthenticated)
-            {
-                <div style="margin-top: 1rem;">
-                    <button onclick="openAddPlayerDialog()" class="bc-btn bc-btn--primary">
-                        <i class="fas fa-plus"></i> Tilføj spiller
-                    </button>
-                </div>
+                <p style="color: #999; text-align: center; padding: 2rem;">
+                    No players in this tournament. 
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <a asp-page="/Tournaments/Players" asp-route-id="@Model.Tournament.Id">Add players</a>
+                    }
+                </p>
             }
         </div>
-        
-        @if (Model.Matches.Any())
-        {
-            <div class="scoreboard" style="margin-top: 2rem;">
-                <h3>Seneste kampe</h3>
-                <table class="scoreboard-table">
-                    <thead>
-                        <tr>
-                            <th>Dato</th>
-                            <th>Hold</th>
-                            <th>Resultat</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var match in Model.Matches.OrderByDescending(m => m.Order).Take(5))
-                        {
-                            <tr>
-                                <td>@match.Order</td>
-                                <td>
-                                    @foreach (var team in match.Teams.Take(2))
-                                    {
-                                        <div>@team.Name: @string.Join(", ", team.Players.Select(p => p.User.UserName))</div>
-                                    }
-                                </td>
-                                <td>
-                                    @foreach (var result in match.Results.Take(2))
-                                    {
-                                        <div>@result.GoalsWon - @result.GoalsLost</div>
-                                    }
-                                </td>
-                                <td><span class="match-state-@MatchStateClass(match.State)">@match.State</span></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
     </div>
     
-    <div class="bc-grid__item bc-grid__item--1-4">
-        <div class="tournament-card">
-            <h3>Turnerings info</h3>
-            <p><strong>Navn:</strong> @Model.Tournament.Name</p>
-            <p><strong>Oprettet:</strong> @Model.Tournament.Id.ToString()[..8]...</p>
-            <p><strong>Status:</strong> @(Model.Tournament.IsArchived ? "Afsluttet" : "Aktiv")</p>
-            <p><strong>Synlighed:</strong> @(Model.Tournament.IsPublic ? "Offentlig" : "Privat")</p>
-            
-            @if (Model.Tournament.MaxPlayerCount.HasValue)
-            {
-                <p><strong>Maks spillere:</strong> @Model.Tournament.MaxPlayerCount</p>
-            }
-        </div>
+    <!-- Sidebar - Next and Recent Matches -->
+    <div class="sidebar">
+        <!-- Create Match Button (already shown above) -->
         
-        @if (User.Identity.IsAuthenticated)
-        {
-            <div class="tournament-card">
-                <h3>Aktioner</h3>
+        <!-- Next Planned Matches -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="card-title" style="margin: 0;">Next Matches</h3>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" 
+                       style="font-size: 0.875rem; color: #1a237e; text-decoration: none;">
+                        + Add
+                    </a>
+                }
+            </div>
+            
+            @if (Model.NextMatches.Any())
+            {
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <a href="/tournaments/@Model.Tournament.Id/create-match" class="bc-btn bc-btn--primary bc-btn--small">
-                        Opret kamp
-                    </a>
-                    <a href="/tournaments/@Model.Tournament.Id/matches" class="bc-btn bc-btn--secondary bc-btn--small">
-                        Alle kampe
-                    </a>
-                    <a href="/tournaments/@Model.Tournament.Id/players" class="bc-btn bc-btn--secondary bc-btn--small">
-                        Spillere
-                    </a>
-                    @if (!Model.Tournament.IsArchived)
+                    @foreach (var match in Model.NextMatches)
                     {
-                        <a href="/tournaments/@Model.Tournament.Id/edit" class="bc-btn bc-btn--secondary bc-btn--small">
-                            Rediger
+                        <a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" asp-route-matchId="@match.Id"
+                           class="card" style="box-shadow: none; border: 1px solid #e0e0e0; padding: 0.75rem; cursor: pointer; transition: all 0.3s;">
+                            <div style="font-size: 0.75rem; color: #999; margin-bottom: 0.25rem;">
+                                Match #@match.Order
+                            </div>
+                            <div style="font-size: 0.875rem;">
+                                @foreach (var team in match.Teams.OrderBy(t => t.Number))
+                                {
+                                    <span style="color: @GetTeamColor(team.Number);">
+                                        @(team.Number == 1 ? "🔴" : "🔵") @string.Join(" + ", team.Players.Select(p => p.User.UserName))
+                                    </span>
+                                    @if (team.Number < match.Teams.Count)
+                                    {
+                                        <span style="color: #999;"> vs </span>
+                                    }
+                                }
+                            </div>
+                            <div style="font-size: 0.75rem; color: #999; margin-top: 0.25rem;">
+                                <span class="badge badge-secondary">Planned</span>
+                            </div>
                         </a>
                     }
                 </div>
+            }
+            else
+            {
+                <p style="color: #999; font-size: 0.875rem; text-align: center;">
+                    No planned matches
+                </p>
+            }
+        </div>
+        
+        <!-- Recent Played Matches -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="card-title" style="margin: 0;">Recent Matches</h3>
+                <a asp-page="/Tournaments/Matches" asp-route-id="@Model.Tournament.Id" 
+                   style="font-size: 0.875rem; color: #1a237e; text-decoration: none;">
+                    All Matches
+                </a>
             </div>
             
-            <div class="tournament-card">
-                <h3>Planlagte kampe</h3>
-                @if (Model.PlannedMatches.Any())
-                {
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        @foreach (var match in Model.PlannedMatches.OrderBy(m => m.Order).Take(5))
-                        {
-                            <a href="/tournaments/@Model.Tournament.Id/create-match?matchId=@match.Id" 
-                               class="bc-btn bc-btn--small bc-btn--secondary" style="text-align: left;">
-                                Kamp @match.Order: @string.Join(" vs ", match.Teams.Take(2).Select(t => string.Join(", ", t.Players.Select(p => p.User.UserName))))
-                            </a>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p><em>Ingen planlagte kampe</em></p>
-                }
-            </div>
-            
-            <div class="tournament-card">
-                <h3>Seneste kampe</h3>
-                @if (Model.RecentMatches.Any())
-                {
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        @foreach (var match in Model.RecentMatches.OrderByDescending(m => m.Order).Take(5))
-                        {
-                            <a href="/tournaments/@Model.Tournament.Id/matches/@match.Id" 
-                               class="bc-btn bc-btn--small bc-btn--secondary" style="text-align: left;">
-                                Kamp @match.Order
-                            </a>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p><em>Ingen seneste kampe</em></p>
-                }
-            </div>
-        }
-    </div>
-</div>
-
-<!-- Add Player Dialog -->
-<div id="addPlayerDialog" class="bc-modal" style="display: none;">
-    <div class="bc-modal__content">
-        <h3>Tilføj spiller</h3>
-        <form id="addPlayerForm" method="post">
-            <div class="form-group">
-                <label for="playerInitials">Initialer (3 bogstaver)</label>
-                <input type="text" id="playerInitials" class="form-control" 
-                       maxlength="3" required pattern="[A-Za-z]{3}" />
-            </div>
-            <div class="form-group">
-                <label for="playerName">Navn (valgfrit)</label>
-                <input type="text" id="playerName" class="form-control" />
-            </div>
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button type="submit" class="bc-btn bc-btn--primary">Tilføj</button>
-                <button type="button" onclick="closeAddPlayerDialog()" class="bc-btn bc-btn--secondary">Annuller</button>
-            </div>
-        </form>
+            @if (Model.RecentMatches.Any())
+            {
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    @foreach (var match in Model.RecentMatches)
+                    {
+                        <div class="card" style="box-shadow: none; border: 1px solid #e0e0e0; padding: 0.75rem;">
+                            <div style="font-size: 0.75rem; color: #999; margin-bottom: 0.25rem;">
+                                Match #@match.Order
+                            </div>
+                            <div style="font-size: 0.875rem;">
+                                @foreach (var result in match.Results.OrderBy(r => r.Team.Number))
+                                {
+                                    <span style="color: @GetTeamColor(result.Team.Number);">
+                                        @(result.Team.Number == 1 ? "🔴" : "🔵") 
+                                        @string.Join(" + ", result.Team.Players.Select(p => p.User.UserName))
+                                        <strong>@result.GoalsWon</strong>
+                                    </span>
+                                    @if (result.Team.Number < match.Results.Count)
+                                    {
+                                        <span style="color: #999;"> - </span>
+                                    }
+                                }
+                            </div>
+                            <div style="font-size: 0.75rem; color: #999; margin-top: 0.25rem;">
+                                <span class="badge badge-success">@match.State</span>
+                                @if (match.CompletedAt.HasValue)
+                                {
+                                    <span style="margin-left: 0.5rem;">@match.CompletedAt.Value.ToShortDateString()</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="color: #999; font-size: 0.875rem; text-align: center;">
+                    No matches played yet
+                </p>
+            }
+        </div>
     </div>
 </div>
 
 @functions {
-    string MatchStateClass(MatchState state)
+    string GetTeamColor(int teamNumber)
     {
-        return state.ToString().ToLower();
+        return teamNumber == 1 ? "#f44336" : "#2196f3";
     }
-}
-
-@section Scripts {
-    <script>
-        function openAddPlayerDialog() {
-            document.getElementById('addPlayerDialog').style.display = 'block';
-        }
-        
-        function closeAddPlayerDialog() {
-            document.getElementById('addPlayerDialog').style.display = 'none';
-        }
-        
-        document.getElementById('addPlayerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const initials = document.getElementById('playerInitials').value;
-            const name = document.getElementById('playerName').value;
-            
-            try {
-                const response = await fetch('/tournaments/@Model.Tournament.Id/players/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: JSON.stringify({ initials, name })
-                });
-                
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    alert('Fejl ved tilføjelse af spiller');
-                }
-            } catch (error) {
-                alert('Fejl: ' + error.message);
-            }
-        });
-    </script>
 }

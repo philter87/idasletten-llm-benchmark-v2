@@ -227,4 +227,4 @@ Folders inside `Idasletten`:
 ## 9. Required deliverables
  
 - **`AGENTS.md`** documenting the tech stack, architecture, rules, and hints — including how to run and test locally, and the "migrations auto‑apply on startup" rule.
-- **UI/design validation with Playwright screenshots** via the Playwright **MCP server**, authenticating with the test user to view all pages. *Do not write Playwright unit/integration tests* — screenshots for visual validation only.
+- **IMPORTANT! Do UI/design validation with Playwright screenshots** via the Playwright **MCP server**, authenticating with the test user to view all pages. *Do not write Playwright unit/integration tests* — screenshots for visual validation only.

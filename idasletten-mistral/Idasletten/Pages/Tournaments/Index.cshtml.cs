@@ -1,70 +1,29 @@
-using Idasletten.Features.Tournaments;
-using Idasletten.Shared;
-using MediatR;
+using Idasletten.Shared.Data;
+using Idasletten.Shared.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace Idasletten.Pages.Tournaments;
 
 public class IndexModel : PageModel
 {
-    private readonly IMediator _mediator;
-
-    public IndexModel(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
-    public ICollection<Tournament> Tournaments { get; set; } = new List<Tournament>();
-    public string SearchTerm { get; set; } = string.Empty;
-
-    public async Task OnGetAsync(string? search)
-    {
-        SearchTerm = search ?? string.Empty;
-        Tournaments = await _mediator.Send(new GetAllTournamentsQuery(SearchTerm));
-    }
-}
-
-public class GetAllTournamentsQuery : IRequest<ICollection<Tournament>>
-{
-    public string SearchTerm { get; }
+    private readonly ApplicationDbContext _context;
     
-    public GetAllTournamentsQuery(string searchTerm)
-    {
-        SearchTerm = searchTerm;
-    }
-}
-
-public class GetAllTournamentsHandler : IRequestHandler<GetAllTournamentsQuery, ICollection<Tournament>>
-{
-    private readonly AppDbContext _context;
-    private readonly IPublisher _publisher;
-
-    public GetAllTournamentsHandler(AppDbContext context, IPublisher publisher)
+    public IndexModel(ApplicationDbContext context)
     {
         _context = context;
-        _publisher = publisher;
     }
-
-    public async Task<ICollection<Tournament>> Handle(GetAllTournamentsQuery request, CancellationToken cancellationToken)
+    
+    public List<Tournament> Tournaments { get; set; } = new List<Tournament>();
+    
+    public async Task OnGetAsync()
     {
-        var query = _context.Tournaments
-            .Include(t => t.Players)
-            .OrderByDescending(t => t.IsArchived)
-            .ThenBy(t => t.Name);
-
-        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-        {
-            query = query.Where(t => t.Name.Contains(request.SearchTerm));
-        }
-
-        var result = await query.ToListAsync(cancellationToken);
-        
-        // Publish event for analytics/tracking
-        await _publisher.Publish(new TournamentsListed(request.SearchTerm), cancellationToken);
-        
-        return result;
+        Tournaments = await _context.Tournaments
+            .Include(t => t.TournamentPlayers)
+            .Include(t => t.Matches)
+            .Include(t => t.ParentTournament)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
     }
 }
-
-public record TournamentsListed(string SearchTerm) : INotification;

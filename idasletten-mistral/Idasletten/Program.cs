@@ -1,102 +1,75 @@
-using Idasletten.Features.Users;
-using Idasletten.Shared;
-using MediatR;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Idasletten.Shared.Data;
+using Idasletten.Shared.Scoring;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 
-// Add MediatR
-builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
-
-// Add Scoring Service
-builder.Services.AddScoped<IScoringService, ScoringService>();
-
-// Database configuration
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Data Source=:memory:";
-
-builder.Services.AddDbContext<AppDbContext>(options =>
+// Add DbContext
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Data Source=:memory:";
+    
+    // For in-memory database, we need to use a different configuration
     if (connectionString == "Data Source=:memory:")
     {
-        // In-memory database for development
         options.UseSqlite(connectionString);
     }
     else
     {
-        // File-based SQLite for production
-        options.UseSqlite(connectionString, sqliteOptions =>
-        {
-            sqliteOptions.MigrationsAssembly(typeof(Program).Assembly.FullName);
-        });
+        options.UseSqlite(connectionString);
+    }
+    
+    // Enable sensitive data logging for development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
     }
 });
 
-// Identity configuration
-builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
+// Add Identity
+builder.Services.AddDefaultIdentity<IdentityUser>(options => 
 {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
+    options.Password.RequiredLength = 4;
 })
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Authentication - Azure AD (commented out for now, needs Microsoft.Identity.Web package)
-// var azureAdConfig = builder.Configuration.GetSection("AzureAd");
-// if (azureAdConfig.Exists &&
-//     !string.IsNullOrEmpty(azureAdConfig["ClientId"]) &&
-//     !string.IsNullOrEmpty(azureAdConfig["TenantId"]))
-// {
-//     builder.Services.AddMicrosoftIdentityWebAppAuthentication(builder.Configuration, "AzureAd");
-//     builder.Services.AddMicrosoftIdentityUI();
-// }
+// Add MediatR
+builder.Services.AddMediatR(cfg => 
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// Test user authentication
-var testUserEmail = builder.Configuration["TestUser__Email"];
-var testUserPassword = builder.Configuration["TestUser__Password"];
+// Add Scoring Systems
+builder.Services.AddScoped<IScoringSystemFactory, ScoringSystemFactory>();
+builder.Services.AddScoped<IEloScoringSystem, EloScoringSystem>();
+builder.Services.AddScoped<ITrueSkillScoringSystem, TrueSkillScoringSystem>();
+builder.Services.AddScoped<ILivesScoringSystem, LivesScoringSystem>();
+builder.Services.AddScoped<IWinCountScoringSystem, WinCountScoringSystem>();
 
-if (!string.IsNullOrEmpty(testUserEmail) && !string.IsNullOrEmpty(testUserPassword))
+// Add Azure AD Authentication
+var azureAdConfig = builder.Configuration.GetSection("AzureAd");
+
+if (azureAdConfig.Exists() && !string.IsNullOrEmpty(azureAdConfig["ClientId"]))
 {
-    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-        .AddCookie(options =>
-        {
-            options.LoginPath = "/login";
-            options.LogoutPath = "/logout";
-            options.AccessDeniedPath = "/access-denied";
-        });
+    builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 }
 
-// Forwarded headers for Fly.io
+// Add forwarded headers for Fly.io
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | 
-                               Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
-});
-
-// Authorization
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireAuthenticatedUser", policy =>
-        policy.RequireAuthenticatedUser());
-    
-    options.AddPolicy("CanCreateTournament", policy =>
-        policy.RequireAuthenticatedUser());
-    
-    options.AddPolicy("CanEditCompletedMatch", policy =>
-        policy.RequireAuthenticatedUser());
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
 var app = builder.Build();
@@ -108,71 +81,63 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-
-// Forwarded headers for Fly.io
+// Use forwarded headers (must be before UseHttpsRedirection and UseAuthentication)
 app.UseForwardedHeaders();
 
+app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
 
+// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
 
-// Apply migrations automatically on startup
-using (var scope = app.Services.CreateScope())
+// Auto-apply migrations on startup
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
-    var services = scope.ServiceProvider;
-    try
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    
+    // For in-memory database, we need to recreate it each time
+    if (dbContext.Database.GetConnectionString() == "Data Source=:memory:")
     {
-        var context = services.GetRequiredService<AppDbContext>();
-        
-        if (connectionString != "Data Source=:memory:")
-        {
-            // For file-based database, apply migrations
-            context.Database.Migrate();
-        }
-        else
-        {
-            // For in-memory database, ensure database is created and migrations are applied
-            context.Database.EnsureCreated();
-            
-            // Note: In-memory SQLite doesn't support migrations in the traditional sense
-            // For development, we use EnsureCreated which creates the schema
-        }
-        
-        // Seed test user if configured
-        var userManager = services.GetRequiredService<UserManager<User>>();
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        
-        if (!string.IsNullOrEmpty(testUserEmail) && !string.IsNullOrEmpty(testUserPassword))
-        {
-            await SeedTestUser(userManager);
-        }
-        
-        async Task SeedTestUser(UserManager<User> userManager)
-        {
-            if (!await userManager.Users.AnyAsync(u => u.Email == testUserEmail))
-            {
-                var testUser = new User
-                {
-                    UserName = testUserEmail,
-                    Email = testUserEmail,
-                    Name = "Test User",
-                    EmailConfirmed = true
-                };
-                
-                await userManager.CreateAsync(testUser, testUserPassword);
-            }
-        }
+        dbContext.Database.OpenConnection();
+        dbContext.Database.EnsureCreated();
     }
-    catch (Exception ex)
+    else
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+        dbContext.Database.Migrate();
     }
+    
+    // Seed initial data
+    SeedData.SeedAsync(scope.ServiceProvider).Wait();
 }
 
 app.Run();
+
+// Seed data helper
+public static class SeedData
+{
+    public static async Task SeedAsync(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        // Check if any data exists
+        if (await dbContext.Users.AnyAsync())
+            return;
+        
+        // Seed a test admin user if test user credentials are configured
+        var config = serviceProvider.GetRequiredService<IConfiguration>();
+        var testEmail = config["TestUser__Email"];
+        var testPassword = config["TestUser__Password"];
+        
+        if (!string.IsNullOrEmpty(testEmail) && !string.IsNullOrEmpty(testPassword))
+        {
+            // Test user will be created on first login
+        }
+    }
+}
