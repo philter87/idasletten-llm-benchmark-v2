@@ -1,10 +1,12 @@
 using Idasletten.Shared.Data;
 using Idasletten.Shared.Scoring;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,15 +19,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=:memory:";
     
-    // For in-memory database, we need to use a different configuration
-    if (connectionString == "Data Source=:memory:")
-    {
-        options.UseSqlite(connectionString);
-    }
-    else
-    {
-        options.UseSqlite(connectionString);
-    }
+    options.UseSqlite(connectionString);
     
     // Enable sensitive data logging for development
     if (builder.Environment.IsDevelopment())
@@ -34,8 +28,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
 });
 
-// Add Identity
-builder.Services.AddDefaultIdentity<IdentityUser>(options => 
+// Add Identity with custom User type
+builder.Services.AddIdentity<User, IdentityRole>(options => 
 {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
@@ -45,6 +39,15 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     options.Password.RequiredLength = 4;
 })
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Add Cookie Authentication for test user
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "Idasletten.Cookies";
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 
 // Add MediatR
 builder.Services.AddMediatR(cfg => 
@@ -75,7 +78,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();

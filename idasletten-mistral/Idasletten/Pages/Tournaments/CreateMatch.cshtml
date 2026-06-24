@@ -1,0 +1,141 @@
+@page
+@model Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = Model.MatchId.HasValue ? "Edit Match" : "Create Match";
+}
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 class="card-title" style="margin: 0;">
+            @if (Model.MatchId.HasValue)
+            {
+                <text>Edit Match #@Model.ExistingMatch?.Order</text>
+            }
+            else
+            {
+                <text>Create New Match</text>
+            }
+        </h2>
+        <a asp-page="/Tournaments/Matches" asp-route-id="@Model.Tournament.Id" class="btn btn-secondary">Back to Matches</a>
+    </div>
+</div>
+
+<form method="post" style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 800px;">
+    <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
+    <input type="hidden" name="matchId" value="@Model.MatchId" />
+    
+    <!-- Team Selection -->
+    @for (int teamNum = 1; teamNum <= Model.Tournament.TeamSize * 2; teamNum++)
+    {
+        var teamIndex = teamNum - 1;
+        var teamColor = teamNum % 2 == 1 ? "#f44336" : "#2196f3";
+        var teamEmoji = teamNum % 2 == 1 ? "🔴" : "🔵";
+        var teamName = teamNum % 2 == 1 ? "Team 1" : "Team 2";
+        
+        <div class="card" style="border-left: 4px solid @teamColor;">
+            <h3 class="card-title" style="color: @teamColor;">
+                @teamEmoji @teamName
+            </h3>
+            
+            <!-- Player selection -->
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label">Player @(teamNum) Initials</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select name="@($"Team{teamNum}Player")" 
+                            onchange="updatePlayerName(@teamNum, this)" 
+                            style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">-- Select or enter initials --</option>
+                        @foreach (var player in Model.Tournament.TournamentPlayers.OrderBy(p => p.User.UserName))
+                        {
+                            <option value="@player.User.UserName" 
+                                    data-name="@player.User.Name"
+                                    @(Model.GetSelectedPlayer(teamNum, player.User.UserName) ? "selected" : "")>
+                                @player.User.UserName (@player.User.Name)
+                            </option>
+                        }
+                    </select>
+                    <span style="color: @teamColor; font-size: 1.25rem;">+</span>
+                    <input type="text" name="@($"Team{teamNum}PlayerCustom")" 
+                           placeholder="Initials" 
+                           value="@Model.GetCustomInitials(teamNum)"
+                           oninput="checkCustomInput(@teamNum, this)"
+                           style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+                </div>
+            </div>
+            
+            <!-- Optional: Full name display -->
+            <div id="@($"playerName{teamNum}")" style="font-size: 0.875rem; color: #666;">
+                @if (!string.IsNullOrEmpty(Model.GetPlayerName(teamNum)))
+                {
+                    <text>Name: @Model.GetPlayerName(teamNum)</text>
+                }
+            </div>
+            
+            <!-- Goals -->
+            <div style="margin-top: 1rem;">
+                <label class="form-label">Goals</label>
+                <input type="number" name="@($"Team{teamNum}Goals")" min="0" max="20" 
+                       value="@Model.GetTeamGoals(teamNum)" 
+                       style="width: 100px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+        </div>
+    }
+    
+    <!-- Match State (for editing existing matches) -->
+    @if (Model.MatchId.HasValue && Model.ExistingMatch != null)
+    {
+        <div class="card">
+            <h3 class="card-title">Match Status</h3>
+            <select name="matchState" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="Planned" @(Model.ExistingMatch.State == MatchState.Planned ? "selected" : "")>Planned</option>
+                <option value="Done" @(Model.ExistingMatch.State == MatchState.Done ? "selected" : "")>Done</option>
+                <option value="Cancelled" @(Model.ExistingMatch.State == MatchState.Cancelled ? "selected" : "")>Cancelled</option>
+            </select>
+        </div>
+    }
+    
+    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <button type="submit" class="btn btn-primary" 
+                @(Model.ExistingMatch?.State == MatchState.Done && !User.Identity.IsAuthenticated ? "disabled" : "")>
+            @if (Model.MatchId.HasValue)
+            {
+                <text>Save Changes</text>
+            }
+            else
+            {
+                <text>Create Match</text>
+            }
+        </button>
+        @if (!User.Identity.IsAuthenticated && Model.MatchId.HasValue && Model.ExistingMatch?.State == MatchState.Done)
+        {
+            <span style="color: #999; font-size: 0.875rem; align-self: center;">
+                Login required to edit completed matches
+            </span>
+        }
+        <a asp-page="/Tournaments/Matches" asp-route-id="@Model.Tournament.Id" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<script>
+    function updatePlayerName(teamNum, selectElement) {
+        var selectedOption = selectElement.options[selectElement.selectedIndex];
+        var playerName = selectedOption.getAttribute('data-name');
+        var nameElement = document.getElementById('playerName' + teamNum);
+        
+        if (nameElement) {
+            if (playerName) {
+                nameElement.textContent = 'Name: ' + playerName;
+            } else {
+                nameElement.textContent = '';
+            }
+        }
+    }
+    
+    function checkCustomInput(teamNum, inputElement) {
+        var selectElement = inputElement.previousElementSibling;
+        if (inputElement.value) {
+            selectElement.value = '';
+            document.getElementById('playerName' + teamNum).textContent = '';
+        }
+    }
+</script>

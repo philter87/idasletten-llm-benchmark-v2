@@ -1,0 +1,178 @@
+@page
+@model Users.DetailModel
+@{
+    ViewData["Title"] = "@Model.User.UserName - Idasletten";
+}
+
+<div class="card">
+    <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 1rem;">
+        @if (!string.IsNullOrEmpty(Model.User.ImageUrl))
+        {
+            <img src="@Model.User.ImageUrl" alt="@Model.User.UserName" 
+                 style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #1a237e;" />
+        }
+        else
+        {
+            <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); 
+                        display: flex; align-items: center; justify-content: center; 
+                        font-size: 2.5rem; color: white; border: 3px solid #1a237e;">
+                @Model.User.UserName
+            </div>
+        }
+        
+        <div>
+            <h2 class="card-title" style="margin: 0;">@Model.User.UserName</h2>
+            <div style="color: #666; margin-top: 0.25rem;">
+                @if (!string.IsNullOrEmpty(Model.User.Name))
+                {
+                    <text>@Model.User.Name</text>
+                }
+                @if (!string.IsNullOrEmpty(Model.User.Email))
+                {
+                    <text> • @Model.User.Email</text>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Stats -->
+<div class="card">
+    <h3 class="card-title">📊 Overall Statistics</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <div style="font-size: 0.875rem; color: #666;">Total Tournaments</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #1a237e;">@Model.Statistics.TotalTournaments</div>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <div style="font-size: 0.875rem; color: #666;">Total Matches</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #1a237e;">@Model.Statistics.TotalMatches</div>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <div style="font-size: 0.875rem; color: #666;">Wins</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #4caf50;">@Model.Statistics.TotalWins</div>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <div style="font-size: 0.875rem; color: #666;">Losses</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #f44336;">@Model.Statistics.TotalLosses</div>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <div style="font-size: 0.875rem; color: #666;">Win Rate</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #2196f3;">
+                @(Model.Statistics.TotalMatches > 0 ? (Model.Statistics.TotalWins * 100.0 / Model.Statistics.TotalMatches).ToString("N1") : "0")%
+            </div>
+        </div>
+        <div class="card" style="box-shadow: none; border: none; padding: 0;">
+            <div style="font-size: 0.875rem; color: #666;">Points Scored</div>
+            <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">@Model.Statistics.TotalPointsWon</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tournament History -->
+<div class="card" style="margin-top: 1rem;">
+    <h3 class="card-title">🏆 Tournament History</h3>
+    
+    @if (Model.TournamentPlayers.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tournament</th>
+                    <th>Score</th>
+                    <th>Wins</th>
+                    <th>Losses</th>
+                    <th>Matches</th>
+                    <th>Rank</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tp in Model.TournamentPlayers.OrderByDescending(tp => tp.Score))
+                {
+                    <tr>
+                        <td>
+                            <a asp-page="/Tournaments/Detail" asp-route-id="@tp.TournamentId">
+                                @tp.Tournament.Name
+                            </a>
+                            <div style="font-size: 0.75rem; color: #999;">
+                                @tp.Tournament.ScoreSystem • @tp.Tournament.TournamentPlayers.Count players
+                            </div>
+                        </td>
+                        <td>@tp.Score.ToString("N2")</td>
+                        <td>@tp.WinCount</td>
+                        <td>@tp.LoseCount</td>
+                        <td>@tp.MatchCount</td>
+                        <td>
+                            @{
+                                var rank = Model.TournamentPlayers
+                                    .Where(t => t.TournamentId == tp.TournamentId)
+                                    .OrderByDescending(t => t.Score)
+                                    .ThenByDescending(t => t.ScoreDiff)
+                                    .ToList()
+                                    .IndexOf(tp) + 1;
+                            }
+                            @(rank)@(rank <= 3 ? "🏆" : "")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: #999; text-align: center; padding: 2rem;">
+            @Model.User.UserName has not participated in any tournaments yet.
+        </p>
+    }
+</div>
+
+@if (Model.RecentMatches.Any())
+{
+    <div class="card" style="margin-top: 1rem;">
+        <h3 class="card-title">🎯 Recent Matches</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            @foreach (var match in Model.RecentMatches.Take(5))
+            {
+                var userResult = match.Results
+                    .SelectMany(r => r.Team.Players)
+                    .FirstOrDefault(p => p.UserId == Model.User.Id);
+                
+                var isWinner = userResult != null && 
+                    match.Results.Any(r => r.Team.Players.Contains(userResult) && 
+                        r.GoalsWon > r.GoalsLost);
+                var isLoser = userResult != null && 
+                    match.Results.Any(r => r.Team.Players.Contains(userResult) && 
+                        r.GoalsWon < r.GoalsLost);
+                
+                <div class="card" style="box-shadow: none; border: 1px solid #e0e0e0; padding: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <a asp-page="/Tournaments/Detail" asp-route-id="@match.TournamentId">
+                                @match.Tournament.Name
+                            </a>
+                            <div style="font-size: 0.75rem; color: #999;">
+                                Match #@match.Order • @match.CreatedAt.ToShortDateString()
+                            </div>
+                        </div>
+                        <div>
+                            @if (isWinner)
+                            {
+                                <span class="badge badge-success">WON</span>
+                            }
+                            else if (isLoser)
+                            {
+                                <span class="badge badge-danger">LOST</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-secondary">DRAW</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

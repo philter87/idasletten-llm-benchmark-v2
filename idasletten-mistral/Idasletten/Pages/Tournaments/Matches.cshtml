@@ -1,0 +1,239 @@
+@page
+@model Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Matches - @Model.Tournament.Name";
+}
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h2 class="card-title" style="margin: 0;">@Model.Tournament.Name - Matches</h2>
+            <div style="color: #666; font-size: 0.875rem; margin-top: 0.25rem;">
+                @Model.PlannedMatches.Count planned | @Model.CompletedMatches.Count completed | @Model.CancelledMatches.Count cancelled
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a asp-page="/Tournaments/Detail" asp-route-id="@Model.Tournament.Id" class="btn btn-secondary">Back to Tournament</a>
+            @if (User.Identity.IsAuthenticated)
+            {
+                <a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-primary">➕ Create Match</a>
+                <button type="button" onclick="showPlanMatchesDialog()" class="btn btn-secondary">📅 Plan Several</button>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Planned Matches -->
+<div class="card" style="margin-bottom: 1rem;">
+    <h3 class="card-title">
+        <span style="color: #1a237e;">📅 Planned Matches</span>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <button type="button" onclick="showPlanMatchesDialog()" 
+                    style="background: none; border: none; color: #1a237e; cursor: pointer; font-size: 0.875rem; margin-left: 1rem;">
+                + Plan Several
+            </button>
+        }
+    </h3>
+    
+    @if (Model.PlannedMatches.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Teams</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var match in Model.PlannedMatches.OrderBy(m => m.Order))
+                {
+                    <tr>
+                        <td>@match.Order</td>
+                        <td>
+                            @foreach (var team in match.Teams.OrderBy(t => t.Number))
+                            {
+                                <span style="color: @GetTeamColor(team.Number);">
+                                    @(team.Number == 1 ? "🔴" : "🔵") @string.Join(" + ", team.Players.Select(p => p.User.UserName))
+                                </span>
+                                @if (team.Number < match.Teams.Count)
+                                {
+                                    <span style="color: #999;"> vs </span>
+                                }
+                            }
+                        </td>
+                        <td>@match.CreatedAt.ToShortDateString()</td>
+                        <td>
+                            <a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" asp-route-matchId="@match.Id"
+                               class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                                Edit
+                            </a>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <button type="button" onclick="cancelMatch('@match.Id')" 
+                                        class="btn btn-danger" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                                    Cancel
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: #999; text-align: center; padding: 1rem;">
+            No planned matches.
+        </p>
+    }
+</div>
+
+<!-- Completed Matches -->
+<div class="card">
+    <h3 class="card-title">✅ Completed Matches</h3>
+    
+    @if (Model.CompletedMatches.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Result</th>
+                    <th>Completed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var match in Model.CompletedMatches.OrderByDescending(m => m.CompletedAt))
+                {
+                    <tr>
+                        <td>@match.Order</td>
+                        <td>
+                            @foreach (var result in match.Results.OrderBy(r => r.Team.Number))
+                            {
+                                <span style="color: @GetTeamColor(result.Team.Number);">
+                                    @(result.Team.Number == 1 ? "🔴" : "🔵") 
+                                    @string.Join(" + ", result.Team.Players.Select(p => p.User.UserName))
+                                    <strong>@result.GoalsWon</strong>
+                                </span>
+                                @if (result.Team.Number < match.Results.Count)
+                                {
+                                    <span style="color: #999;"> - </span>
+                                }
+                            }
+                        </td>
+                        <td>@match.CompletedAt?.ToShortDateString() ?? "-"</td>
+                        <td>
+                            <a asp-page="/Tournaments/MatchDetail" asp-route-id="@match.Id"
+                               class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                                View
+                            </a>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" asp-route-matchId="@match.Id"
+                                   class="btn btn-warning" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                                    Edit
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color: #999; text-align: center; padding: 1rem;">
+            No completed matches yet.
+        </p>
+    }
+</div>
+
+<!-- Cancel Match Dialog -->
+<div id="cancelMatchDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="card" style="max-width: 400px; margin: 2rem; text-align: center;">
+        <h3 class="card-title">Cancel Match</h3>
+        <p style="color: #666; margin: 1rem 0;">
+            Are you sure you want to cancel this planned match?
+        </p>
+        <form id="cancelMatchForm" method="post" style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+            <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
+            <input type="hidden" id="cancelMatchId" name="matchId" />
+            <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+            <button type="button" onclick="hideCancelMatchDialog()" class="btn btn-secondary">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<!-- Plan Several Matches Dialog -->
+<div id="planMatchesDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="card" style="max-width: 500px; margin: 2rem;">
+        <h3 class="card-title">Plan Several Matches</h3>
+        
+        <form method="post" style="display: flex; flex-direction: column; gap: 1rem;">
+            <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
+            
+            <div>
+                <label class="form-label">Seed Tournament (Optional)</label>
+                <select name="seedTournamentId" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">-- No Seed Tournament --</option>
+                    @foreach (var tournament in Model.PreviousTournaments)
+                    {
+                        <option value="@tournament.Id">@tournament.Name</option>
+                    }
+                </select>
+            </div>
+            
+            <div>
+                <label class="form-label">Number of games per player</label>
+                <input type="number" name="gamesPerPlayer" min="1" max="10" value="3"
+                       style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+            
+            <div>
+                <label class="form-label">Seeding Type</label>
+                <select name="seedingType" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="Random">Random</option>
+                    <option value="Equality">Equality (best vs worst)</option>
+                    <option value="Fair">Fair (split top/bottom halves)</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="fixedTeams" name="fixedTeams" style="width: auto;" />
+                <label for="fixedTeams" class="form-label" style="margin: 0;">Fixed teams (don't reshuffle)</label>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary">Plan Matches</button>
+                <button type="button" onclick="hidePlanMatchesDialog()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function cancelMatch(matchId) {
+        document.getElementById('cancelMatchId').value = matchId;
+        document.getElementById('cancelMatchDialog').style.display = 'flex';
+    }
+    
+    function hideCancelMatchDialog() {
+        document.getElementById('cancelMatchDialog').style.display = 'none';
+    }
+    
+    function showPlanMatchesDialog() {
+        document.getElementById('planMatchesDialog').style.display = 'flex';
+    }
+    
+    function hidePlanMatchesDialog() {
+        document.getElementById('planMatchesDialog').style.display = 'none';
+    }
+    
+    function GetTeamColor(teamNumber) {
+        return teamNumber == 1 ? "#f44336" : "#2196f3";
+    }
+</script>

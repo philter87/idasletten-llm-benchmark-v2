@@ -1,0 +1,16 @@
+@page
+@model Account.LogoutModel
+@{
+    ViewData["Title"] = "Logout - Idasletten";
+}
+
+<div class="card" style="max-width: 450px; margin: 2rem auto; text-align: center;">
+    <h2 class="card-title">Signing Out</h2>
+    <p style="color: #666; margin: 1rem 0;">
+        Are you sure you want to sign out of Idasletten?
+    </p>
+    <form method="post">
+        <button type="submit" class="btn btn-primary">Yes, Sign Out</button>
+        <a asp-page="/" class="btn btn-secondary" style="margin-left: 1rem;">Cancel</a>
+    </form>
+</div>
