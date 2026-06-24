@@ -1,0 +1,53 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Idasletten";
+}
+
+<!-- Hero Section -->
+<section style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; padding: 4rem 2rem; border-radius: 0.75rem; margin-bottom: 2.5rem; position: relative; overflow: hidden;">
+    <div style="position: relative; z-index: 1; max-width: 700px;">
+        <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">⚔️ Idasletten</h1>
+        <p style="font-size: 1.05rem; line-height: 1.7; color: #c9d6ff; font-style: italic;">
+            "Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. Hver aften er Idasletten rød af blod."
+        </p>
+    </div>
+    <div style="position: absolute; right: 2rem; top: 50%; transform: translateY(-50%); font-size: 8rem; opacity: 0.08; user-select: none;">🏆</div>
+</section>
+
+<!-- Public Tournaments -->
+<section>
+    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.25rem;">Active Tournaments</h2>
+
+    @if (!Model.PublicTournaments.Any())
+    {
+        <p style="color: #6b7280;">No active public tournaments at the moment.</p>
+    }
+    else
+    {
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+            @foreach (var tournament in Model.PublicTournaments)
+            {
+                <a href="/tournaments/@tournament.Id" style="text-decoration: none; flex: 1; min-width: 260px; max-width: 340px;">
+                    <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.25rem; background: #fff; transition: box-shadow 0.15s; cursor: pointer;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="font-size: 1.25rem;">⚡</span>
+                            <h3 style="font-size: 1rem; font-weight: 600; color: #111; margin: 0;">@tournament.Name</h3>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                            <span style="background: #f3f4f6; border-radius: 9999px; padding: 0.2rem 0.65rem; font-size: 0.75rem; color: #374151;">@tournament.ScoreSystem</span>
+                            <span style="background: #f3f4f6; border-radius: 9999px; padding: 0.2rem 0.65rem; font-size: 0.75rem; color: #374151;">@tournament.Players.Count players</span>
+                            <span style="background: #f3f4f6; border-radius: 9999px; padding: 0.2rem 0.65rem; font-size: 0.75rem; color: #374151;">First to @tournament.PointsToWin</span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+        <a asp-page="/Tournaments/Index" style="color: #6b7280; font-size: 0.875rem; text-decoration: none;">
+            📜 View all tournaments (including historical) →
+        </a>
+    </div>
+</section>

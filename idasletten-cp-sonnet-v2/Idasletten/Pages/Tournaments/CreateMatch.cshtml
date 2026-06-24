@@ -1,0 +1,131 @@
+@page "/tournaments/{tournamentId}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = "Record Match";
+    var isEdit = Model.ExistingMatch != null;
+}
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="margin-bottom: 1.5rem;">
+        <a href="/tournaments/@Model.TournamentId" style="color: #6b7280; font-size: 0.875rem; text-decoration: none;">← Back to @(Model.Tournament?.Name ?? "tournament")</a>
+    </div>
+
+    <h1 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem;">
+        @(isEdit ? "Update Match" : "Record Match")
+    </h1>
+
+    <form method="post" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <input type="hidden" asp-for="TournamentId" />
+        <input type="hidden" asp-for="ExistingMatchId" />
+
+        <div asp-validation-summary="ModelOnly" style="color: #dc2626; font-size: 0.875rem; background: #fef2f2; padding: 0.75rem; border-radius: 0.5rem;"></div>
+
+        <!-- Team 1 -->
+        <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.25rem;">
+            <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Team 1</h3>
+            <div style="margin-bottom: 0.75rem;">
+                <label style="font-size: 0.875rem; font-weight: 500; display: block; margin-bottom: 0.375rem;">
+                    Player initials <span style="color: #9ca3af; font-weight: 400;">(comma-separated for @(Model.Tournament?.TeamSize ?? 2)v@(Model.Tournament?.TeamSize ?? 2))</span>
+                </label>
+                <input asp-for="Team1Initials" type="text" placeholder="@(Model.Tournament?.TeamSize == 1 ? "PCH" : "PCH, MKR")"
+                       style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; box-sizing: border-box;" />
+                <span asp-validation-for="Team1Initials" style="color: #dc2626; font-size: 0.75rem;"></span>
+            </div>
+            <div>
+                <label style="font-size: 0.875rem; font-weight: 500; display: block; margin-bottom: 0.375rem;">Goals scored</label>
+                <input asp-for="Team1Goals" type="number" min="0" max="99"
+                       style="width: 80px; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; text-align: center; font-weight: 600;" />
+            </div>
+        </div>
+
+        <div style="text-align: center; color: #9ca3af; font-weight: 600; font-size: 1.25rem;">VS</div>
+
+        <!-- Team 2 -->
+        <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.25rem;">
+            <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Team 2</h3>
+            <div style="margin-bottom: 0.75rem;">
+                <label style="font-size: 0.875rem; font-weight: 500; display: block; margin-bottom: 0.375rem;">
+                    Player initials
+                </label>
+                <input asp-for="Team2Initials" type="text" placeholder="@(Model.Tournament?.TeamSize == 1 ? "JLN" : "JLN, ABN")"
+                       style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; box-sizing: border-box;" />
+                <span asp-validation-for="Team2Initials" style="color: #dc2626; font-size: 0.75rem;"></span>
+            </div>
+            <div>
+                <label style="font-size: 0.875rem; font-weight: 500; display: block; margin-bottom: 0.375rem;">Goals scored</label>
+                <input asp-for="Team2Goals" type="number" min="0" max="99"
+                       style="width: 80px; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; text-align: center; font-weight: 600;" />
+            </div>
+        </div>
+
+        <!-- Select from list -->
+        @if (Model.TournamentPlayers.Any())
+        {
+            <div>
+                <button type="button" onclick="document.getElementById('selectPlayersDialog').showModal()"
+                        style="color: #6b7280; font-size: 0.875rem; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0;">
+                    📋 Select players from list
+                </button>
+            </div>
+        }
+
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="submit" style="background: #111; color: #fff; padding: 0.625rem 1.5rem; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer;">
+                @(isEdit ? "Update Match" : "Record Match")
+            </button>
+            <a href="/tournaments/@Model.TournamentId" style="padding: 0.625rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; text-decoration: none; color: #374151; font-size: 0.875rem;">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Select Players Dialog -->
+<dialog id="selectPlayersDialog" style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; min-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Select Players</h3>
+    <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">Click a player to fill their initials into the input field.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem;">
+        @foreach (var player in Model.TournamentPlayers)
+        {
+            <button type="button" onclick="addPlayerInitials('@player.User.Username')"
+                    style="padding: 0.375rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background: #fff; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
+                @player.User.Username
+                @if (!string.IsNullOrEmpty(player.User.Name) && player.User.Name != player.User.Username)
+                {
+                    <span style="color: #9ca3af; font-weight: 400; margin-left: 0.25rem;">@player.User.Name</span>
+                }
+            </button>
+        }
+    </div>
+    <div style="text-align: right;">
+        <button type="button" onclick="document.getElementById('selectPlayersDialog').close()"
+                style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background: #fff; cursor: pointer; font-size: 0.875rem;">
+            Close
+        </button>
+    </div>
+</dialog>
+
+@section Scripts {
+    <script>
+        let currentTarget = null;
+        function addPlayerInitials(username) {
+            const t1 = document.querySelector('[name="Team1Initials"]');
+            const t2 = document.querySelector('[name="Team2Initials"]');
+            if (!t1.value) {
+                t1.value = username;
+            } else if (!t2.value) {
+                t2.value = username;
+            } else {
+                // append to team1 if not full, else team2
+                const t1Parts = t1.value.split(',').map(s => s.trim()).filter(Boolean);
+                const t2Parts = t2.value.split(',').map(s => s.trim()).filter(Boolean);
+                const teamSize = @(Model.Tournament?.TeamSize ?? 2);
+                if (t1Parts.length < teamSize) {
+                    t1.value = [...t1Parts, username].join(', ');
+                } else if (t2Parts.length < teamSize) {
+                    t2.value = [...t2Parts, username].join(', ');
+                }
+            }
+        }
+    </script>
+}

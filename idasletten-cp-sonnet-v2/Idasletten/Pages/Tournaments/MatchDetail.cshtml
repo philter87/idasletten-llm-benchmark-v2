@@ -1,0 +1,61 @@
+@page "/tournaments/{tournamentId}/matches/{matchId}"
+@model Idasletten.Pages.Tournaments.MatchDetailModel
+@{
+    ViewData["Title"] = "Match Detail";
+}
+
+@if (Model.Match == null)
+{
+    <p>Match not found.</p>
+    return;
+}
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/tournaments/@Model.TournamentId/matches" style="color: #6b7280; font-size: 0.875rem; text-decoration: none;">← Back to matches</a>
+</div>
+
+<h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Match Result</h1>
+
+@{
+    var r1 = Model.Match.TeamResults.FirstOrDefault();
+    var r2 = Model.Match.TeamResults.Skip(1).FirstOrDefault();
+}
+
+@if (r1 != null && r2 != null)
+{
+    bool t1Won = r1.GoalsWon > r2.GoalsWon;
+
+    <div style="display: flex; gap: 2rem; align-items: center; justify-content: center; padding: 2rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; background: #f9fafb; margin-bottom: 1.5rem;">
+        <div style="text-align: center; flex: 1;">
+            @if (t1Won)
+            {
+                <div style="font-size: 1.25rem; margin-bottom: 0.5rem;">🏆</div>
+            }
+            <div style="font-size: 1.25rem; font-weight: 700;">@string.Join(", ", r1.Team.TeamPlayers.Select(tp => tp.Player.User.Username))</div>
+            <div style="font-size: 3rem; font-weight: 900; color: @(t1Won ? "#059669" : "#374151"); line-height: 1;">@r1.GoalsWon</div>
+        </div>
+        <div style="text-align: center; color: #9ca3af; font-size: 1.25rem; font-weight: 600;">VS</div>
+        <div style="text-align: center; flex: 1;">
+            @if (!t1Won && r2.GoalsWon > r1.GoalsWon)
+            {
+                <div style="font-size: 1.25rem; margin-bottom: 0.5rem;">🏆</div>
+            }
+            <div style="font-size: 1.25rem; font-weight: 700;">@string.Join(", ", r2.Team.TeamPlayers.Select(tp => tp.Player.User.Username))</div>
+            <div style="font-size: 3rem; font-weight: 900; color: @(!t1Won ? "#059669" : "#374151"); line-height: 1;">@r2.GoalsWon</div>
+        </div>
+    </div>
+
+    <div style="text-align: center; color: #9ca3af; font-size: 0.875rem; margin-bottom: 1.5rem;">
+        Played @Model.Match.PlayedAt?.ToString("MMMM d, yyyy at HH:mm")
+    </div>
+}
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <div style="text-align: center;">
+        <a href="/tournaments/@Model.TournamentId/create-match?matchId=@Model.Match.Id"
+           style="color: #6b7280; font-size: 0.875rem; text-decoration: none;">
+            ✏️ Edit this match
+        </a>
+    </div>
+}

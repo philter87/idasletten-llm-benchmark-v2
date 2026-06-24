@@ -1,0 +1,63 @@
+@page
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Tournaments";
+}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h1 style="font-size: 1.75rem; font-weight: 700;">All Tournaments</h1>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-page="/Tournaments/Create" style="background: #111; color: #fff; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; font-size: 0.875rem; font-weight: 500;">+ Create tournament</a>
+    }
+    else
+    {
+        <a asp-page="/Login" style="color: #6b7280; font-size: 0.875rem; text-decoration: none;">Sign in to create tournament</a>
+    }
+</div>
+
+@if (!Model.Tournaments.Any())
+{
+    <p style="color: #6b7280;">No tournaments found.</p>
+}
+else
+{
+    <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                    <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Name</th>
+                    <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Score System</th>
+                    <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Status</th>
+                    <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tournament in Model.Tournaments)
+                {
+                    <tr style="border-bottom: 1px solid #f3f4f6; transition: background 0.1s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+                        <td style="padding: 0.875rem 1rem;">
+                            <a href="/tournaments/@tournament.Id" style="font-weight: 600; color: #111; text-decoration: none;">@tournament.Name</a>
+                        </td>
+                        <td style="padding: 0.875rem 1rem; color: #374151; font-size: 0.875rem;">@tournament.ScoreSystem</td>
+                        <td style="padding: 0.875rem 1rem;">
+                            @if (tournament.IsArchived)
+                            {
+                                <span style="background: #f3f4f6; color: #6b7280; border-radius: 9999px; padding: 0.2rem 0.65rem; font-size: 0.75rem;">Archived</span>
+                            }
+                            else if (tournament.IsPublic)
+                            {
+                                <span style="background: #d1fae5; color: #065f46; border-radius: 9999px; padding: 0.2rem 0.65rem; font-size: 0.75rem;">Active</span>
+                            }
+                            else
+                            {
+                                <span style="background: #fef3c7; color: #92400e; border-radius: 9999px; padding: 0.2rem 0.65rem; font-size: 0.75rem;">Private</span>
+                            }
+                        </td>
+                        <td style="padding: 0.875rem 1rem; color: #6b7280; font-size: 0.875rem;">@tournament.CreatedAt.ToString("MMM d, yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

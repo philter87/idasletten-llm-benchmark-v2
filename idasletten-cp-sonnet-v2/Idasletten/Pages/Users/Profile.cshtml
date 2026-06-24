@@ -1,0 +1,82 @@
+@page "/users/{userId}"
+@model Idasletten.Pages.Users.ProfileModel
+@{
+    ViewData["Title"] = Model.User?.Name ?? "Player Profile";
+}
+
+@if (Model.User == null)
+{
+    <p>Player not found.</p>
+    return;
+}
+
+<div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
+    @if (!string.IsNullOrEmpty(Model.User.ImageUrl))
+    {
+        <img src="@Model.User.ImageUrl" alt="" style="width: 4rem; height: 4rem; border-radius: 9999px; object-fit: cover;" />
+    }
+    else
+    {
+        <div style="width: 4rem; height: 4rem; border-radius: 9999px; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; color: #6b7280;">
+            @Model.User.Username.Substring(0, Math.Min(2, Model.User.Username.Length))
+        </div>
+    }
+    <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700;">@Model.User.Name</h1>
+        <p style="color: #6b7280; font-size: 0.875rem;">@@#@Model.User.Username</p>
+    </div>
+</div>
+
+<!-- Stats summary -->
+<div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+    @{
+        int totalWins = Model.User.TournamentPlayers.Sum(tp => tp.WinCount);
+        int totalLosses = Model.User.TournamentPlayers.Sum(tp => tp.LoseCount);
+        int totalMatches = Model.User.TournamentPlayers.Sum(tp => tp.MatchCount);
+        int totalPointsWon = Model.User.TournamentPlayers.Sum(tp => tp.PointsWon);
+    }
+    <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem 1.5rem; text-align: center; min-width: 100px;">
+        <div style="font-size: 1.75rem; font-weight: 700; color: #059669;">@totalWins</div>
+        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Wins</div>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem 1.5rem; text-align: center; min-width: 100px;">
+        <div style="font-size: 1.75rem; font-weight: 700; color: #dc2626;">@totalLosses</div>
+        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Losses</div>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem 1.5rem; text-align: center; min-width: 100px;">
+        <div style="font-size: 1.75rem; font-weight: 700;">@totalMatches</div>
+        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Matches</div>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem 1.5rem; text-align: center; min-width: 100px;">
+        <div style="font-size: 1.75rem; font-weight: 700;">@totalPointsWon</div>
+        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Goals</div>
+    </div>
+</div>
+
+<!-- Tournament breakdown -->
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem;">Tournament History</h2>
+<div style="border: 1px solid #e5e7eb; border-radius: 0.75rem; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                <th style="padding: 0.625rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase;">Tournament</th>
+                <th style="padding: 0.625rem 1rem; text-align: right; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase;">Score</th>
+                <th style="padding: 0.625rem 1rem; text-align: right; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase;">W</th>
+                <th style="padding: 0.625rem 1rem; text-align: right; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase;">L</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tp in Model.User.TournamentPlayers.OrderByDescending(t => t.Tournament.CreatedAt))
+            {
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 0.75rem 1rem;">
+                        <a href="/tournaments/@tp.TournamentId" style="font-weight: 500; color: #111; text-decoration: none;">@tp.Tournament.Name</a>
+                    </td>
+                    <td style="padding: 0.75rem 1rem; text-align: right; font-weight: 600;">@tp.Score.ToString("F0")</td>
+                    <td style="padding: 0.75rem 1rem; text-align: right; color: #059669;">@tp.WinCount</td>
+                    <td style="padding: 0.75rem 1rem; text-align: right; color: #dc2626;">@tp.LoseCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

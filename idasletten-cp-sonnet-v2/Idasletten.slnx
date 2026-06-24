@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Idasletten.Tests/Idasletten.Tests.csproj" />
+  <Project Path="Idasletten/Idasletten.csproj" />
+</Solution>

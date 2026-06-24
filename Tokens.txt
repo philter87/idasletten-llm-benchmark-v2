@@ -1,5 +1,8 @@
 idasletten-cp-sonnet
 20min Session, 569 AIC used
+idasletten-cp-sonnet-v2
+AI Credits 690 (36m 8s)
+Tokens     ↑ 14.6m (14.2m cached, 330.3k written) • ↓ 91.8k (3.2k reasoning)
 
 idasletten-sonnet
 Total cost:            $4.78
@@ -9,6 +12,15 @@ Total cost:            $4.78
   Usage by model:
       claude-haiku-4-5:  4.0k input, 20 output, 0 cache read, 0 cache write ($0.0041)
      claude-sonnet-4-6:  112 input, 65.1k output, 10.3m cache read, 119.3k cache write ($4.77)
+
+idasletten-opus48
+Total cost:            $25.87
+  Total duration (API):  55m 0s
+  Total duration (wall): 1h 14m 54s
+  Total code changes:    5180 lines added, 21 lines removed
+  Usage by model:
+      claude-haiku-4-5:  19.0k input, 1.1k output, 0 cache read, 0 cache write ($0.0246)
+       claude-opus-4-8:  12.8k input, 187.4k output, 36.7m cache read, 273.2k cache write ($25.85)
 
 
 Mistral
@@ -21,3 +33,4 @@ Session Completion Tokens: 56,286
 Session Total LLM Tokens: 4,519,499
 Last Turn Tokens: 121,952
 Cost: $7.1170
+
