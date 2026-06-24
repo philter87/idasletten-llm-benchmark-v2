@@ -1,0 +1,129 @@
+@page "{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.DetailModel
+@{
+    ViewData["Title"] = Model.Tournament?.Name ?? "Tournament";
+}
+
+@if (Model.Tournament == null)
+{
+    <p>Tournament not found.</p>
+    return;
+}
+
+<div class="layout-main">
+    <div class="layout-content">
+        <div class="flex-between" style="margin-bottom: 1rem;">
+            <h2>@Model.Tournament.Name</h2>
+            <div>
+                <a href="javascript:openDialog('addPlayerDialog')" class="btn btn-sm btn-primary">Add Player</a>
+                <a asp-page="Matches" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-sm">View Matches</a>
+            </div>
+        </div>
+
+        <p>
+            <span class="badge @(Model.Tournament.ScoreSystem == ScoreSystem.Elo ? "badge-green" : Model.Tournament.ScoreSystem == ScoreSystem.TrueSkill ? "badge-blue" : Model.Tournament.ScoreSystem == ScoreSystem.Lives ? "badge-red" : "badge-yellow")">
+                @Model.Tournament.ScoreSystem
+            </span>
+            <span>@Model.Tournament.TeamSize players per team</span>
+            <span>&middot; @Model.Tournament.PointsToWin pts to win</span>
+        </p>
+
+        <table style="margin-top: 1rem;">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Score</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>Matches</th>
+                    <th>Diff</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var ranked = Model.Tournament.Players.OrderByDescending(p => p.Score).ToList();
+                    for (int i = 0; i < ranked.Count; i++)
+                    {
+                        var p = ranked[i];
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>
+                                <a asp-page="/Users/Profile" asp-route-userId="@p.UserId">@p.User.Username</a>
+                                @(p.User.Name != null ? $" - {p.User.Name}" : "")
+                            </td>
+                            <td>@p.Score.ToString("F0")</td>
+                            <td>@p.WinCount</td>
+                            <td>@p.LoseCount</td>
+                            <td>@p.MatchCount</td>
+                            <td>
+                                <span class="@(p.ScoreDiff > 0 ? "score-diff-positive" : p.ScoreDiff < 0 ? "score-diff-negative" : "score-diff-zero")">
+                                    @(p.ScoreDiff > 0 ? "+" : "")@p.ScoreDiff.ToString("F0")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="layout-sidebar">
+        <a asp-page="CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-primary" style="width:100%;margin-bottom:1rem;">Create Match</a>
+
+        @if (Model.Matches?.Planned.Any() == true)
+        {
+            <div class="card" style="margin-bottom:1rem;">
+                <h3>Planned Matches</h3>
+                @foreach (var m in Model.Matches.Planned.Take(5))
+                {
+                    <p>
+                        <a asp-page="CreateMatch" asp-route-tournamentId="@Model.Tournament.Id" asp-route-matchId="@m.Id">
+                            @string.Join(" vs ", m.Teams.Select(t => string.Join(", ", t.PlayerInitials)))
+                        </a>
+                    </p>
+                }
+            </div>
+        }
+
+        @if (Model.Matches?.Completed.Any() == true)
+        {
+            <div class="card" style="margin-bottom:1rem;">
+                <h3>Recent Matches</h3>
+                @foreach (var m in Model.Matches.Completed.Take(5))
+                {
+                    <p>
+                        <a asp-page="MatchDetail" asp-route-tournamentId="@Model.Tournament.Id" asp-route-matchId="@m.Id">
+                            @string.Join(" vs ", m.Teams.Select(t => $"{string.Join(", ", t.PlayerInitials)} ({t.GoalsWon})"))
+                        </a>
+                    </p>
+                }
+            </div>
+        }
+
+        <a asp-page="Matches" asp-route-tournamentId="@Model.Tournament.Id">View all matches →</a>
+        <br/>
+        <a asp-page="Players" asp-route-tournamentId="@Model.Tournament.Id">View all players →</a>
+        <br/><br/>
+        <a asp-page="/Tournaments/Index" class="btn btn-sm">← Back to tournaments</a>
+    </div>
+</div>
+
+@* Add Player Dialog *@
+<div id="addPlayerDialog" class="dialog-overlay">
+    <div class="dialog">
+        <h2>Add Player</h2>
+        <form method="post" asp-page-handler="AddPlayer" asp-route-tournamentId="@Model.Tournament.Id">
+            <div class="form-group">
+                <label for="initials">Initials</label>
+                <input type="text" id="initials" name="Initials" class="form-control" maxlength="20" required />
+            </div>
+            <div class="form-group">
+                <label for="playerName">Name (optional)</label>
+                <input type="text" id="playerName" name="Name" class="form-control" maxlength="200" />
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+            <button type="button" class="btn" onclick="closeDialog('addPlayerDialog')">Cancel</button>
+        </form>
+    </div>
+</div>

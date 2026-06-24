@@ -1,0 +1,129 @@
+<%- include('partials/head', { title: 'Kampe — ' + tournament.name }) %>
+<%- include('partials/nav') %>
+
+<div class="container py-4">
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/tournaments">Turneringer</a></li>
+      <li class="breadcrumb-item"><a href="/tournaments/<%= tournament.id %>"><%= tournament.name %></a></li>
+      <li class="breadcrumb-item active">Kampe</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title mb-0">Kampe</h1>
+    <a href="/tournaments/<%= tournament.id %>/create-match" class="btn btn-gold">
+      <i class="bi bi-plus-circle me-1"></i>Registrer kamp
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Planned -->
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Planlagte kampe <span class="badge bg-secondary ms-1"><%= planned.length %></span></span>
+          <button class="btn btn-sm btn-norse" data-bs-toggle="modal" data-bs-target="#planMatchModal">
+            <i class="bi bi-plus me-1"></i>Planlæg kamp
+          </button>
+        </div>
+        <div class="list-group list-group-flush">
+          <% planned.forEach(m => { %>
+            <a href="/tournaments/<%= tournament.id %>/create-match?matchId=<%= m.id %>"
+               class="list-group-item list-group-item-action">
+              <% const p1 = m.teams[0], p2 = m.teams[1]; %>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong><%= p1 ? p1.players.join(' & ') : '?' %></strong>
+                  <span class="text-muted mx-2 small">vs</span>
+                  <strong><%= p2 ? p2.players.join(' & ') : '?' %></strong>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge badge-planned">Planlagt</span>
+                  <i class="bi bi-pencil text-muted small"></i>
+                </div>
+              </div>
+              <div class="text-muted" style="font-size:.72rem">Kamp #<%= m.order %></div>
+            </a>
+          <% }) %>
+          <% if (planned.length === 0) { %>
+            <div class="list-group-item text-muted text-center py-4">Ingen planlagte kampe.</div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Done -->
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header">
+          Kampresultater <span class="badge bg-secondary ms-1"><%= done.length %></span>
+        </div>
+        <div class="list-group list-group-flush">
+          <% done.forEach(m => { %>
+            <div class="list-group-item">
+              <% const d1 = m.teams[0], d2 = m.teams[1]; %>
+              <% const r1 = d1 && d1.result, r2 = d2 && d2.result; %>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="<%= r1 && r1.goalsWon > r1.goalsLost ? 'fw-bold' : 'text-muted' %>">
+                      <%= d1 ? d1.players.join(' & ') : '?' %>
+                    </span>
+                    <% if (r1 && r2) { %>
+                      <span class="badge border text-dark fw-bold" style="background:#f8f8f8;font-size:.9rem">
+                        <%= r1.goalsWon %> – <%= r2.goalsWon %>
+                      </span>
+                    <% } %>
+                    <span class="<%= r2 && r2.goalsWon > r2.goalsLost ? 'fw-bold' : 'text-muted' %>">
+                      <%= d2 ? d2.players.join(' & ') : '?' %>
+                    </span>
+                  </div>
+                </div>
+                <span class="badge badge-done ms-2">Spillet</span>
+              </div>
+              <div class="text-muted" style="font-size:.72rem">Kamp #<%= m.order %></div>
+            </div>
+          <% }) %>
+          <% if (done.length === 0) { %>
+            <div class="list-group-item text-muted text-center py-4">Ingen kampe spillet endnu.</div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Plan match modal -->
+<div class="modal fade" id="planMatchModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Planlæg kamp</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="/tournaments/<%= tournament.id %>/matches/plan">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-medium">Hold 1 (<%= tournament.teamSize %> spiller<%= tournament.teamSize > 1 ? 'e' : '' %>)</label>
+            <% for (let i = 0; i < tournament.teamSize; i++) { %>
+              <input type="text" name="team1" class="form-control text-uppercase mb-2" placeholder="Initialer" maxlength="5" />
+            <% } %>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Hold 2 (<%= tournament.teamSize %> spiller<%= tournament.teamSize > 1 ? 'e' : '' %>)</label>
+            <% for (let i = 0; i < tournament.teamSize; i++) { %>
+              <input type="text" name="team2" class="form-control text-uppercase mb-2" placeholder="Initialer" maxlength="5" />
+            <% } %>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
+          <button type="submit" class="btn btn-norse">Gem planlagt kamp</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

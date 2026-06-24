@@ -1,0 +1,26 @@
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="/">⚡ Idasletten</a>
+    <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav me-auto gap-1">
+        <li class="nav-item"><a class="nav-link" href="/tournaments">Turneringer</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+          <span class="text-white-50 small d-flex align-items-center gap-2">
+            <span class="avatar" style="width:26px;height:26px;font-size:.6rem"><%= currentUser.username %></span>
+            <%= currentUser.name %>
+          </span>
+          <form method="POST" action="/logout" class="mb-0">
+            <button type="submit" class="btn btn-sm" style="color:#aaa;border:1px solid #555">Log ud</button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="btn btn-sm btn-outline-gold">Log ind</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</nav>

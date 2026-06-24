@@ -1,0 +1,60 @@
+@page "/tournaments"
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "All Tournaments";
+}
+
+<h1 class="text-2xl font-bold">All Tournaments</h1>
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <div class="mb-3">
+        <a href="/tournaments/create" class="btn">Create Tournament</a>
+    </div>
+}
+
+@if (Model.Tournaments.Any())
+{
+    <table class="table w-full">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Players</th>
+                <th>Score System</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tournament in Model.Tournaments)
+            {
+                <tr>
+                    <td>@tournament.Name</td>
+                    <td>@tournament.Players.Count</td>
+                    <td>@tournament.ScoreSystem</td>
+                    <td>
+                        @if (tournament.IsArchived)
+                        {
+                            <span class="badge">Archived</span>
+                        }
+                        else if (tournament.IsPublic)
+                        {
+                            <span class="badge">Public</span>
+                        }
+                        else
+                        {
+                            <span class="badge">Private</span>
+                        }
+                    </td>
+                    <td>
+                        <a href="/tournaments/@tournament.Id" class="text-blue-600 hover:underline">View</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert">No tournaments found.</div>
+}

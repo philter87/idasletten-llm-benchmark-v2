@@ -1,0 +1,47 @@
+@page "/tournaments/create"
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Create Tournament";
+}
+
+<h1 class="text-2xl font-bold">Create Tournament</h1>
+
+<form method="post" class="form mt-3">
+    <div class="flex flex-col gap-1 mb-4">
+        <label asp-for="Name" class="label"></label>
+        <input asp-for="Name" class="input" required />
+        <span asp-validation-for="Name" class="text-sm text-red-500"></span>
+    </div>
+
+    <div class="flex flex-col gap-1 mb-4">
+        <label asp-for="TeamSize" class="label">Players per team</label>
+        <input asp-for="TeamSize" class="input" type="number" min="1" max="5" />
+    </div>
+
+    <div class="flex flex-col gap-1 mb-4">
+        <label asp-for="PointsToWin" class="label">Points to win</label>
+        <input asp-for="PointsToWin" class="input" type="number" min="1" />
+    </div>
+
+    <div class="flex flex-col gap-1 mb-4">
+        <label asp-for="ScoreSystem" class="label">Score system</label>
+        <select asp-for="ScoreSystem" class="select" asp-items="Html.GetEnumSelectList<ScoreSystem>()"></select>
+    </div>
+
+    <div class="flex flex-col gap-1 mb-4">
+        <label asp-for="MaxPlayerCount" class="label">Max players (optional)</label>
+        <input asp-for="MaxPlayerCount" class="input" type="number" min="1" />
+    </div>
+
+    <div class="flex items-center gap-2">
+        <label>
+            <input asp-for="IsPublic" type="checkbox" />
+            <span>Public tournament</span>
+        </label>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn">Create</button>
+        <button type="submit" name="handler" value="CreateAndPlan" class="btn btn-outline">Create and Plan</button>
+    </div>
+</form>

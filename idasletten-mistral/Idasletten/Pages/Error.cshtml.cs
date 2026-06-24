@@ -23,9 +23,9 @@ public class ErrorModel : PageModel
         {
             ErrorMessage = exceptionHandlerFeature.Error.Message;
         }
-        else if (Response.StatusCode.HasValue)
+        else
         {
-            ErrorCode = Response.StatusCode.Value;
+            ErrorCode = Response.StatusCode;
             ErrorMessage = ErrorCode switch
             {
                 404 => "The page you requested could not be found.",

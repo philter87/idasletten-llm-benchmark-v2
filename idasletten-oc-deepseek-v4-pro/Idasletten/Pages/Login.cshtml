@@ -1,0 +1,41 @@
+@page
+@model Idasletten.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-error">@Model.ErrorMessage</div>
+}
+
+@if (Model.HasAzureAd)
+{
+    <form method="post" asp-page-handler="AzureLogin">
+        <button type="submit" class="btn btn-primary">Sign in with Microsoft</button>
+    </form>
+}
+
+@if (Model.HasTestUser)
+{
+    <hr style="margin: 1.5rem 0" />
+    <h3>Test Login</h3>
+    <form method="post" asp-page-handler="TestLogin">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="Email" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="Password" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+}
+
+@if (!Model.HasAzureAd && !Model.HasTestUser)
+{
+    <p>No authentication configured.</p>
+}

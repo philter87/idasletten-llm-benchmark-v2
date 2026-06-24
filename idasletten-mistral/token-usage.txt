@@ -1,0 +1,8 @@
+Elapsed???: 2 hours
+
+Steps: 182
+Session Prompt Tokens: 8,220,022
+Session Completion Tokens: 13,136
+Session Total LLM Tokens: 8,233,158
+Last Turn Tokens: 70,853
+Cost: $12.4286

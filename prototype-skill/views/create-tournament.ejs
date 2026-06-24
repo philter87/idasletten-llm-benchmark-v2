@@ -1,0 +1,88 @@
+<%- include('partials/head', { title: 'Opret turnering' }) %>
+<%- include('partials/nav') %>
+
+<div class="container py-4" style="max-width:640px">
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/tournaments">Turneringer</a></li>
+      <li class="breadcrumb-item active">Opret</li>
+    </ol>
+  </nav>
+  <h1 class="page-title">Opret Turnering</h1>
+
+  <div class="card">
+    <div class="card-body p-4">
+      <form method="POST" action="/tournaments/create">
+        <div class="mb-3">
+          <label class="form-label fw-medium">Navn <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control" placeholder="F.eks. Ragnarök Cup 2025" required autofocus />
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-sm-6">
+            <label class="form-label fw-medium">Holdstørrelse</label>
+            <input type="number" name="teamSize" class="form-control" value="2" min="1" max="5" />
+            <div class="form-text">Antal spillere per hold.</div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label fw-medium">Mål til sejr</label>
+            <input type="number" name="pointsToWin" class="form-control" value="5" min="1" max="20" />
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-medium d-flex align-items-center gap-2">
+            Pointsystem
+            <button type="button" class="btn btn-sm btn-link p-0" data-bs-toggle="modal" data-bs-target="#systemInfoModal">
+              <i class="bi bi-info-circle text-muted"></i>
+            </button>
+          </label>
+          <select name="scoreSystem" class="form-select">
+            <option value="Elo">Elo</option>
+            <option value="TrueSkill">TrueSkill</option>
+            <option value="Lives">Lives</option>
+            <option value="WinCount">WinCount</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-medium">Max antal spillere <span class="text-muted small">(valgfrit — tomt = ubegrænset)</span></label>
+          <input type="number" name="maxPlayerCount" class="form-control" placeholder="Ubegrænset" min="2" />
+        </div>
+        <div class="mb-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="isPublic" id="isPublic" checked />
+            <label class="form-check-label" for="isPublic">Offentlig turnering (vises på forsiden)</label>
+          </div>
+        </div>
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-gold btn-lg">Opret turnering</button>
+          <a href="/tournaments" class="btn btn-outline-secondary">Annuller</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Score system info modal -->
+<div class="modal fade" id="systemInfoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Pointsystemer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <dl>
+          <dt>Elo</dt>
+          <dd class="mb-3">Klassisk Elo-rating. Startrating 1000. Vindere får ~25 point, tabere mister ~20. Hold med flere spillere bruger gennemsnitsrating.</dd>
+          <dt>TrueSkill</dt>
+          <dd class="mb-3">Microsofts matchmaking-algoritme via Moserware.Skills. Mere præcis end Elo, tager usikkerhed i betragtning.</dd>
+          <dt>Lives</dt>
+          <dd class="mb-3">Hver spiller starter med 3 liv. Taber du en kamp, mister du et liv. Ingen liv = elimineret.</dd>
+          <dt>WinCount</dt>
+          <dd>Score = antal sejre. Tiebreaker: målforskel.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

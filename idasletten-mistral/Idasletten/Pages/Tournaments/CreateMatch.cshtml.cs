@@ -1,6 +1,7 @@
 using Idasletten.Shared.Data;
 using Idasletten.Shared.Data.Entities;
 using Idasletten.Shared.Data.Enums;
+using Idasletten.Shared.Scoring;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -299,12 +300,13 @@ public class CreateMatchModel : PageModel
         }
         
         // Set goals lost for each team
-        for (int i = 0; i < match.Results.Count; i++)
+        var resultsList = match.Results.ToList();
+        for (int i = 0; i < resultsList.Count; i++)
         {
             var otherTeamIndex = i == 0 ? 1 : 0;
             if (i < teamGoals.Count && otherTeamIndex < teamGoals.Count)
             {
-                match.Results[i].GoalsLost = teamGoals[otherTeamIndex];
+                resultsList[i].GoalsLost = teamGoals[otherTeamIndex];
             }
         }
         

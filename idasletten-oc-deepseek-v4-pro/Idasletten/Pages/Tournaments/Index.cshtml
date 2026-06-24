@@ -1,0 +1,44 @@
+@page
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "All Tournaments";
+}
+
+<div class="flex-between">
+    <h2>All Tournaments</h2>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-page="Create" class="btn btn-primary">Create Tournament</a>
+    }
+</div>
+
+<div class="card-grid" style="margin-top: 1.5rem;">
+    @if (!Model.Tournaments.Any())
+    {
+        <p>No tournaments found.</p>
+    }
+    else
+    {
+        @foreach (var t in Model.Tournaments)
+        {
+            <div class="card">
+                <a asp-page="Detail" asp-route-tournamentId="@t.Id">
+                    <h3>@t.Name</h3>
+                    <p>
+                        <span class="badge @(t.IsPublic ? "badge-green" : "badge-yellow")">
+                            @(t.IsPublic ? "Public" : "Private")
+                        </span>
+                        @if (t.IsArchived)
+                        {
+                            <span class="badge badge-red">Archived</span>
+                        }
+                        @if (t.ParentTournamentId.HasValue)
+                        {
+                            <span class="badge badge-blue">Round @t.RoundNumber</span>
+                        }
+                    </p>
+                </a>
+            </div>
+        }
+    }
+</div>

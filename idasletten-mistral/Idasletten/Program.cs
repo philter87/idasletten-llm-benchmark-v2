@@ -4,6 +4,7 @@ using Idasletten.Shared.Scoring;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
@@ -69,16 +70,6 @@ builder.Services.AddScoped<IEloScoringSystem, EloScoringSystem>();
 builder.Services.AddScoped<ITrueSkillScoringSystem, TrueSkillScoringSystem>();
 builder.Services.AddScoped<ILivesScoringSystem, LivesScoringSystem>();
 builder.Services.AddScoped<IWinCountScoringSystem, WinCountScoringSystem>();
-
-// Add Azure AD Authentication as an additional scheme
-var azureAdConfig = builder.Configuration.GetSection("AzureAd");
-
-if (azureAdConfig.Exists() && !string.IsNullOrEmpty(azureAdConfig["ClientId"]))
-{
-    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-        .AddCookie()
-        .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
-}
 
 // Add forwarded headers for Fly.io
 builder.Services.Configure<ForwardedHeadersOptions>(options =>

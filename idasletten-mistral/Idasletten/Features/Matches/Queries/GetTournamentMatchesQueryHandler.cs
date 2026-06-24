@@ -24,13 +24,13 @@ public class GetTournamentMatchesQueryHandler : IRequestHandler<GetTournamentMat
                     .ThenInclude(p => p.User)
             .Include(m => m.Results)
                 .ThenInclude(r => r.Team)
-            .OrderBy(m => m.Order);
+            .AsQueryable();
         
         if (request.State.HasValue)
         {
             query = query.Where(m => m.State == request.State);
         }
         
-        return await query.ToListAsync(cancellationToken);
+        return await query.OrderBy(m => m.Order).ToListAsync(cancellationToken);
     }
 }

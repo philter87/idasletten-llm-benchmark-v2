@@ -38,4 +38,14 @@ public class MatchDetailModel : PageModel
         
         return Page();
     }
+    
+    public List<TournamentTeam> GetTeams()
+    {
+        return Match?.Teams?.ToList() ?? new List<TournamentTeam>();
+    }
+    
+    public List<TournamentTeamMatchResult> GetResults()
+    {
+        return Match?.Results?.ToList() ?? new List<TournamentTeamMatchResult>();
+    }
 }

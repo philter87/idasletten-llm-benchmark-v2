@@ -1,0 +1,18 @@
+{
+  "name": "idasletten-prototype",
+  "version": "1.0.0",
+  "description": "Throwaway prototype — Idasletten foosball tournament app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

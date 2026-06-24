@@ -1,0 +1,39 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Idasletten";
+}
+
+<div class="hero">
+    <h1>Iðavöllr</h1>
+    <p>
+        <em>Idasletten findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. Hver aften er Idasletten rød af blod.</em>
+    </p>
+</div>
+
+<div class="card-grid">
+    @if (Model.PublicTournaments == null || !Model.PublicTournaments.Any())
+    {
+        <p class="alert alert-error">Ingen offentilge turneringer fundet.</p>
+    }
+    else
+    {
+        @foreach (var tournament in Model.PublicTournaments)
+        {
+            <div class="card">
+                <a asp-page="/tournaments/@tournament.Id">
+                    <h3>@tournament.Name</h3>
+                    <p>
+                        <span class="badge @(tournament.ScoreSystem == ScoreSystem.Elo ? "badge-green" : tournament.ScoreSystem == ScoreSystem.TrueSkill ? "badge-blue" : tournament.ScoreSystem == ScoreSystem.Lives ? "badge-red" : "badge-yellow")">
+                            @tournament.ScoreSystem
+                        </span>
+                        <br/>
+                        <small>@tournament.Players.Count spillere &middot; @tournament.CreatedAt.ToString("d. MMM yyyy")</small>
+                    </p>
+                </a>
+            </div>
+        }
+    }
+</div>
+
+<a asp-page="/Tournaments" class="btn btn-link">Historiske turneringer</a>

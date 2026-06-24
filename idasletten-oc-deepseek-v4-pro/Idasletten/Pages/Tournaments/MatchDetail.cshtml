@@ -1,0 +1,32 @@
+@page "{tournamentId:guid}/matches/{matchId:guid}"
+@model Idasletten.Pages.Tournaments.MatchDetailModel
+@{
+    ViewData["Title"] = "Match Detail";
+}
+
+@if (Model.Match == null)
+{
+    <p>Match not found.</p>
+    return;
+}
+
+<h2>Match #@Model.Match.Order</h2>
+
+@foreach (var team in Model.Match.Teams)
+{
+    <div class="card" style="margin-bottom:0.5rem;">
+        <h3>@team.Name</h3>
+        <p>Players: @string.Join(", ", team.PlayerInitials)</p>
+        <p>Goals: @team.GoalsWon - @team.GoalsLost</p>
+    </div>
+}
+
+<p>State: <span class="badge @(Model.Match.State == "Done" ? "badge-green" : Model.Match.State == "Planned" ? "badge-yellow" : "badge-red")">@Model.Match.State</span></p>
+<p>Played: @Model.Match.PlayedAt?.ToString("d. MMM yyyy HH:mm")</p>
+
+@if (Model.Match.State != "Done" || User.Identity?.IsAuthenticated == true)
+{
+    <a asp-page="CreateMatch" asp-route-tournamentId="@RouteData.Values["tournamentId"]" asp-route-matchId="@Model.Match.Id" class="btn btn-primary">Edit</a>
+}
+
+<a asp-page="Detail" asp-route-tournamentId="@RouteData.Values["tournamentId"]" class="btn">Back to tournament</a>

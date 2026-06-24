@@ -1,5 +1,5 @@
 @page
-@model Tournaments.MatchesModel
+@model MatchesModel
 @{
     ViewData["Title"] = "Matches - @Model.Tournament.Name";
 }
@@ -55,7 +55,7 @@
                         <td>
                             @foreach (var team in match.Teams.OrderBy(t => t.Number))
                             {
-                                <span style="color: @GetTeamColor(team.Number);">
+                                <span style="color: @Model.GetTeamColor(team.Number);">
                                     @(team.Number == 1 ? "🔴" : "🔵") @string.Join(" + ", team.Players.Select(p => p.User.UserName))
                                 </span>
                                 @if (team.Number < match.Teams.Count)
@@ -114,7 +114,7 @@
                         <td>
                             @foreach (var result in match.Results.OrderBy(r => r.Team.Number))
                             {
-                                <span style="color: @GetTeamColor(result.Team.Number);">
+                                <span style="color: @Model.GetTeamColor(result.Team.Number);">
                                     @(result.Team.Number == 1 ? "🔴" : "🔵") 
                                     @string.Join(" + ", result.Team.Players.Select(p => p.User.UserName))
                                     <strong>@result.GoalsWon</strong>

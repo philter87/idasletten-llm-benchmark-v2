@@ -1,0 +1,151 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Matches";
+}
+
+<h1 class="text-2xl font-bold">Matches</h1>
+
+<div class="mb-3">
+    <button type="button" class="btn" onclick="document.getElementById('addPlannedModal').showModal()">Add Planned Match</button>
+    <button type="button" class="btn btn-outline" onclick="document.getElementById('planSeveralModal').showModal()">Plan Several Matches</button>
+</div>
+
+@if (Model.PlannedMatches.Any())
+{
+    <h3 class="text-lg font-semibold">Planned Matches</h3>
+    <table class="table w-full">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Teams</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var match in Model.PlannedMatches)
+            {
+                <tr>
+                    <td>@match.Order</td>
+                    <td>
+                        @string.Join(" vs ",
+                            match.TeamEntries.Select(te =>
+                                string.Join("/",
+                                    te.Team.PlayerEntries.Select(pe => pe.Player.User?.Initials))))
+                    </td>
+                    <td>
+                        <a href="/tournaments/@Model.TournamentId/create-match?matchId=@match.Id" class="text-blue-600 hover:underline">Play</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (Model.CompletedMatches.Any())
+{
+    <h3 class="text-lg font-semibold mt-4">Match Results</h3>
+    <table class="table w-full">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Teams</th>
+                <th>Result</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var match in Model.CompletedMatches)
+            {
+                var teams = match.TeamEntries.Select(te => te.Team).ToList();
+                var result1 = match.Results.FirstOrDefault(r => r.TeamId == (teams.ElementAtOrDefault(0)?.Id ?? Guid.Empty));
+                var result2 = match.Results.FirstOrDefault(r => r.TeamId == (teams.ElementAtOrDefault(1)?.Id ?? Guid.Empty));
+                <tr>
+                    <td>@match.Order</td>
+                    <td>
+                        @string.Join(" vs ",
+                            match.TeamEntries.Select(te =>
+                                string.Join("/",
+                                    te.Team.PlayerEntries.Select(pe => pe.Player.User?.Initials))))
+                    </td>
+                    <td>
+                        @(result1?.GoalsWon ?? 0) - @(result2?.GoalsWon ?? 0)
+                    </td>
+                    <td>
+                        <a href="/tournaments/@Model.TournamentId/create-match?matchId=@match.Id" class="text-blue-600 hover:underline">View</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Add Planned Match Modal -->
+<dialog id="addPlannedModal">
+    <div class="dialog-content">
+        <div class="dialog-header">
+            <h4 class="text-base font-semibold">Add Planned Match</h4>
+            <button type="button" onclick="document.getElementById('addPlannedModal').close()">&times;</button>
+        </div>
+        <form method="post" asp-page-handler="AddPlanned">
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Team 1 Player 1 initials</label>
+                <input name="Team1Player1" class="input" required />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Team 1 Player 2 initials</label>
+                <input name="Team1Player2" class="input" />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Team 2 Player 1 initials</label>
+                <input name="Team2Player1" class="input" required />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Team 2 Player 2 initials</label>
+                <input name="Team2Player2" class="input" />
+            </div>
+            <button type="submit" class="btn">Add</button>
+        </form>
+    </div>
+</dialog>
+
+<!-- Plan Several Matches Modal -->
+<dialog id="planSeveralModal">
+    <div class="dialog-content">
+        <div class="dialog-header">
+            <h4 class="text-base font-semibold">Plan Several Matches</h4>
+            <button type="button" onclick="document.getElementById('planSeveralModal').close()">&times;</button>
+        </div>
+        <form method="post" asp-page-handler="PlanSeveral">
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Seed tournament</label>
+                <select name="SeedTournamentId" class="select">
+                    <option value="">None</option>
+                    @foreach (var t in Model.AvailableSeedTournaments)
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Games per player</label>
+                <input name="GamesPerPlayer" type="number" class="input" min="1" value="1" />
+            </div>
+            <div class="flex items-center gap-2">
+                <label>
+                    <input name="FixedTeam" type="checkbox" />
+                    <span>Fixed teams (no reshuffling)</span>
+                </label>
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Seeding type</label>
+                <select name="SeedingType" class="select">
+                    <option value="Random">Random</option>
+                    <option value="Equality">Equality</option>
+                    <option value="Fair">Fair</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Plan</button>
+        </form>
+    </div>
+</dialog>

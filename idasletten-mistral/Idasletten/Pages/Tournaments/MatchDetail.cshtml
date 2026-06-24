@@ -1,5 +1,5 @@
 @page
-@model Tournaments.MatchDetailModel
+@model MatchDetailModel
 @{
     ViewData["Title"] = "Match Details - @Model.Tournament?.Name";
 }
@@ -138,7 +138,7 @@
                     <td>Created:</td>
                     <td>@Model.Match?.CreatedAt.ToShortDateString()</td>
                 </tr>
-                @if (Model.Match?.CompletedAt.HasValue)
+                @if (Model.Match != null && Model.Match.CompletedAt.HasValue)
                 {
                     <tr>
                         <td>Completed:</td>
@@ -173,27 +173,30 @@
 @functions {
     string GetTeamName(int teamIndex)
     {
-        if (Model.Match?.Teams?.Count > teamIndex)
+        var teams = Model.GetTeams();
+        if (teams.Count > teamIndex)
         {
-            return Model.Match.Teams[teamIndex].Name;
+            return teams[teamIndex].Name;
         }
         return "Team " + (teamIndex + 1);
     }
     
     List<TournamentPlayer> GetTeamPlayers(int teamIndex)
     {
-        if (Model.Match?.Teams?.Count > teamIndex)
+        var teams = Model.GetTeams();
+        if (teams.Count > teamIndex)
         {
-            return Model.Match.Teams[teamIndex].Players;
+            return teams[teamIndex].Players?.ToList() ?? new List<TournamentPlayer>();
         }
         return new List<TournamentPlayer>();
     }
     
     int GetTeamScore(int teamIndex)
     {
-        if (Model.Match?.Results?.Count > teamIndex)
+        var results = Model.GetResults();
+        if (results.Count > teamIndex)
         {
-            return Model.Match.Results[teamIndex].GoalsWon;
+            return results[teamIndex].GoalsWon;
         }
         return 0;
     }

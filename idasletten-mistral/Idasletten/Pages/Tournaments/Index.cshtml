@@ -1,5 +1,5 @@
 @page
-@model Tournaments.IndexModel
+@model IndexModel
 @{
     ViewData["Title"] = "All Tournaments";
 }
@@ -95,7 +95,13 @@
     else
     {
         <p style="color: #999; text-align: center; padding: 2rem;">
-            No tournaments found. @if (User.Identity.IsAuthenticated) { <a asp-page="/Tournaments/Create">Create your first tournament</a>. }
+            No tournaments found.
         </p>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <p style="text-align: center;">
+                <a asp-page="/Tournaments/Create">Create your first tournament</a>.
+            </p>
+        }
     }
 </div>

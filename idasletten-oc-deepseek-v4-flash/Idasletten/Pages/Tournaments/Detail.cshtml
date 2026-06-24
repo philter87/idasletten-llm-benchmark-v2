@@ -1,0 +1,157 @@
+@page "/tournaments/{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.DetailModel
+@{
+    ViewData["Title"] = Model.Tournament?.Name ?? "Tournament";
+}
+
+@if (Model.Tournament == null)
+{
+    <div class="alert">Tournament not found.</div>
+    return;
+}
+
+<div class="grid grid-cols-12 gap-4">
+    <div class="col-span-8">
+        <h1 class="text-2xl font-bold">@Model.Tournament.Name</h1>
+
+        <div class="mb-2">
+            <span class="badge">@Model.Tournament.ScoreSystem</span>
+            <span class="badge">@Model.Tournament.Players.Count players</span>
+            <span class="badge">Best of @Model.Tournament.PointsToWin</span>
+        </div>
+
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <div class="mb-3">
+                <button type="button" class="btn" onclick="document.getElementById('addPlayerModal').showModal()">Add Player</button>
+                <a href="/tournaments/@Model.Tournament.Id/players" class="btn btn-outline">Manage Players</a>
+            </div>
+        }
+
+        <h3 class="text-lg font-semibold">Scoreboard</h3>
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Score</th>
+                    <th>Δ</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>GF</th>
+                    <th>GA</th>
+                    @if (Model.Tournament.ScoreSystem == ScoreSystem.Lives)
+                    {
+                        <th>Lives</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int rank = 1;
+                    var sortedPlayers = Model.Tournament.Players.OrderByDescending(p => p.Score).ToList();
+                }
+                @foreach (var player in sortedPlayers)
+                {
+                    <tr>
+                        <td>@(rank++)</td>
+                        <td><a href="/users/@player.UserId">@player.User?.Name (@player.User?.Initials)</a></td>
+                        <td>@player.Score.ToString("F1")</td>
+                        <td class="@(player.ScoreDiff >= 0 ? "text-green-600" : "text-red-600")">
+                            @(player.ScoreDiff >= 0 ? "+" : "")@player.ScoreDiff.ToString("F1")
+                        </td>
+                        <td>@player.WinCount</td>
+                        <td>@player.LoseCount</td>
+                        <td>@player.PointsWon</td>
+                        <td>@player.PointsLost</td>
+                        @if (Model.Tournament.ScoreSystem == ScoreSystem.Lives)
+                        {
+                            <td>@player.Lives</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-span-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <a href="/tournaments/@Model.Tournament.Id/create-match" class="btn w-full">Create Match</a>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4 class="text-base font-semibold">Upcoming Matches</h4>
+            </div>
+            <div class="card-body">
+                @if (Model.UpcomingMatches.Any())
+                {
+                    <ul class="list-none p-0 m-0">
+                        @foreach (var match in Model.UpcomingMatches)
+                        {
+                            <li>
+                                <a href="/tournaments/@Model.Tournament.Id/create-match?matchId=@match.Id">
+                                    Match #@match.Order
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-sm text-gray-500">No upcoming matches.</p>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4 class="text-base font-semibold">Recent Results</h4>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentMatches.Any())
+                {
+                    <ul class="list-none p-0 m-0">
+                        @foreach (var match in Model.RecentMatches)
+                        {
+                            <li>
+                                <a href="/tournaments/@Model.Tournament.Id/create-match?matchId=@match.Id">
+                                    Match #@match.Order
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-sm text-gray-500">No matches played yet.</p>
+                }
+            </div>
+        </div>
+
+        <a href="/tournaments/@Model.Tournament.Id/matches" class="text-blue-600 hover:underline text-sm">View all matches &rarr;</a>
+    </div>
+</div>
+
+<!-- Add Player Modal -->
+<dialog id="addPlayerModal">
+    <div class="dialog-content">
+        <div class="dialog-header">
+            <h4 class="text-base font-semibold">Add Player</h4>
+            <button type="button" onclick="document.getElementById('addPlayerModal').close()">&times;</button>
+        </div>
+        <form method="post" asp-page-handler="AddPlayer">
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Player initials</label>
+                <input name="Initials" class="input" required maxlength="3" placeholder="e.g. OLA" />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Name (optional)</label>
+                <input name="Name" class="input" placeholder="Full name" />
+            </div>
+            <button type="submit" class="btn">Add</button>
+        </form>
+    </div>
+</dialog>

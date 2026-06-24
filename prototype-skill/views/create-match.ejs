@@ -1,0 +1,174 @@
+<%- include('partials/head', { title: 'Registrer kamp' }) %>
+<%- include('partials/nav') %>
+
+<div class="container py-4" style="max-width:700px">
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/tournaments">Turneringer</a></li>
+      <li class="breadcrumb-item"><a href="/tournaments/<%= tournament.id %>"><%= tournament.name %></a></li>
+      <li class="breadcrumb-item active">Registrer kamp</li>
+    </ol>
+  </nav>
+  <h1 class="page-title">Registrer Kamp</h1>
+  <p class="text-muted mb-4">Ukendte initialer opretter automatisk en ny spiller. Ingen login krævet.</p>
+
+  <div class="card">
+    <div class="card-body p-4">
+      <form method="POST" action="/tournaments/<%= tournament.id %>/create-match">
+        <% if (prefill && prefill.match) { %>
+          <input type="hidden" name="matchId" value="<%= prefill.match.id %>" />
+        <% } %>
+
+        <div class="row g-4 mb-4">
+          <!-- Team 1 -->
+          <div class="col-sm-6">
+            <div class="card h-100" style="border:2px solid var(--norse-dark)">
+              <div class="card-header" style="background:var(--norse-dark);color:var(--norse-gold);font-size:.85rem">
+                Hold 1
+              </div>
+              <div class="card-body">
+                <% const t1pre = prefill && prefill.teams && prefill.teams.find(t => t.number === 1); %>
+                <% for (let i = 0; i < tournament.teamSize; i++) { %>
+                  <div class="mb-2">
+                    <input type="text" name="team1" class="form-control text-uppercase"
+                      placeholder="Initialer (f.eks. PCH)" maxlength="5"
+                      value="<%= t1pre && t1pre.players[i] ? t1pre.players[i] : '' %>" required />
+                  </div>
+                <% } %>
+                <% if (players.length > 0) { %>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                    data-bs-toggle="modal" data-bs-target="#pickT1Modal">
+                    <i class="bi bi-list-check me-1"></i>Vælg fra liste
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Team 2 -->
+          <div class="col-sm-6">
+            <div class="card h-100" style="border:2px solid var(--norse-gold)">
+              <div class="card-header" style="background:var(--norse-gold);color:var(--norse-dark);font-size:.85rem">
+                Hold 2
+              </div>
+              <div class="card-body">
+                <% const t2pre = prefill && prefill.teams && prefill.teams.find(t => t.number === 2); %>
+                <% for (let i = 0; i < tournament.teamSize; i++) { %>
+                  <div class="mb-2">
+                    <input type="text" name="team2" class="form-control text-uppercase"
+                      placeholder="Initialer (f.eks. ASL)" maxlength="5"
+                      value="<%= t2pre && t2pre.players[i] ? t2pre.players[i] : '' %>" required />
+                  </div>
+                <% } %>
+                <% if (players.length > 0) { %>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                    data-bs-toggle="modal" data-bs-target="#pickT2Modal">
+                    <i class="bi bi-list-check me-1"></i>Vælg fra liste
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score -->
+        <div class="card mb-4" style="background:#f8f9fa">
+          <div class="card-body">
+            <h6 class="card-title">Resultat</h6>
+            <div class="d-flex align-items-center gap-3">
+              <div style="flex:1">
+                <label class="form-label fw-medium small">Hold 1 mål</label>
+                <input type="number" name="team1goals" class="form-control form-control-lg text-center" value="0" min="0" max="20" />
+              </div>
+              <div class="text-muted fw-bold" style="font-size:1.5rem;margin-top:1.4rem">—</div>
+              <div style="flex:1">
+                <label class="form-label fw-medium small">Hold 2 mål</label>
+                <input type="number" name="team2goals" class="form-control form-control-lg text-center" value="0" min="0" max="20" />
+              </div>
+            </div>
+            <div class="form-text mt-2">Sejr kræver <%= tournament.pointsToWin %> mål.</div>
+          </div>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-gold btn-lg">
+            <i class="bi bi-check-circle me-2"></i>Gem kampresultat
+          </button>
+          <a href="/tournaments/<%= tournament.id %>" class="btn btn-outline-secondary">Annuller</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Pick T1 modal -->
+<div class="modal fade" id="pickT1Modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Vælg Hold 1 spillere</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="list-group list-group-flush">
+          <% players.forEach(p => { %>
+            <button type="button"
+              class="list-group-item list-group-item-action d-flex align-items-center gap-2 py-2 px-3"
+              onclick="pickPlayer('team1', '<%= p.user.username %>', 'pickT1Modal')">
+              <span class="avatar"><%= p.user.username %></span>
+              <div>
+                <div class="fw-medium small"><%= p.user.name %></div>
+                <div class="text-muted" style="font-size:.72rem"><%= p.user.username %></div>
+              </div>
+            </button>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pick T2 modal -->
+<div class="modal fade" id="pickT2Modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Vælg Hold 2 spillere</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="list-group list-group-flush">
+          <% players.forEach(p => { %>
+            <button type="button"
+              class="list-group-item list-group-item-action d-flex align-items-center gap-2 py-2 px-3"
+              onclick="pickPlayer('team2', '<%= p.user.username %>', 'pickT2Modal')">
+              <span class="avatar"><%= p.user.username %></span>
+              <div>
+                <div class="fw-medium small"><%= p.user.name %></div>
+                <div class="text-muted" style="font-size:.72rem"><%= p.user.username %></div>
+              </div>
+            </button>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function pickPlayer(team, initials, modalId) {
+  const inputs = document.querySelectorAll(`input[name="${team}"]`);
+  for (const input of inputs) {
+    if (!input.value) {
+      input.value = initials;
+      bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
+      return;
+    }
+  }
+  // All filled — overwrite first
+  inputs[0].value = initials;
+  bootstrap.Modal.getInstance(document.getElementById(modalId))?.hide();
+}
+</script>
+
+<%- include('partials/footer') %>

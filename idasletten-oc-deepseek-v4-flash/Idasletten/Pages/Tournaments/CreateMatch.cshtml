@@ -1,0 +1,102 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = "Create Match";
+}
+
+<h1 class="text-2xl font-bold">@(Model.IsEditing ? "Edit Match" : "Create Match")</h1>
+
+<form method="post" class="form mt-3">
+    <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-6">
+            <h3 class="text-base font-semibold">Team 1</h3>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Player initials</label>
+                <input asp-for="Team1Player1" class="input" placeholder="Player 1" required />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Player initials</label>
+                <input asp-for="Team1Player2" class="input" placeholder="Player 2 (if doubles)" />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Score</label>
+                <input asp-for="Team1Score" class="input" type="number" min="0" />
+            </div>
+        </div>
+        <div class="col-span-6">
+            <h3 class="text-base font-semibold">Team 2</h3>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Player initials</label>
+                <input asp-for="Team2Player1" class="input" placeholder="Player 1" required />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Player initials</label>
+                <input asp-for="Team2Player2" class="input" placeholder="Player 2 (if doubles)" />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Score</label>
+                <input asp-for="Team2Score" class="input" type="number" min="0" />
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn">
+            @(Model.IsEditing ? "Save Changes" : "Record Match")
+        </button>
+        <a href="/tournaments/@Model.TournamentId/matches" class="btn btn-outline">Cancel</a>
+    </div>
+</form>
+
+<div class="mt-4">
+    <button type="button" class="text-blue-600 hover:underline" onclick="document.getElementById('playerSelectModal').showModal()">
+        Select from existing players
+    </button>
+</div>
+
+<!-- Player Selection Modal -->
+<dialog id="playerSelectModal">
+    <div class="dialog-content">
+        <div class="dialog-header">
+            <h4 class="text-base font-semibold">Select Players</h4>
+            <button type="button" onclick="document.getElementById('playerSelectModal').close()">&times;</button>
+        </div>
+        @if (Model.AvailablePlayers.Any())
+        {
+            <ul class="list-none p-0 m-0">
+                @foreach (var player in Model.AvailablePlayers)
+                {
+                    <li>
+                        <label>
+                            <input type="checkbox" class="checkbox"
+                                   data-initials="@player.User?.Initials"
+                                   onchange="fillPlayerInput(this)" />
+                            @player.User?.Name (@player.User?.Initials)
+                        </label>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-sm">No players available. Add players first.</p>
+        }
+    </div>
+</dialog>
+
+@section Scripts {
+    <script>
+        function fillPlayerInput(checkbox) {
+            var username = checkbox.getAttribute('data-initials');
+            var team1p1 = document.getElementById('Team1Player1');
+            var team1p2 = document.getElementById('Team1Player2');
+            var team2p1 = document.getElementById('Team2Player1');
+            var team2p2 = document.getElementById('Team2Player2');
+
+            if (!team1p1.value) { team1p1.value = username; return; }
+            if (!team1p2.value) { team1p2.value = username; return; }
+            if (!team2p1.value) { team2p1.value = username; return; }
+            if (!team2p2.value) { team2p2.value = username; return; }
+        }
+    </script>
+}

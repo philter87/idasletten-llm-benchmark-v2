@@ -1,0 +1,66 @@
+@page "{userId:guid}"
+@model Idasletten.Pages.Users.ProfileModel
+@{
+    ViewData["Title"] = Model.UserProfile?.Username ?? "User Profile";
+}
+
+@if (Model.UserProfile == null)
+{
+    <p>User not found.</p>
+    return;
+}
+
+<h2>@Model.UserProfile.Username</h2>
+@if (!string.IsNullOrEmpty(Model.UserProfile.Name))
+{
+    <p>@Model.UserProfile.Name</p>
+}
+
+<h3 style="margin-top: 2rem;">Tournament History</h3>
+@if (Model.UserProfile.TournamentPlayers.Any())
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Tournament</th>
+                <th>Score</th>
+                <th>W</th>
+                <th>L</th>
+                <th>Matches</th>
+                <th>Goals For</th>
+                <th>Goals Against</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tp in Model.UserProfile.TournamentPlayers.OrderByDescending(tp => tp.Tournament.CreatedAt))
+            {
+                <tr>
+                    <td>
+                        <a asp-page="/Tournaments/Detail" asp-route-tournamentId="@tp.TournamentId">@tp.Tournament.Name</a>
+                    </td>
+                    <td>@tp.Score.ToString("F0")</td>
+                    <td>@tp.WinCount</td>
+                    <td>@tp.LoseCount</td>
+                    <td>@tp.MatchCount</td>
+                    <td>@tp.PointsWon</td>
+                    <td>@tp.PointsLost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4 style="margin-top: 1.5rem;">Summary</h4>
+    <p>
+        Total Matches: @Model.UserProfile.TournamentPlayers.Sum(tp => tp.MatchCount)<br/>
+        Total Wins: @Model.UserProfile.TournamentPlayers.Sum(tp => tp.WinCount)<br/>
+        Total Losses: @Model.UserProfile.TournamentPlayers.Sum(tp => tp.LoseCount)<br/>
+        Total Goals For: @Model.UserProfile.TournamentPlayers.Sum(tp => tp.PointsWon)<br/>
+        Total Goals Against: @Model.UserProfile.TournamentPlayers.Sum(tp => tp.PointsLost)
+    </p>
+}
+else
+{
+    <p>No tournament history.</p>
+}
+
+<a href="/" class="btn btn-sm">← Home</a>

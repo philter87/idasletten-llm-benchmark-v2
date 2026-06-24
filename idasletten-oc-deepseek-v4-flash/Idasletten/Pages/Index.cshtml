@@ -1,0 +1,44 @@
+﻿@page
+@model Idasletten.Pages.IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 4rem 2rem; border-radius: 8px; margin-bottom: 2rem;">
+    <div class="max-w-7xl mx-auto px-4">
+        <h1 class="text-4xl font-bold">Idasletten</h1>
+        <p class="text-lg mt-2">
+            <em>Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. Hver aften er Idasletten rød af blod.</em>
+        </p>
+    </div>
+</div>
+
+<h2 class="text-xl font-semibold">Active Tournaments</h2>
+<div class="grid grid-cols-12 gap-4 mt-2">
+    @if (Model.Tournaments.Any())
+    {
+        @foreach (var tournament in Model.Tournaments)
+        {
+            <div class="col-span-4 mb-2">
+                <a href="/tournaments/@tournament.Id" class="card cursor-pointer hover:shadow-md" style="display:block; text-decoration:none; color:inherit;">
+                    <div class="card-body">
+                        <h3 class="text-base font-semibold">@tournament.Name</h3>
+                        <p class="text-sm mt-1">
+                            @tournament.Players.Count players &middot; @tournament.ScoreSystem
+                        </p>
+                    </div>
+                </a>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-span-12">
+            <div class="alert">No active tournaments yet.</div>
+        </div>
+    }
+</div>
+
+<div class="mt-4">
+    <a href="/tournaments" class="text-blue-600 hover:underline text-sm">View historical tournaments &rarr;</a>
+</div>

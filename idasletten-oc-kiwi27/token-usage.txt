@@ -1,0 +1,15 @@
+START: 11.29
+
+STATS BEFORE SESSION
+Total Cost                                        $1.09 │
+│Input                                            676.0K │
+│Output                                           167.9K │
+│Cache Read                                        25.5M │
+│Cache Write                                           0
+
+STATS AFTER SESSION
+Total Cost                                        $7.60 │
+│Input                                              1.3M │
+│Output                                           271.6K │
+│Cache Read                                        54.2M │
+│Cache Write                                           0

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Idasletten</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.11/dist/basecoat.cdn.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.11/dist/js/all.min.js" defer></script>
+</head>
+<body class="bg-background text-foreground min-h-screen flex flex-col">
+    <header class="bg-background border-b sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+            <a href="/" class="text-xl font-bold tracking-tight">Idasletten</a>
+            <nav class="flex items-center gap-4">
+                <a href="/" class="text-sm font-medium hover:underline">Home</a>
+                <a href="/tournaments" class="text-sm font-medium hover:underline">Tournaments</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="text-sm text-muted-foreground">@User.Identity.Name</span>
+                    <form method="post" asp-page="/Logout" class="inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="text-sm font-medium hover:underline">Log out</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/login" class="text-sm font-medium hover:underline">Log in</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1">
+        @RenderBody()
+    </main>
+
+    <footer class="border-t py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-sm text-muted-foreground text-center">
+            Idasletten — table football tournaments
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

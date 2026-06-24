@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Idasletten - @ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.11/dist/basecoat.cdn.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="bg-white text-gray-900 min-h-screen flex flex-col">
+    <header class="border-b">
+        <nav class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
+            <a href="/" class="font-bold text-lg no-underline text-inherit hover:opacity-80">⚔️ Idasletten</a>
+            <div class="flex items-center gap-4 text-sm">
+                <a href="/" class="no-underline text-inherit hover:underline">Home</a>
+                <a href="/tournaments" class="no-underline text-inherit hover:underline">Tournaments</a>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <span>@User.Identity?.Name</span>
+                    <form asp-page="/Login" method="post" style="display:inline">
+                        <button type="submit" name="handler" value="Logout" class="btn btn-outline btn-sm">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/login" class="no-underline text-inherit hover:underline">Login</a>
+                }
+            </div>
+        </nav>
+    </header>
+    <main class="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+        @RenderBody()
+    </main>
+    <footer class="border-t py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+            &copy; @DateTime.Now.Year - Idasletten Tournament Manager
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.11/dist/js/all.min.js" defer></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

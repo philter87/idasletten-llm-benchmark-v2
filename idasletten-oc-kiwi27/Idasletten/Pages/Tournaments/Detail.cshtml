@@ -1,0 +1,132 @@
+@page "/tournaments/{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.DetailModel
+@{
+    ViewData["Title"] = Model.Tournament?.Name ?? "Tournament";
+}
+
+<section class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">@Model.Tournament!.Name</h1>
+            <p class="text-sm text-muted-foreground">
+                @Model.Tournament.ScoreSystem scoring &middot; @Model.Tournament.TeamSize vs @Model.Tournament.TeamSize &middot; @Model.Tournament.PointsToWin points to win
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/tournaments/@Model.TournamentId/players" class="btn-outline">Players</a>
+            <a href="/tournaments/@Model.TournamentId/create-match" class="btn">Create match</a>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <div class="flex-1">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold">Scoreboard</h2>
+                <button type="button" onclick="document.getElementById('add-player-dialog').showModal()" class="btn-sm">Add player</button>
+            </div>
+
+            @if (Model.Players.Count == 0)
+            {
+                <div class="alert">
+                    <section>No players yet. Add players to start the tournament.</section>
+                </div>
+            }
+            else
+            {
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="table w-full">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th class="text-right">Score</th>
+                                <th class="text-right">Won</th>
+                                <th class="text-right">Lost</th>
+                                <th class="text-right">+/-</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Players)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="/users/@p.UserId" class="font-medium hover:underline">@p.Initials</a>
+                                        <span class="text-muted-foreground text-sm">@p.Name</span>
+                                    </td>
+                                    <td class="text-right font-semibold">
+                                        @p.Score.ToString("0")
+                                        @if (p.ScoreDiff != 0)
+                                        {
+                                            <span class="text-xs @(p.ScoreDiff > 0 ? "text-green-600" : "text-red-600")">@((p.ScoreDiff > 0 ? "+" : "") + p.ScoreDiff.ToString("0"))</span>
+                                        }
+                                    </td>
+                                    <td class="text-right">@p.WinCount</td>
+                                    <td class="text-right">@p.LoseCount</td>
+                                    <td class="text-right">@(p.PointsWon - p.PointsLost)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <aside class="w-full lg:w-80 space-y-6">
+            @if (Model.Tournament.NextPlannedMatches.Count > 0)
+            {
+                <div class="card">
+                    <header><h3 class="font-semibold">Next planned matches</h3></header>
+                    <ul class="divide-y">
+                        @foreach (var m in Model.Tournament.NextPlannedMatches)
+                        {
+                            <li class="py-2">
+                                <a href="/tournaments/@Model.TournamentId/create-match?matchId=@m.Id" class="hover:underline text-sm">
+                                    @string.Join(" & ", m.Teams.Select(t => string.Join(", ", t.Members)))
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (Model.Tournament.RecentDoneMatches.Count > 0)
+            {
+                <div class="card">
+                    <header><h3 class="font-semibold">Recent matches</h3></header>
+                    <ul class="divide-y">
+                        @foreach (var m in Model.Tournament.RecentDoneMatches)
+                        {
+                            <li class="py-2">
+                                <a href="/tournaments/@Model.TournamentId/create-match?matchId=@m.Id" class="hover:underline text-sm">
+                                    @string.Join(" vs ", m.Teams.Select(t => $"{string.Join(", ", t.Members)} {t.GoalsWon}"))
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <a href="/tournaments/@Model.TournamentId/matches" class="btn-outline w-full">View all matches</a>
+        </aside>
+    </div>
+</section>
+
+<dialog id="add-player-dialog" class="dialog">
+    <form method="post" asp-page="/Tournaments/Players" asp-route-tournamentId="@Model.TournamentId" asp-page-handler="AddPlayer" class="grid gap-4">
+        <header>
+            <h2 class="font-semibold">Add player</h2>
+            <p class="text-sm text-muted-foreground">Enter initials. A new user will be created if needed.</p>
+        </header>
+        <div class="field">
+            <label for="initials">Initials</label>
+            <input id="initials" name="initials" class="input" maxlength="10" required />
+        </div>
+        <div class="field">
+            <label for="name">Name (optional)</label>
+            <input id="name" name="name" class="input" />
+        </div>
+        <footer class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('add-player-dialog').close()" class="btn-outline">Cancel</button>
+            <button type="submit" class="btn">Add</button>
+        </footer>
+    </form>
+</dialog>

@@ -1,0 +1,104 @@
+@page "{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    ViewData["Title"] = "Players";
+}
+
+<h2>Players</h2>
+
+<a asp-page="Detail" asp-route-tournamentId="@RouteData.Values["tournamentId"]" class="btn btn-sm">← Back to tournament</a>
+
+<div style="margin: 1rem 0;">
+    <a href="javascript:openDialog('addPlayerDialog')" class="btn btn-primary btn-sm">Add Player</a>
+</div>
+
+@if (Model.Tournament == null)
+{
+    <p>Tournament not found.</p>
+    return;
+}
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Score</th>
+            <th>W</th>
+            <th>L</th>
+            <th>Matches</th>
+            <th>Goals For</th>
+            <th>Goals Against</th>
+            @if (Model.Tournament.ScoreSystem == ScoreSystem.Lives)
+            {
+                <th>Lives</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var ranked = Model.Tournament.Players.OrderByDescending(p => p.Score).ToList();
+            for (int i = 0; i < ranked.Count; i++)
+            {
+                var p = ranked[i];
+                <tr>
+                    <td>@(i + 1)</td>
+                    <td>
+                        <a asp-page="/Users/Profile" asp-route-userId="@p.UserId">@p.User.Username</a>
+                        @(p.User.Name != null ? $" - {p.User.Name}" : "")
+                    </td>
+                    <td>@p.Score.ToString("F0")</td>
+                    <td>@p.WinCount</td>
+                    <td>@p.LoseCount</td>
+                    <td>@p.MatchCount</td>
+                    <td>@p.PointsWon</td>
+                    <td>@p.PointsLost</td>
+                    @if (Model.Tournament.ScoreSystem == ScoreSystem.Lives)
+                    {
+                        <td>@p.Lives</td>
+                    }
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<h3 style="margin-top: 2rem;">Seed from Previous Tournament</h3>
+@if (Model.SeedTournaments.Any())
+{
+    <form method="post" asp-page-handler="SeedFromTournament" asp-route-tournamentId="@RouteData.Values["tournamentId"]">
+        <div class="form-group">
+            <select name="seedTournamentId" class="form-control">
+                <option value="">Select a tournament...</option>
+                @foreach (var t in Model.SeedTournaments)
+                {
+                    <option value="@t.Id">@t.Name (@t.ScoreSystem)</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Seed Players</button>
+    </form>
+}
+else
+{
+    <p>No previous tournaments to seed from.</p>
+}
+
+@* Add Player Dialog *@
+<div id="addPlayerDialog" class="dialog-overlay">
+    <div class="dialog">
+        <h2>Add Player</h2>
+        <form method="post" asp-page-handler="AddPlayer" asp-route-tournamentId="@RouteData.Values["tournamentId"]">
+            <div class="form-group">
+                <label>Initials</label>
+                <input type="text" name="Initials" class="form-control" maxlength="20" required />
+            </div>
+            <div class="form-group">
+                <label>Name (optional)</label>
+                <input type="text" name="Name" class="form-control" maxlength="200" />
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+            <button type="button" class="btn" onclick="closeDialog('addPlayerDialog')">Cancel</button>
+        </form>
+    </div>
+</div>

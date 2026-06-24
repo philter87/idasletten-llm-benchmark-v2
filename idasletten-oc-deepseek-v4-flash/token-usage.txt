@@ -1,0 +1,22 @@
+Time: 15min + 20min
+Very cheep: 0.09$
+
+Notes: deepseek-v4-flash was unable to apply the basecoat ui components at the first try and it initially skipped the playwright validation. furthermore, it had to tell it that it looked broken
+
+STATUS BEFORE SESSION
+Total Cost                                        $0.96 │
+│Input                                            346.9K │
+│Output                                            63.0K │
+│Cache Read                                         7.6M │
+│Cache Write                                           0 │
+└────────────────────────────────────────────────────────┘
+
+
+STATUS AFTER SESSION
+Total Cost                                        $1.09 │
+│Input                                            676.0K │
+│Output                                           167.9K │
+│Cache Read                                        25.5M │
+│Cache Write                                           0
+
+

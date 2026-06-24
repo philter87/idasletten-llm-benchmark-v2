@@ -1,0 +1,44 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = Model.MatchId.HasValue ? "Match" : "Create match";
+    var isReadOnly = Model.Match?.State == MatchState.Done && !User.Identity?.IsAuthenticated == true;
+}
+
+<section class="max-w-3xl mx-auto px-4 py-12">
+    <h1 class="text-3xl font-semibold tracking-tight mb-6">@(Model.MatchId.HasValue ? "Match result" : "Create match")</h1>
+
+    <form method="post" class="grid gap-6">
+        <input type="hidden" asp-for="TournamentId" />
+        @if (Model.MatchId.HasValue)
+        {
+            <input type="hidden" asp-for="MatchId" />
+        }
+        else
+        {
+            <input type="hidden" name="NewMatchId" value="@Model.NewMatchId" />
+        }
+
+        @for (int i = 0; i < Model.Teams.Count; i++)
+        {
+            <div class="card">
+                <header><h3 class="font-semibold">Team @(i + 1)</h3></header>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="field">
+                        <label asp-for="Teams[i].Initials">Player initials (comma separated)</label>
+                        <input asp-for="Teams[i].Initials" class="input" placeholder="ODN, THO" required />
+                    </div>
+                    <div class="field">
+                        <label asp-for="Teams[i].Score">Score</label>
+                        <input asp-for="Teams[i].Score" class="input" type="number" min="0" required />
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="flex gap-3">
+            <button type="submit" class="btn">Save result</button>
+            <a href="/tournaments/@Model.TournamentId" class="btn-outline">Cancel</a>
+        </div>
+    </form>
+</section>

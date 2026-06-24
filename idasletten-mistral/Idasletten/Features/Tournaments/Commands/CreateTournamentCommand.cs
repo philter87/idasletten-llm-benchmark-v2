@@ -1,4 +1,5 @@
 using Idasletten.Shared.Data.Enums;
+using MediatR;
 
 namespace Idasletten.Features.Tournaments.Commands;
 

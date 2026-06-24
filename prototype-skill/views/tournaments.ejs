@@ -1,0 +1,64 @@
+<%- include('partials/head', { title: 'Turneringer' }) %>
+<%- include('partials/nav') %>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title mb-0">Alle Turneringer</h1>
+    <a href="/tournaments/create" class="btn btn-norse"><i class="bi bi-plus-lg me-1"></i>Opret turnering</a>
+  </div>
+
+  <div class="mb-3">
+    <% if (showAll) { %>
+      <a href="/tournaments" class="btn btn-sm btn-outline-secondary">Skjul arkiverede</a>
+    <% } else { %>
+      <a href="/tournaments?all=1" class="btn btn-sm btn-outline-secondary">Vis alle inkl. arkiverede</a>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead style="background:var(--norse-dark)">
+          <tr>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Navn</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">System</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Hold</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Spillere</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Kampe</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Status</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Oprettet</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tournaments.forEach(t => { %>
+            <tr>
+              <td>
+                <a href="/tournaments/<%= t.id %>" class="fw-medium text-decoration-none text-dark"><%= t.name %></a>
+                <% if (t.roundNumber) { %><span class="badge bg-secondary ms-1" style="font-size:.7rem">Runde <%= t.roundNumber %></span><% } %>
+              </td>
+              <td><span class="sys-badge"><%= t.scoreSystem %></span></td>
+              <td><%= t.teamSize %>v<%= t.teamSize %></td>
+              <td><%= t.playerCount %><% if (t.maxPlayerCount) { %>/<%= t.maxPlayerCount %><% } %></td>
+              <td><%= t.matchCount %></td>
+              <td>
+                <% if (t.isArchived) { %>
+                  <span class="badge bg-secondary">Arkiveret</span>
+                <% } else if (t.isPublic) { %>
+                  <span class="badge bg-success">Aktiv</span>
+                <% } else { %>
+                  <span class="badge bg-warning text-dark">Privat</span>
+                <% } %>
+              </td>
+              <td class="text-muted small"><%= new Date(t.createdAt).toLocaleDateString('da-DK') %></td>
+            </tr>
+          <% }) %>
+          <% if (tournaments.length === 0) { %>
+            <tr><td colspan="7" class="text-center text-muted py-4">Ingen turneringer endnu.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

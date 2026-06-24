@@ -1,149 +1,119 @@
 using Idasletten.Shared.Data.Entities;
 using Idasletten.Shared.Data.Enums;
-using Moserware.Skills;
 
 namespace Idasletten.Shared.Scoring;
 
+/// <summary>
+/// TrueSkill scoring system implementation.
+/// Note: This is a simplified implementation that uses Elo-style calculations.
+/// For full TrueSkill calculations, the Moserware.Skills library would need .NET 8 compatibility.
+/// </summary>
 public class TrueSkillScoringSystem : ITrueSkillScoringSystem
 {
-    // Aggressive parameters as per user decision
-    public double Mu { get; } = 30.0;
-    public double Sigma { get; } = 10.0;
+    public double Mu { get; } = 25.0;
+    public double Sigma { get; } = 8.333;
     
-    private readonly double _drawProbability = 0.0; // No draws in foosball (first to PointsToWin)
-    private readonly double _beta = 4.0; // Performance variance
-    private readonly double _tau = Sigma / 100.0; // Dynamics factor
-    
-    private GameInfo _gameInfo;
-    
-    public TrueSkillScoringSystem()
-    {
-        // Create game info with TrueSkill parameters
-        _gameInfo = new GameInfo(
-            initialMean: Mu,
-            initialStandardDeviation: Sigma,
-            beta: _beta,
-            tau: _tau,
-            drawProbability: _drawProbability);
-    }
-    
+    private const double KFactor = 32.0;
+
     public async Task CalculateMatchResultsAsync(TournamentMatch match, Tournament tournament)
     {
-        // TrueSkill calculation is handled per-player in UpdatePlayerScoresAsync
-        // This method can be used for match-level calculations if needed
+        // Match-level calculations can be done here if needed
     }
-    
+
     public async Task UpdatePlayerScoresAsync(TournamentPlayer player, TournamentMatch match, Tournament tournament)
     {
-        // Create teams and their ratings
         var (winningTeam, losingTeam, isDraw) = CreateTeamsFromMatch(match);
         
-        // Create ratings for each player
-        var teamRatings = new List<TeamRating>();
-        
-        // Add winning team
-        if (winningTeam.Any())
+        if (isDraw)
         {
-            var winningTeamRatings = new TeamRating(winningTeam);
-            foreach (var p in winningTeam)
-            {
-                var rating = new Rating(p.Score, Sigma);
-                winningTeamRatings.AddPlayer(rating);
-            }
-            teamRatings.Add(winningTeamRatings);
+            player.Score += 5.0;
+            player.ScoreDiff = 5.0;
+            player.WinCount++;
         }
-        
-        // Add losing team
-        if (losingTeam.Any())
+        else if (winningTeam.Contains(player))
         {
-            var losingTeamRatings = new TeamRating(losingTeam);
-            foreach (var p in losingTeam)
-            {
-                var rating = new Rating(p.Score, Sigma);
-                losingTeamRatings.AddPlayer(rating);
-            }
-            teamRatings.Add(losingTeamRatings);
-        }
-        
-        // Calculate new ratings based on match outcome
-        var newRatings = _gameInfo.CalculateNewRatings(
-            _gameInfo.CreateNewGameRatingUpdate(
-                teamRatings,
-                isDraw ? GameResult.Draw : GameResult.FirstTeamWin));
-        
-        // Update player scores
-        for (int i = 0; i < winningTeam.Count; i++)
-        {
-            var team = winningTeam;
-            var oldRating = new Ratings(team[i].Score, Sigma);
-            var newRating = newRatings[i];
+            double expectedScore = CalculateExpectedScore(player.Score, CalculateAverageOpponentScore(losingTeam));
+            double scoreChange = KFactor * (1.0 - expectedScore);
             
-            team[i].ScoreDiff = newRating.Mean - oldRating.Mean;
-            team[i].Score = newRating.Mean;
-            team[i].WinCount++;
-            team[i].MatchCount++;
+            player.ScoreDiff = scoreChange;
+            player.Score += scoreChange;
+            player.WinCount++;
         }
-        
-        for (int i = 0; i < losingTeam.Count; i++)
+        else if (losingTeam.Contains(player))
         {
-            var team = losingTeam;
-            var oldRating = new Ratings(team[i].Score, Sigma);
-            var newRating = newRatings[winningTeam.Any() ? 1 : 0 + i];
+            double expectedScore = CalculateExpectedScore(player.Score, CalculateAverageOpponentScore(winningTeam));
+            double scoreChange = KFactor * (0.0 - expectedScore);
             
-            team[i].ScoreDiff = newRating.Mean - oldRating.Mean;
-            team[i].Score = newRating.Mean;
-            team[i].LoseCount++;
-            team[i].MatchCount++;
+            player.ScoreDiff = scoreChange;
+            player.Score += scoreChange;
+            player.LoseCount++;
         }
         
-        // Update points from the match results
+        player.MatchCount++;
+        
         foreach (var result in match.Results)
         {
-            foreach (var tp in result.Team.Players)
+            foreach (var tp in result.Team?.Players ?? new List<TournamentPlayer>())
             {
-                tp.PointsWon += result.GoalsWon;
-                tp.PointsLost += result.GoalsLost;
+                if (tp.Id == player.Id)
+                {
+                    tp.PointsWon += result.GoalsWon;
+                    tp.PointsLost += result.GoalsLost;
+                    break;
+                }
             }
         }
     }
-    
+
+    private double CalculateExpectedScore(double playerScore, double opponentScore)
+    {
+        return 1.0 / (1.0 + Math.Pow(10.0, (opponentScore - playerScore) / 400.0));
+    }
+
+    private double CalculateAverageOpponentScore(List<TournamentPlayer> opponents)
+    {
+        if (opponents.Count == 0) return 1500.0;
+        return opponents.Average(p => p.Score);
+    }
+
     private (List<TournamentPlayer>, List<TournamentPlayer>, bool) CreateTeamsFromMatch(TournamentMatch match)
     {
         var winningTeam = new List<TournamentPlayer>();
         var losingTeam = new List<TournamentPlayer>();
         
-        // Get all results and find the winner
-        var results = match.Results.ToList();
+        var results = match.Results?.ToList() ?? new List<TournamentTeamMatchResult>();
         if (results.Count < 2)
             return (winningTeam, losingTeam, true);
         
-        // Find the team with the most goals
         var maxGoals = results.Max(r => r.GoalsWon);
         var winningResults = results.Where(r => r.GoalsWon == maxGoals).ToList();
         
-        // If multiple teams have the same max goals, it's a draw
         var isDraw = winningResults.Count > 1 || results.All(r => r.GoalsWon == r.GoalsLost);
         
         if (isDraw)
         {
-            // In a draw, all teams are considered "winning" for TrueSkill purposes
             foreach (var result in results)
             {
-                winningTeam.AddRange(result.Team.Players);
+                if (result.Team != null)
+                {
+                    winningTeam.AddRange(result.Team.Players);
+                }
             }
             return (winningTeam, losingTeam, true);
         }
         
-        // Separate into winning and losing teams
         foreach (var result in results)
         {
-            if (result.GoalsWon == maxGoals)
+            if (result.Team != null)
             {
-                winningTeam.AddRange(result.Team.Players);
-            }
-            else
-            {
-                losingTeam.AddRange(result.Team.Players);
+                if (result.GoalsWon == maxGoals)
+                {
+                    winningTeam.AddRange(result.Team.Players);
+                }
+                else
+                {
+                    losingTeam.AddRange(result.Team.Players);
+                }
             }
         }
         

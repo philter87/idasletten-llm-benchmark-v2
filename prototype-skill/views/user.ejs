@@ -1,0 +1,72 @@
+<%- include('partials/head', { title: user.name }) %>
+<%- include('partials/nav') %>
+
+<div class="container py-4" style="max-width:800px">
+  <h1 class="page-title"><%= user.name %></h1>
+
+  <!-- Profile card -->
+  <div class="card mb-4">
+    <div class="card-body d-flex align-items-center gap-4 py-4">
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--norse-dark);color:var(--norse-gold);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;flex-shrink:0">
+        <%= user.username %>
+      </div>
+      <div>
+        <h4 class="mb-1"><%= user.name %></h4>
+        <div class="text-muted"><i class="bi bi-person me-1"></i><%= user.username %></div>
+        <% if (user.email) { %>
+          <div class="text-muted"><i class="bi bi-envelope me-1"></i><%= user.email %></div>
+        <% } %>
+        <div class="mt-2 d-flex gap-2 flex-wrap">
+          <span class="sys-badge"><%= playerRecords.length %> turneringer</span>
+          <span class="sys-badge"><%= playerRecords.reduce((s, p) => s + p.matchCount, 0) %> kampe i alt</span>
+          <span class="sys-badge"><%= playerRecords.reduce((s, p) => s + p.winCount, 0) %> sejre i alt</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tournament history -->
+  <div class="card">
+    <div class="card-header">Turneringshistorik</div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead style="background:var(--norse-dark)">
+          <tr>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Turnering</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">System</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">Score</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">V</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">N</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">K</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">G+</th>
+            <th style="font-family:'Cinzel',serif;font-size:.8rem;color:var(--norse-gold)">G−</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% playerRecords.forEach(p => { %>
+            <% if (p.tournament) { %>
+              <tr>
+                <td>
+                  <a href="/tournaments/<%= p.tournament.id %>" class="text-decoration-none fw-medium"><%= p.tournament.name %></a>
+                  <% if (p.tournament.isArchived) { %><span class="badge bg-secondary ms-1" style="font-size:.65rem">Arkiveret</span><% } %>
+                </td>
+                <td><span class="sys-badge"><%= p.tournament.scoreSystem %></span></td>
+                <td><span class="score-badge"><%= (p.tournament.scoreSystem === 'Elo' || p.tournament.scoreSystem === 'TrueSkill') ? Math.round(p.score) : p.score %></span></td>
+                <td class="fw-medium text-success"><%= p.winCount %></td>
+                <td class="fw-medium text-danger"><%= p.loseCount %></td>
+                <td class="text-muted"><%= p.matchCount %></td>
+                <td><%= p.pointsWon %></td>
+                <td><%= p.pointsLost %></td>
+              </tr>
+            <% } %>
+          <% }) %>
+          <% if (playerRecords.length === 0) { %>
+            <tr><td colspan="8" class="text-center text-muted py-4">Ingen turneringer spillet endnu.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

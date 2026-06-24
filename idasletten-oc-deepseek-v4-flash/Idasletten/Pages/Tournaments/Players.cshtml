@@ -1,0 +1,114 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    ViewData["Title"] = "Players";
+}
+
+<h1 class="text-2xl font-bold">Players</h1>
+
+<button type="button" class="btn mb-3" onclick="document.getElementById('addPlayerModal').showModal()">Add Player</button>
+
+@if (Model.Players.Any())
+{
+    <table class="table w-full">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Score</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Matches</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var player in Model.Players)
+            {
+                <tr>
+                    <td><a href="/users/@player.UserId">@player.User?.Name (@player.User?.Initials)</a></td>
+                    <td>@player.Score.ToString("F1")</td>
+                    <td>@player.WinCount</td>
+                    <td>@player.LoseCount</td>
+                    <td>@player.MatchCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert">No players in this tournament yet.</div>
+}
+
+<hr class="mt-4" />
+<h3 class="text-lg font-semibold">Add players based on a previous tournament</h3>
+
+@if (Model.SeedTournaments.Any())
+{
+    <form method="post" asp-page-handler="SetSeedTournament" class="form mt-2">
+        <div class="flex flex-col gap-1 mb-4">
+            <label class="label">Select tournament</label>
+            <select name="seedTournamentId" class="select">
+                @foreach (var t in Model.SeedTournaments)
+                {
+                    <option value="@t.Id">@t.Name</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline">Load Players</button>
+    </form>
+}
+
+@if (Model.SeedPlayers.Any())
+{
+    <form method="post" asp-page-handler="AddSeedPlayer" class="mt-3">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Score</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sp in Model.SeedPlayers)
+                {
+                    <tr class="@(Model.AddedSeedPlayerIds.Contains(sp.UserId) ? "text-gray-500" : "")">
+                        <td>@sp.User?.Name (@sp.User?.Initials)</td>
+                        <td>@sp.Score.ToString("F1")</td>
+                        <td>
+                            @if (!Model.AddedSeedPlayerIds.Contains(sp.UserId))
+                            {
+                                <button type="submit" name="userId" value="@sp.UserId" class="btn btn-sm">+</button>
+                            }
+                            else
+                            {
+                                <span class="badge">Added</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+}
+
+<!-- Add Player Modal -->
+<dialog id="addPlayerModal">
+    <div class="dialog-content">
+        <div class="dialog-header">
+            <h4 class="text-base font-semibold">Add Player</h4>
+            <button type="button" onclick="document.getElementById('addPlayerModal').close()">&times;</button>
+        </div>
+        <form method="post" asp-page-handler="AddPlayer">
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Player initials</label>
+                <input name="Initials" class="input" required maxlength="3" />
+            </div>
+            <div class="flex flex-col gap-1 mb-4">
+                <label class="label">Name (optional)</label>
+                <input name="Name" class="input" />
+            </div>
+            <button type="submit" class="btn">Add</button>
+        </form>
+    </div>
+</dialog>

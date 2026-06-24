@@ -1,0 +1,12 @@
+Elapsed time: 1 HOUR
+
+
+Total Cost                                        $0.96 │
+│Avg Cost/Day                                      $0.96 │
+│Avg Tokens/Session                                 2.7M │
+│Median Tokens/Session                            632.3K │
+│Input                                            346.9K │
+│Output                                            63.0K │
+│Cache Read                                         7.6M │
+│Cache Write                                           0 │
+└────────────────────────────────────────────────────────┘

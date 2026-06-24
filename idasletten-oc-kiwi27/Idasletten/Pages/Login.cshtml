@@ -1,0 +1,27 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<section class="max-w-md mx-auto px-4 py-24">
+    <div class="card">
+        <header class="text-center">
+            <h1 class="text-2xl font-semibold tracking-tight">Log in</h1>
+            <p class="text-sm text-muted-foreground">Authenticate to create tournaments and edit completed matches.</p>
+        </header>
+
+        <form method="post" asp-page-handler="Microsoft" class="grid gap-4">
+            <button type="submit" class="btn w-full">Log in with Microsoft</button>
+        </form>
+
+        @if (Model.TestLoginEnabled)
+        {
+            <div class="relative my-4 text-center text-xs text-muted-foreground uppercase">or</div>
+            <form method="post" asp-page-handler="Test" class="grid gap-4">
+                <input type="hidden" name="email" value="@Model.TestUserEmail" />
+                <button type="submit" class="btn-outline w-full">Log in as test user (@Model.TestUserEmail)</button>
+            </form>
+        }
+    </div>
+</section>

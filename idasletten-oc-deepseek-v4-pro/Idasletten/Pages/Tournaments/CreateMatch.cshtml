@@ -1,0 +1,42 @@
+@page "{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = "Create Match";
+}
+
+<h2>@(Model.IsEditing ? "Edit Match" : "Record Match Result")</h2>
+
+<form method="post">
+    <input type="hidden" name="MatchId" value="@Model.MatchId" />
+
+    <h3>Team 1</h3>
+    <div class="form-group">
+        <label>Player 1 Initials</label>
+        <input type="text" name="Team1Player1Initials" class="form-control" value="@Model.Team1Player1Initials" required maxlength="20" />
+    </div>
+    <div class="form-group">
+        <label>Player 2 Initials (optional)</label>
+        <input type="text" name="Team1Player2Initials" class="form-control" value="@Model.Team1Player2Initials" maxlength="20" />
+    </div>
+    <div class="form-group">
+        <label>Goals</label>
+        <input type="number" name="Team1Goals" class="form-control" value="@Model.Team1Goals" required min="0" />
+    </div>
+
+    <h3>Team 2</h3>
+    <div class="form-group">
+        <label>Player 1 Initials</label>
+        <input type="text" name="Team2Player1Initials" class="form-control" value="@Model.Team2Player1Initials" required maxlength="20" />
+    </div>
+    <div class="form-group">
+        <label>Player 2 Initials (optional)</label>
+        <input type="text" name="Team2Player2Initials" class="form-control" value="@Model.Team2Player2Initials" maxlength="20" />
+    </div>
+    <div class="form-group">
+        <label>Goals</label>
+        <input type="number" name="Team2Goals" class="form-control" value="@Model.Team2Goals" required min="0" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Result</button>
+    <a asp-page="Detail" asp-route-tournamentId="@RouteData.Values["tournamentId"]" class="btn">Cancel</a>
+</form>

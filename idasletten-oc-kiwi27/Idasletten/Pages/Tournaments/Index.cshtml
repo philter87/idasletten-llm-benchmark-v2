@@ -1,0 +1,48 @@
+@page
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Tournaments";
+}
+
+<section class="max-w-7xl mx-auto px-4 py-12">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-semibold tracking-tight">All tournaments</h1>
+        <a href="/tournaments/create" class="btn">Create tournament</a>
+    </div>
+
+    @if (Model.Tournaments.Count == 0)
+    {
+        <div class="alert">
+            <section>No tournaments found.</section>
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var t in Model.Tournaments)
+            {
+                <a href="/tournaments/@t.Id" class="card hover:border-primary transition-colors">
+                    <header>
+                        <h3 class="text-lg font-semibold">@t.Name</h3>
+                        <p class="text-sm text-muted-foreground">
+                            Round @t.RoundNumber &middot; @t.ScoreSystem &middot; @t.PlayerCount players &middot; @t.MatchCount matches
+                        </p>
+                    </header>
+                    @if (t.IsArchived || !t.IsPublic)
+                    {
+                        <footer class="flex gap-2">
+                            @if (t.IsArchived)
+                            {
+                                <span class="badge">Archived</span>
+                            }
+                            @if (!t.IsPublic)
+                            {
+                                <span class="badge">Private</span>
+                            }
+                        </footer>
+                    }
+                </a>
+            }
+        </div>
+    }
+</section>

@@ -1,0 +1,134 @@
+<%- include('partials/head', { title: 'Spillere — ' + tournament.name }) %>
+<%- include('partials/nav') %>
+
+<div class="container py-4">
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/tournaments">Turneringer</a></li>
+      <li class="breadcrumb-item"><a href="/tournaments/<%= tournament.id %>"><%= tournament.name %></a></li>
+      <li class="breadcrumb-item active">Spillere</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title mb-0">Spillere</h1>
+    <button class="btn btn-norse" data-bs-toggle="modal" data-bs-target="#addPlayerModal">
+      <i class="bi bi-person-plus me-1"></i>Tilføj spiller
+    </button>
+  </div>
+
+  <div class="card mb-4">
+    <div class="table-responsive">
+      <table class="table table-scoreboard table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Spiller</th>
+            <th>Score</th>
+            <th title="Vundet">V</th>
+            <th title="Nederlaget">N</th>
+            <th title="Kampe">K</th>
+            <th title="Mål for">G+</th>
+            <th title="Mål imod">G−</th>
+            <% if (tournament.scoreSystem === 'Lives') { %><th>Liv</th><% } %>
+          </tr>
+        </thead>
+        <tbody>
+          <% players.forEach((p, i) => { %>
+            <tr>
+              <td><span class="rank-num <%= i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '' %>"><%= i + 1 %></span></td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="avatar"><%= p.user.username %></span>
+                  <div>
+                    <a href="/users/<%= p.user.id %>" class="text-decoration-none text-dark fw-medium"><%= p.user.name %></a>
+                    <div class="text-muted" style="font-size:.72rem"><%= p.user.username %></div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="score-badge"><%= (tournament.scoreSystem === 'Elo' || tournament.scoreSystem === 'TrueSkill') ? Math.round(p.score) : p.score %></span></td>
+              <td class="fw-medium text-success"><%= p.winCount %></td>
+              <td class="fw-medium text-danger"><%= p.loseCount %></td>
+              <td class="text-muted"><%= p.matchCount %></td>
+              <td><%= p.pointsWon %></td>
+              <td><%= p.pointsLost %></td>
+              <% if (tournament.scoreSystem === 'Lives') { %>
+                <td>
+                  <% for (let l = 0; l < 3; l++) { %>
+                    <i class="bi bi-heart<%= l < p.lives ? '-fill text-danger' : ' text-muted' %>"></i>
+                  <% } %>
+                </td>
+              <% } %>
+            </tr>
+          <% }) %>
+          <% if (players.length === 0) { %>
+            <tr><td colspan="9" class="text-center text-muted py-5">Ingen spillere endnu.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Seed from previous tournament -->
+  <div class="card">
+    <div class="card-header">Tilføj spillere fra en tidligere turnering</div>
+    <div class="card-body">
+      <% if (otherTournaments.length === 0) { %>
+        <p class="text-muted mb-0">Ingen andre turneringer at hente spillere fra.</p>
+      <% } else { %>
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Vælg turnering
+          </button>
+          <ul class="dropdown-menu">
+            <% otherTournaments.forEach(t => { %>
+              <li>
+                <a class="dropdown-item" href="#"
+                  onclick="showSeedNote('<%= t.name %>');return false"><%= t.name %></a>
+              </li>
+            <% }) %>
+          </ul>
+        </div>
+        <div id="seedNote" class="mt-3 text-muted small"></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Add Player Modal -->
+<div class="modal fade" id="addPlayerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tilføj spiller</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="/tournaments/<%= tournament.id %>/players">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Initialer <span class="text-danger">*</span></label>
+            <input type="text" name="initials" class="form-control text-uppercase" placeholder="PCH" maxlength="5" required autofocus />
+            <div class="form-text">Ukendte initialer opretter automatisk en ny bruger.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Navn <span class="text-muted small">(valgfrit)</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Philip Christensen" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
+          <button type="submit" class="btn btn-norse">Tilføj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function showSeedNote(name) {
+  document.getElementById('seedNote').textContent =
+    `Valgt: ${name} — I den fulde implementation ville spillere herfra vises med +/− knapper.`;
+}
+</script>
+
+<%- include('partials/footer') %>

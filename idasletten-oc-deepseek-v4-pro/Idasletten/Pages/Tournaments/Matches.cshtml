@@ -1,0 +1,117 @@
+@page "{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Matches";
+}
+
+<h2>Matches</h2>
+
+<a asp-page="Detail" asp-route-tournamentId="@RouteData.Values["tournamentId"]" class="btn btn-sm">← Back to tournament</a>
+
+<div style="display:flex; gap:0.5rem; margin: 1rem 0;">
+    <a href="javascript:openDialog('addPlannedDialog')" class="btn btn-sm">Add Planned Match</a>
+    <a href="javascript:openDialog('planSeveralDialog')" class="btn btn-sm">Plan Several Matches</a>
+</div>
+
+<h3>Planned Matches</h3>
+@if (Model.Matches?.Planned.Any() == true)
+{
+    <table>
+        <thead><tr><th>#</th><th>Teams</th><th>State</th><th>Action</th></tr></thead>
+        <tbody>
+            @foreach (var m in Model.Matches.Planned)
+            {
+                <tr>
+                    <td>@m.Order</td>
+                    <td>@string.Join(" vs ", m.Teams.Select(t => string.Join(", ", t.PlayerInitials)))</td>
+                    <td><span class="badge badge-yellow">@m.State</span></td>
+                    <td>
+                        <a asp-page="CreateMatch" asp-route-tournamentId="@RouteData.Values["tournamentId"]" asp-route-matchId="@m.Id" class="btn btn-sm">Play</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No planned matches.</p>
+}
+
+<h3 style="margin-top: 2rem;">Match Results</h3>
+@if (Model.Matches?.Completed.Any() == true)
+{
+    <table>
+        <thead><tr><th>#</th><th>Teams</th><th>Result</th><th>Date</th></tr></thead>
+        <tbody>
+            @foreach (var m in Model.Matches.Completed)
+            {
+                <tr>
+                    <td>@m.Order</td>
+                    <td>@string.Join(", ", m.Teams.SelectMany(t => t.PlayerInitials))</td>
+                    <td>@string.Join(" - ", m.Teams.Select(t => t.GoalsWon.ToString()))</td>
+                    <td>@m.PlayedAt?.ToString("d. MMM yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No completed matches yet.</p>
+}
+
+@* Add Planned Match Dialog *@
+<div id="addPlannedDialog" class="dialog-overlay">
+    <div class="dialog">
+        <h2>Add Planned Match</h2>
+        <form method="post" asp-page-handler="AddPlanned" asp-route-tournamentId="@RouteData.Values["tournamentId"]">
+            <div class="form-group">
+                <label>Team 1 Player 1</label>
+                <input type="text" name="Team1Player1Initials" class="form-control" required maxlength="20" />
+            </div>
+            <div class="form-group">
+                <label>Team 1 Player 2</label>
+                <input type="text" name="Team1Player2Initials" class="form-control" maxlength="20" />
+            </div>
+            <div class="form-group">
+                <label>Team 2 Player 1</label>
+                <input type="text" name="Team2Player1Initials" class="form-control" required maxlength="20" />
+            </div>
+            <div class="form-group">
+                <label>Team 2 Player 2</label>
+                <input type="text" name="Team2Player2Initials" class="form-control" maxlength="20" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+            <button type="button" class="btn" onclick="closeDialog('addPlannedDialog')">Cancel</button>
+        </form>
+    </div>
+</div>
+
+@* Plan Several Dialog *@
+<div id="planSeveralDialog" class="dialog-overlay">
+    <div class="dialog">
+        <h2>Plan Several Matches</h2>
+        <form method="post" asp-page-handler="PlanSeveral" asp-route-tournamentId="@RouteData.Values["tournamentId"]">
+            <div class="form-group">
+                <label>Games per Player</label>
+                <input type="number" name="GamesPerPlayer" class="form-control" value="3" min="1" required />
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="FixedTeams" value="true" /> Fixed Teams
+                </label>
+            </div>
+            <div class="form-group">
+                <label>Seeding Type</label>
+                <select name="SeedingType" class="form-control">
+                    <option value="Random">Random</option>
+                    <option value="Equality">Equality (Best vs Worst)</option>
+                    <option value="Fair">Fair (Top vs Bottom half)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Plan Matches</button>
+            <button type="button" class="btn" onclick="closeDialog('planSeveralDialog')">Cancel</button>
+        </form>
+    </div>
+</div>

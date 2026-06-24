@@ -1,0 +1,191 @@
+<%- include('partials/head', { title: tournament.name }) %>
+<%- include('partials/nav') %>
+
+<div class="container py-4">
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/tournaments">Turneringer</a></li>
+      <li class="breadcrumb-item active"><%= tournament.name %></li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h1 class="page-title mb-2"><%= tournament.name %></h1>
+      <div class="d-flex gap-1 flex-wrap">
+        <span class="sys-badge"><%= tournament.scoreSystem %></span>
+        <span class="sys-badge"><%= tournament.teamSize %>v<%= tournament.teamSize %></span>
+        <span class="sys-badge">Mål til sejr: <%= tournament.pointsToWin %></span>
+        <% if (tournament.maxPlayerCount) { %><span class="sys-badge">Max: <%= tournament.maxPlayerCount %></span><% } %>
+        <% if (tournament.isPublic) { %><span class="badge bg-success">Offentlig</span><% } else { %><span class="badge bg-secondary">Privat</span><% } %>
+      </div>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addPlayerModal">
+      <i class="bi bi-person-plus me-1"></i>Tilføj spiller
+    </button>
+  </div>
+
+  <div class="row g-4">
+    <!-- Scoreboard -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Rangliste</span>
+          <a href="/tournaments/<%= tournament.id %>/players" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-people me-1"></i>Alle spillere
+          </a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-scoreboard table-hover mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Spiller</th>
+                <th>Score</th>
+                <th title="Vundet">V</th>
+                <th title="Nederlaget">N</th>
+                <th title="Kampe">K</th>
+                <th title="Mål for">G+</th>
+                <th title="Mål imod">G−</th>
+                <% if (tournament.scoreSystem === 'Lives') { %><th>Liv</th><% } %>
+                <th title="Scoreændring siden sidste kamp">Δ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% players.forEach((p, i) => { %>
+                <tr>
+                  <td><span class="rank-num <%= i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '' %>"><%= i + 1 %></span></td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="avatar"><%= p.user.username %></span>
+                      <div>
+                        <a href="/users/<%= p.user.id %>" class="text-decoration-none text-dark fw-medium"><%= p.user.name %></a>
+                        <div class="text-muted" style="font-size:.72rem"><%= p.user.username %></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="score-badge"><%= (tournament.scoreSystem === 'Elo' || tournament.scoreSystem === 'TrueSkill') ? Math.round(p.score) : p.score %></span></td>
+                  <td class="fw-medium text-success"><%= p.winCount %></td>
+                  <td class="fw-medium text-danger"><%= p.loseCount %></td>
+                  <td class="text-muted"><%= p.matchCount %></td>
+                  <td><%= p.pointsWon %></td>
+                  <td><%= p.pointsLost %></td>
+                  <% if (tournament.scoreSystem === 'Lives') { %>
+                    <td>
+                      <% for (let l = 0; l < 3; l++) { %>
+                        <i class="bi bi-heart<%= l < p.lives ? '-fill text-danger' : ' text-muted' %>"></i>
+                      <% } %>
+                    </td>
+                  <% } %>
+                  <td>
+                    <% if (p.scoreDiff !== 0) { %>
+                      <span class="<%= p.scoreDiff > 0 ? 'diff-pos' : 'diff-neg' %>">
+                        <%= p.scoreDiff > 0 ? '+' : '' %><%= (tournament.scoreSystem === 'Elo' || tournament.scoreSystem === 'TrueSkill') ? Math.round(p.scoreDiff) : p.scoreDiff %>
+                      </span>
+                    <% } else { %>
+                      <span class="text-muted">—</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+              <% if (players.length === 0) { %>
+                <tr>
+                  <td colspan="10" class="text-center text-muted py-5">
+                    Ingen spillere endnu.
+                    <button class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#addPlayerModal">Tilføj en spiller</button>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="d-grid mb-3">
+        <a href="/tournaments/<%= tournament.id %>/create-match" class="btn btn-gold btn-lg">
+          <i class="bi bi-plus-circle me-2"></i>Registrer kamp
+        </a>
+      </div>
+
+      <% if (planned.length > 0) { %>
+        <div class="mb-3">
+          <div class="sidebar-label">Planlagte kampe</div>
+          <% planned.forEach(m => { %>
+            <a href="/tournaments/<%= tournament.id %>/create-match?matchId=<%= m.id %>" class="text-decoration-none">
+              <div class="match-chip">
+                <% const t1 = m.teams[0], t2 = m.teams[1]; %>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="small">
+                    <strong><%= t1 ? t1.players.join(' & ') : '?' %></strong>
+                    <span style="color:#999;margin:0 .3rem;font-size:.8rem">vs</span>
+                    <strong><%= t2 ? t2.players.join(' & ') : '?' %></strong>
+                  </span>
+                  <i class="bi bi-pencil text-muted small"></i>
+                </div>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <% if (recent.length > 0) { %>
+        <div class="mb-3">
+          <div class="sidebar-label">Seneste kampe</div>
+          <% recent.forEach(m => { %>
+            <div class="match-chip">
+              <% const mt1 = m.teams[0], mt2 = m.teams[1]; %>
+              <% const r1 = mt1 && mt1.result, r2 = mt2 && mt2.result; %>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="small">
+                  <div class="<%= r1 && r1.goalsWon > r1.goalsLost ? 'fw-bold' : 'text-muted' %>"><%= mt1 ? mt1.players.join(' & ') : '?' %></div>
+                  <div class="<%= r2 && r2.goalsWon > r2.goalsLost ? 'fw-bold' : 'text-muted' %>"><%= mt2 ? mt2.players.join(' & ') : '?' %></div>
+                </div>
+                <% if (r1 && r2) { %>
+                  <span style="font-size:1.1rem;font-weight:700"><%= r1.goalsWon %> – <%= r2.goalsWon %></span>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <div class="text-center">
+        <a href="/tournaments/<%= tournament.id %>/matches" class="text-muted small">Se alle kampe →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Player Modal -->
+<div class="modal fade" id="addPlayerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tilføj spiller</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="/tournaments/<%= tournament.id %>/add-player">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Initialer <span class="text-danger">*</span></label>
+            <input type="text" name="initials" class="form-control text-uppercase" placeholder="PCH" maxlength="5" required autofocus />
+            <div class="form-text">Ukendte initialer opretter automatisk en ny bruger.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Navn <span class="text-muted small">(valgfrit)</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Philip Christensen" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
+          <button type="submit" class="btn btn-norse">Tilføj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
