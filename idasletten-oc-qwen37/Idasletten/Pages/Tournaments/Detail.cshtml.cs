@@ -1,0 +1,42 @@
+using Idasletten.Features.Matches.Queries;
+using Idasletten.Features.Players.Commands;
+using Idasletten.Features.Tournaments.Queries;
+using Idasletten.Models;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace Idasletten.Pages.Tournaments;
+
+public class DetailModel : PageModel
+{
+    private readonly IMediator _mediator;
+
+    public DetailModel(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    public Tournament? Tournament { get; set; }
+    public List<TournamentMatch> NextMatches { get; set; } = new();
+    public List<TournamentMatch> RecentMatches { get; set; } = new();
+
+    public async Task<IActionResult> OnGetAsync(Guid id)
+    {
+        Tournament = await _mediator.Send(new GetTournamentQuery(id));
+        if (Tournament == null)
+            return NotFound();
+
+        var allMatches = await _mediator.Send(new ListMatchesQuery(id));
+        NextMatches = allMatches.Where(m => m.State == MatchState.Planned).Take(5).ToList();
+        RecentMatches = allMatches.Where(m => m.State == MatchState.Done).OrderByDescending(m => m.Order).Take(5).ToList();
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostAddPlayerAsync(Guid tournamentId, string username, string? name)
+    {
+        await _mediator.Send(new AddPlayerToTournamentCommand(tournamentId, username, name));
+        return RedirectToPage(new { id = tournamentId });
+    }
+}

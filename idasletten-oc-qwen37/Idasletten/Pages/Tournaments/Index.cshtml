@@ -1,0 +1,65 @@
+@page
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "All Tournaments";
+}
+
+<div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold">All Tournaments</h1>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a href="/tournaments/create" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Create Tournament
+        </a>
+    }
+</div>
+
+@if (Model.Tournaments.Any())
+{
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score System</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Players</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Round</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @foreach (var tournament in Model.Tournaments)
+                {
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <a href="/tournaments/@tournament.Id" class="text-blue-600 hover:underline font-medium">
+                                @tournament.Name
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">@tournament.ScoreSystem</td>
+                        <td class="px-6 py-4 text-gray-600">@tournament.Players.Count</td>
+                        <td class="px-6 py-4">
+                            @if (tournament.IsArchived)
+                            {
+                                <span class="px-2 py-1 text-xs rounded bg-gray-200 text-gray-700">Archived</span>
+                            }
+                            else if (!tournament.IsPublic)
+                            {
+                                <span class="px-2 py-1 text-xs rounded bg-yellow-200 text-yellow-800">Private</span>
+                            }
+                            else
+                            {
+                                <span class="px-2 py-1 text-xs rounded bg-green-200 text-green-800">Active</span>
+                            }
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">@tournament.RoundNumber</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p class="text-gray-600">No tournaments found.</p>
+}

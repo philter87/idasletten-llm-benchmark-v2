@@ -1,0 +1,62 @@
+@page
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Create Tournament";
+}
+
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Create Tournament</h1>
+
+    <form method="post" class="space-y-6">
+        <div>
+            <label asp-for="Input.Name" class="block text-sm font-medium mb-2">Tournament Name</label>
+            <input asp-for="Input.Name" class="w-full border border-gray-300 rounded px-3 py-2" required />
+            <span asp-validation-for="Input.Name" class="text-red-600 text-sm"></span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label asp-for="Input.TeamSize" class="block text-sm font-medium mb-2">Team Size</label>
+                <input asp-for="Input.TeamSize" type="number" min="1" max="10" class="w-full border border-gray-300 rounded px-3 py-2" />
+                <span asp-validation-for="Input.TeamSize" class="text-red-600 text-sm"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.PointsToWin" class="block text-sm font-medium mb-2">Points to Win</label>
+                <input asp-for="Input.PointsToWin" type="number" min="1" class="w-full border border-gray-300 rounded px-3 py-2" />
+                <span asp-validation-for="Input.PointsToWin" class="text-red-600 text-sm"></span>
+            </div>
+        </div>
+
+        <div>
+            <label asp-for="Input.ScoreSystem" class="block text-sm font-medium mb-2">
+                Score System
+                <span class="text-gray-500 text-xs ml-2" title="Elo: Rating-based system. TrueSkill: Advanced rating. Lives: Lose lives when you lose. WinCount: Simple win counter.">
+                    (?)
+                </span>
+            </label>
+            <select asp-for="Input.ScoreSystem" asp-items="Html.GetEnumSelectList<Idasletten.Models.ScoreSystem>()"
+                    class="w-full border border-gray-300 rounded px-3 py-2"></select>
+        </div>
+
+        <div>
+            <label asp-for="Input.MaxPlayerCount" class="block text-sm font-medium mb-2">Max Players (optional)</label>
+            <input asp-for="Input.MaxPlayerCount" type="number" min="2" class="w-full border border-gray-300 rounded px-3 py-2" />
+            <span asp-validation-for="Input.MaxPlayerCount" class="text-red-600 text-sm"></span>
+        </div>
+
+        <div class="flex items-center">
+            <input asp-for="Input.IsPublic" type="checkbox" class="mr-2" />
+            <label asp-for="Input.IsPublic" class="text-sm font-medium">Public Tournament</label>
+        </div>
+
+        <div class="flex gap-4">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                Create
+            </button>
+            <button type="submit" asp-page-handler="CreateAndPlan" class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
+                Create and Plan
+            </button>
+        </div>
+    </form>
+</div>

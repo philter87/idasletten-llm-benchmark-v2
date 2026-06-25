@@ -1,0 +1,175 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Matches";
+}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2">Matches</h1>
+    <a href="/tournaments/@Model.TournamentId" class="text-blue-600 hover:underline">
+        Back to tournament
+    </a>
+</div>
+
+<section class="mb-12">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold">Planned Matches</h2>
+        <div class="flex gap-2">
+            <button onclick="document.getElementById('addMatchModal').classList.remove('hidden')"
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Add Planned Match
+            </button>
+            <button onclick="document.getElementById('planMatchesModal').classList.remove('hidden')"
+                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Plan Several Matches
+            </button>
+        </div>
+    </div>
+
+    @if (Model.PlannedMatches.Any())
+    {
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teams</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var match in Model.PlannedMatches)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">@match.Order</td>
+                            <td class="px-4 py-3">
+                                @foreach (var result in match.TeamResults)
+                                {
+                                    <div class="text-sm">
+                                        @string.Join(", ", result.Team.Players.Select(p => p.User.Username))
+                                    </div>
+                                }
+                            </td>
+                            <td class="px-4 py-3">
+                                <a href="/tournaments/@Model.TournamentId/create-match/@match.Id"
+                                   class="text-blue-600 hover:underline text-sm">
+                                    Edit
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-gray-600">No planned matches.</p>
+    }
+</section>
+
+<section>
+    <h2 class="text-2xl font-bold mb-4">Match Results</h2>
+
+    @if (Model.CompletedMatches.Any())
+    {
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teams & Scores</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var match in Model.CompletedMatches)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">@match.Order</td>
+                            <td class="px-4 py-3">
+                                @foreach (var result in match.TeamResults)
+                                {
+                                    <div class="text-sm mb-1">
+                                        <span class="font-medium">
+                                            @string.Join(", ", result.Team.Players.Select(p => p.User.Username))
+                                        </span>
+                                        <span class="text-gray-600 ml-2">
+                                            @result.GoalsWon - @result.GoalsLost
+                                        </span>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-gray-600">No completed matches yet.</p>
+    }
+</section>
+
+<div id="addMatchModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96">
+        <h3 class="text-xl font-bold mb-4">Add Planned Match</h3>
+        <form method="post" asp-page-handler="AddPlannedMatch">
+            <input type="hidden" name="tournamentId" value="@Model.TournamentId" />
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Team 1 Players (comma-separated initials)</label>
+                <input type="text" name="team1Players" required class="w-full border border-gray-300 rounded px-3 py-2" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Team 2 Players (comma-separated initials)</label>
+                <input type="text" name="team2Players" required class="w-full border border-gray-300 rounded px-3 py-2" />
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    Add Match
+                </button>
+                <button type="button" onclick="document.getElementById('addMatchModal').classList.add('hidden')"
+                        class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="planMatchesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96">
+        <h3 class="text-xl font-bold mb-4">Plan Several Matches</h3>
+        <form method="post" asp-page-handler="PlanMatches">
+            <input type="hidden" name="tournamentId" value="@Model.TournamentId" />
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Games per Player</label>
+                <input type="number" name="gamesPerPlayer" value="1" min="1" required
+                       class="w-full border border-gray-300 rounded px-3 py-2" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Seeding Type</label>
+                <select name="seedingType" class="w-full border border-gray-300 rounded px-3 py-2">
+                    <option value="Random">Random</option>
+                    <option value="Equality">Equality (Best vs Worst)</option>
+                    <option value="Fair">Fair (Top vs Bottom Half)</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="flex items-center">
+                    <input type="checkbox" name="fixedTeams" class="mr-2" />
+                    <span class="text-sm font-medium">Fixed Teams</span>
+                </label>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Plan Matches
+                </button>
+                <button type="button" onclick="document.getElementById('planMatchesModal').classList.add('hidden')"
+                        class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

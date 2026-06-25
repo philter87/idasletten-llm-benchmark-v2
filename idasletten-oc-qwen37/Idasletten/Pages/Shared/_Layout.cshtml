@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Idasletten</title>
+    <link rel="stylesheet" href="https://cdn.basecoatui.com/basecoat.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body class="bg-white">
+    <header class="border-b border-gray-200">
+        <nav class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/" class="text-2xl font-bold text-gray-900">Idasletten</a>
+            <div class="flex items-center gap-4">
+                <a href="/tournaments" class="text-gray-600 hover:text-gray-900">Tournaments</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="text-gray-600">@User.Identity.Name</span>
+                    <form method="post" asp-page="/Account/Logout" class="inline">
+                        <button type="submit" class="text-gray-600 hover:text-gray-900">Logout</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/login" class="text-gray-600 hover:text-gray-900">Login</a>
+                }
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        @RenderBody()
+    </main>
+
+    <footer class="border-t border-gray-200 mt-16">
+        <div class="container mx-auto px-4 py-8 text-center text-gray-600">
+            <p>Idasletten - Table Football Tournament Manager</p>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

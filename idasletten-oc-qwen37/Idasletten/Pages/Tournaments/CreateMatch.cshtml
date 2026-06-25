@@ -1,0 +1,99 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = Model.IsEditing ? "Edit Match" : "Create Match";
+}
+
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">@(Model.IsEditing ? "Edit Match" : "Create Match")</h1>
+
+    <form method="post" class="space-y-6">
+        <input type="hidden" asp-for="TournamentId" />
+        <input type="hidden" asp-for="MatchId" />
+
+        @for (int i = 0; i < Model.TeamCount; i++)
+        {
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold mb-3">Team @(i + 1)</h3>
+
+                @for (int j = 0; j < Model.TeamSize; j++)
+                {
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium mb-1">Player @(j + 1) Initials</label>
+                        <input type="text" name="PlayerInitials[@i][@j]" value="@Model.GetPlayerInitial(i, j)"
+                               class="w-full border border-gray-300 rounded px-3 py-2" required maxlength="10" />
+                    </div>
+                }
+
+                <div class="mt-3">
+                    <label class="block text-sm font-medium mb-1">Goals Scored</label>
+                    <input type="number" name="Goals[@i]" value="@Model.GetGoals(i)" min="0"
+                           class="w-full border border-gray-300 rounded px-3 py-2" required />
+                </div>
+
+                <div class="mt-3">
+                    <button type="button" onclick="openPlayerSelect(@i)"
+                            class="text-blue-600 hover:underline text-sm">
+                        Select from list
+                    </button>
+                </div>
+            </div>
+        }
+
+        <div class="flex gap-4">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                @(Model.IsEditing ? "Save Match" : "Create Match")
+            </button>
+            <a href="/tournaments/@Model.TournamentId" class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<div id="playerSelectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">Select Players</h3>
+        <div id="playerList" class="space-y-2 mb-4">
+            @foreach (var player in Model.TournamentPlayers)
+            {
+                <label class="flex items-center">
+                    <input type="checkbox" value="@player.User.Username" class="mr-2 player-checkbox" />
+                    <span>@player.User.Username</span>
+                    @if (!string.IsNullOrEmpty(player.User.Name))
+                    {
+                        <span class="text-gray-500 text-sm ml-2">(@player.User.Name)</span>
+                    }
+                </label>
+            }
+        </div>
+        <button type="button" onclick="closePlayerSelect()"
+                class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+            Close
+        </button>
+    </div>
+</div>
+
+<script>
+    let currentTeam = 0;
+
+    function openPlayerSelect(teamIndex) {
+        currentTeam = teamIndex;
+        document.getElementById('playerSelectModal').classList.remove('hidden');
+    }
+
+    function closePlayerSelect() {
+        const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+        const initials = Array.from(checkboxes).map(cb => cb.value);
+
+        for (let i = 0; i < initials.length; i++) {
+            const input = document.querySelector(`input[name="PlayerInitials[${currentTeam}][${i}]"]`);
+            if (input) {
+                input.value = initials[i];
+            }
+        }
+
+        document.getElementById('playerSelectModal').classList.add('hidden');
+        document.querySelectorAll('.player-checkbox').forEach(cb => cb.checked = false);
+    }
+</script>

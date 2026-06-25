@@ -1,0 +1,8 @@
+STATS BEFORE SESSION Total Cost                                       $10.36 │
+│Avg Cost/Day                                     $10.36 │
+│Avg Tokens/Session                                 7.2M │
+│Median Tokens/Session                              4.1M │
+│Input                                              2.0M │
+│Output                                           143.1K │
+│Cache Read                                        26.4M │
+│Cache Write                                           0 │

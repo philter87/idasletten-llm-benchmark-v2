@@ -1,0 +1,37 @@
+@page
+@model Idasletten.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="max-w-md mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Login</h1>
+
+    <div class="space-y-4">
+        <form method="post" asp-page-handler="AzureAd">
+            <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">
+                Sign in with Microsoft
+            </button>
+        </form>
+
+        @if (Model.ShowTestLogin)
+        {
+            <div class="border-t border-gray-200 pt-4">
+                <h2 class="text-lg font-semibold mb-3">Test Login</h2>
+                <form method="post" asp-page-handler="TestUser" class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email</label>
+                        <input type="email" name="email" required class="w-full border border-gray-300 rounded px-3 py-2" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Password</label>
+                        <input type="password" name="password" required class="w-full border border-gray-300 rounded px-3 py-2" />
+                    </div>
+                    <button type="submit" class="w-full bg-gray-600 text-white px-6 py-3 rounded hover:bg-gray-700">
+                        Sign in with Test User
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
