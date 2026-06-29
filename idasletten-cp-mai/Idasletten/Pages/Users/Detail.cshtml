@@ -1,0 +1,66 @@
+@page "/users/{userId:guid}"
+@model Idasletten.Pages.Users.DetailModel
+@{
+    ViewData["Title"] = Model.UserStats?.Username ?? "Player";
+}
+
+<section class="max-w-4xl mx-auto px-4 py-12">
+    <div class="flex items-center gap-4 mb-8">
+        @if (!string.IsNullOrEmpty(Model.UserStats!.ImageUrl))
+        {
+            <img src="@Model.UserStats.ImageUrl" alt="" class="size-16 rounded-full object-cover" />
+        }
+        else
+        {
+            <span class="size-16 bg-muted flex items-center justify-center rounded-full text-2xl font-semibold">@Model.UserStats.Username</span>
+        }
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">@Model.UserStats.Username</h1>
+            <p class="text-muted-foreground">@Model.UserStats.Name</p>
+        </div>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-3 mb-8">
+        <div class="card text-center">
+            <div class="text-2xl font-bold">@Model.UserStats.TotalMatches</div>
+            <div class="text-sm text-muted-foreground">Matches</div>
+        </div>
+        <div class="card text-center">
+            <div class="text-2xl font-bold">@Model.UserStats.TotalWins</div>
+            <div class="text-sm text-muted-foreground">Wins</div>
+        </div>
+        <div class="card text-center">
+            <div class="text-2xl font-bold">@(Model.UserStats.TotalPointsWon - Model.UserStats.TotalPointsLost)</div>
+            <div class="text-sm text-muted-foreground">Goal difference</div>
+        </div>
+    </div>
+
+    <h2 class="text-xl font-semibold mb-4">Tournaments</h2>
+    @if (Model.UserStats.Tournaments.Count == 0)
+    {
+        <div class="alert">
+            <section>No tournament data.</section>
+        </div>
+    }
+    else
+    {
+        <div class="rounded-lg border overflow-hidden">
+            <table class="table w-full">
+                <thead>
+                    <tr><th>Tournament</th><th class="text-right">Score</th><th class="text-right">W</th><th class="text-right">L</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.UserStats.Tournaments)
+                    {
+                        <tr>
+                            <td><a href="/tournaments/@t.TournamentId" class="hover:underline">@t.TournamentName</a></td>
+                            <td class="text-right">@t.Score.ToString("0")</td>
+                            <td class="text-right">@t.WinCount</td>
+                            <td class="text-right">@t.LoseCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

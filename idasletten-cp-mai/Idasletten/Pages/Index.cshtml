@@ -1,0 +1,43 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="relative bg-slate-100">
+    <div class="max-w-7xl mx-auto px-4 py-12 flex flex-col items-center text-center gap-6">
+        <img src="https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=1200&q=80" alt="Table football" class="w-full max-w-3xl h-64 md:h-80 object-cover rounded-lg shadow" />
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight">Idasletten</h1>
+        <p class="max-w-2xl text-lg text-muted-foreground italic">
+            "Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. Hver aften er Idasletten rød af blod."
+        </p>
+    </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 py-12">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-semibold tracking-tight">Public tournaments</h2>
+        <a href="/tournaments" class="text-sm text-muted-foreground hover:text-foreground">Historical tournaments</a>
+    </div>
+
+    @if (Model.PublicTournaments.Count == 0)
+    {
+        <div class="alert">
+            <section>No public tournaments yet. Log in to create one.</section>
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var t in Model.PublicTournaments)
+            {
+                <a href="/tournaments/@t.Id" class="card hover:border-primary transition-colors">
+                    <header>
+                        <h3 class="text-lg font-semibold">@t.Name</h3>
+                        <p class="text-sm text-muted-foreground">@t.ScoreSystem scoring &middot; @t.PlayerCount players &middot; @t.MatchCount matches</p>
+                    </header>
+                </a>
+            }
+        </div>
+    }
+</section>

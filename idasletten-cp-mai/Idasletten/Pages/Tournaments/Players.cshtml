@@ -1,0 +1,99 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    ViewData["Title"] = "Players";
+}
+
+<section class="max-w-7xl mx-auto px-4 py-12">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-semibold tracking-tight">Players</h1>
+        <button type="button" onclick="document.getElementById('add-player-dialog').showModal()" class="btn">Add a player</button>
+    </div>
+
+    @if (Model.Players.Count == 0)
+    {
+        <div class="alert mb-8">
+            <section>No players yet.</section>
+        </div>
+    }
+    else
+    {
+        <div class="rounded-lg border overflow-hidden mb-8">
+            <table class="table w-full">
+                <thead>
+                    <tr><th>Initials</th><th>Name</th><th class="text-right">Score</th><th class="text-right">Matches</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Players)
+                    {
+                        <tr>
+                            <td><a href="/users/@p.UserId" class="hover:underline font-medium">@p.Initials</a></td>
+                            <td>@p.Name</td>
+                            <td class="text-right">@p.Score.ToString("0")</td>
+                            <td class="text-right">@p.MatchCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="card">
+        <header><h3 class="font-semibold">Add players based on a previous tournament</h3></header>
+        @if (Model.Tournament?.SeedTournamentId == null)
+        {
+            <p class="text-sm text-muted-foreground mb-4">Select a previous tournament to seed players from.</p>
+            <form method="post" asp-page-handler="SetSeedTournament" class="grid gap-2">
+                <select name="seedTournamentId" class="select" required>
+                    @foreach (var opt in Model.SeedOptions)
+                    {
+                        <option value="@opt.UserId">@opt.Initials</option>
+                    }
+                </select>
+                <button type="submit" class="btn-outline">Use this tournament</button>
+            </form>
+        }
+        else
+        {
+            <ul class="divide-y">
+                @foreach (var opt in Model.SeedOptions)
+                {
+                    <li class="py-2 flex items-center justify-between">
+                        <span class="@(opt.IsAdded ? "line-through text-muted-foreground" : "")">@opt.Initials</span>
+                        @if (!opt.IsAdded)
+                        {
+                            <form method="post" asp-page-handler="AddSeedPlayer" class="inline">
+                                <input type="hidden" name="userId" value="@opt.UserId" />
+                                <button type="submit" class="btn-sm">+</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-xs text-muted-foreground">Added</span>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</section>
+
+<dialog id="add-player-dialog" class="dialog">
+    <form method="post" asp-page-handler="AddPlayer" class="grid gap-4">
+        <header>
+            <h2 class="font-semibold">Add player</h2>
+        </header>
+        <div class="field">
+            <label for="initials">Initials</label>
+            <input id="initials" name="initials" class="input" required />
+        </div>
+        <div class="field">
+            <label for="name">Name (optional)</label>
+            <input id="name" name="name" class="input" />
+        </div>
+        <footer class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('add-player-dialog').close()" class="btn-outline">Cancel</button>
+            <button type="submit" class="btn">Add</button>
+        </footer>
+    </form>
+</dialog>

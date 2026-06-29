@@ -1,0 +1,51 @@
+@page
+@model Idasletten.Pages.Tournaments.CreateModel
+@using Idasletten.Features.Tournaments
+@{
+    ViewData["Title"] = "Create tournament";
+}
+
+<section class="max-w-2xl mx-auto px-4 py-12">
+    <h1 class="text-3xl font-semibold tracking-tight mb-6">Create tournament</h1>
+
+    <form method="post" class="grid gap-6">
+        <div class="field">
+            <label asp-for="Name">Name</label>
+            <input asp-for="Name" class="input" required />
+        </div>
+
+        <div class="grid gap-6 sm:grid-cols-2">
+            <div class="field">
+                <label asp-for="TeamSize">Players per team</label>
+                <input asp-for="TeamSize" class="input" type="number" min="1" max="10" value="2" />
+            </div>
+            <div class="field">
+                <label asp-for="PointsToWin">Points to win</label>
+                <input asp-for="PointsToWin" class="input" type="number" min="1" value="5" />
+            </div>
+        </div>
+
+        <div class="field">
+            <label asp-for="ScoreSystem">Score system</label>
+            <select asp-for="ScoreSystem" class="select" asp-items="Html.GetEnumSelectList<ScoreSystem>()"></select>
+            <p class="text-xs text-muted-foreground mt-1">
+                Elo uses team-average ratings. TrueSkill uses the Moserware TrueSkill library. Lives gives each player 3 lives. WinCount ranks by number of wins.
+            </p>
+        </div>
+
+        <div class="field">
+            <label asp-for="MaxPlayerCount">Max player count (optional)</label>
+            <input asp-for="MaxPlayerCount" class="input" type="number" min="2" />
+        </div>
+
+        <div class="flex items-center gap-2">
+            <input asp-for="IsPublic" type="checkbox" class="checkbox" />
+            <label asp-for="IsPublic" class="text-sm">Public tournament</label>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button type="submit" name="action" value="create" class="btn">Create</button>
+            <button type="submit" name="action" value="create-and-plan" class="btn-outline">Create and Plan</button>
+        </div>
+    </form>
+</section>

@@ -1,0 +1,124 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@using Idasletten.Features.Matches.Commands
+@{
+    ViewData["Title"] = "Matches";
+}
+
+<section class="max-w-7xl mx-auto px-4 py-12">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-semibold tracking-tight">Matches</h1>
+        <div class="flex gap-2">
+            <button type="button" onclick="document.getElementById('plan-match-dialog').showModal()" class="btn-outline">Add planned match</button>
+            <button type="button" onclick="document.getElementById('plan-several-dialog').showModal()" class="btn">Plan several matches</button>
+        </div>
+    </div>
+
+    <h2 class="text-xl font-semibold mb-4">Planned matches</h2>
+    @if (Model.Matches.Planned.Count == 0)
+    {
+        <div class="alert mb-8">
+            <section>No planned matches.</section>
+        </div>
+    }
+    else
+    {
+        <div class="rounded-lg border overflow-hidden mb-8">
+            <table class="table w-full">
+                <thead>
+                    <tr><th>#</th><th>Teams</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Matches.Planned)
+                    {
+                        <tr>
+                            <td>@m.Order</td>
+                            <td>@string.Join(" vs ", m.Teams.Select(t => string.Join(", ", t.Members)))</td>
+                            <td class="text-right">
+                                <a href="/tournaments/@Model.TournamentId/create-match?matchId=@m.Id" class="text-sm hover:underline">Record result</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h2 class="text-xl font-semibold mb-4">Match results</h2>
+    @if (Model.Matches.Done.Count == 0)
+    {
+        <div class="alert">
+            <section>No completed matches.</section>
+        </div>
+    }
+    else
+    {
+        <div class="rounded-lg border overflow-hidden">
+            <table class="table w-full">
+                <thead>
+                    <tr><th>#</th><th>Teams</th><th>Played</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Matches.Done)
+                    {
+                        <tr>
+                            <td>@m.Order</td>
+                            <td>@string.Join(" vs ", m.Teams.Select(t => $"{string.Join(", ", t.Members)} {t.GoalsWon}"))</td>
+                            <td>@m.CompletedAt?.ToString("g")</td>
+                            <td class="text-right">
+                                <a href="/tournaments/@Model.TournamentId/create-match?matchId=@m.Id" class="text-sm hover:underline">Edit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<dialog id="plan-match-dialog" class="dialog">
+    <form method="post" asp-page-handler="PlanSingle" class="grid gap-4">
+        <header>
+            <h2 class="font-semibold">Add planned match</h2>
+            <p class="text-sm text-muted-foreground">Enter comma-separated initials for each team.</p>
+        </header>
+        <div class="grid gap-4">
+            <div class="field">
+                <label>Team 1</label>
+                <input name="PlanMatchInitials" class="input" placeholder="ODN, THO" required />
+            </div>
+            <div class="field">
+                <label>Team 2</label>
+                <input name="PlanMatchInitials" class="input" placeholder="KLA, BJA" required />
+            </div>
+        </div>
+        <footer class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('plan-match-dialog').close()" class="btn-outline">Cancel</button>
+            <button type="submit" class="btn">Plan</button>
+        </footer>
+    </form>
+</dialog>
+
+<dialog id="plan-several-dialog" class="dialog">
+    <form method="post" asp-page-handler="PlanSeveral" class="grid gap-4">
+        <header>
+            <h2 class="font-semibold">Plan several matches</h2>
+        </header>
+        <div class="field">
+            <label asp-for="GamesPerPlayer">Games per player</label>
+            <input asp-for="GamesPerPlayer" class="input" type="number" min="1" value="2" />
+        </div>
+        <div class="field">
+            <label asp-for="Seeding">Seeding type</label>
+            <select asp-for="Seeding" class="select" asp-items="Html.GetEnumSelectList<SeedingType>()"></select>
+        </div>
+        <div class="flex items-center gap-2">
+            <input asp-for="FixedTeam" type="checkbox" class="checkbox" />
+            <label asp-for="FixedTeam" class="text-sm">Fixed teams</label>
+        </div>
+        <footer class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('plan-several-dialog').close()" class="btn-outline">Cancel</button>
+            <button type="submit" class="btn">Plan</button>
+        </footer>
+    </form>
+</dialog>
