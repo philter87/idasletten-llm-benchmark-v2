@@ -1,0 +1,9 @@
+@page "/logout"
+@model Idasletten.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Log ud";
+}
+<h1 class="text-2xl font-bold mb-6">Log ud</h1>
+<form method="post" asp-antiforgery="true">
+    <button type="submit" class="btn">Bekræft log ud</button>
+</form>

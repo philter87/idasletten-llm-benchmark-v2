@@ -1,0 +1,49 @@
+@page "/users/{userId:guid}"
+@model Idasletten.Pages.Users.DetailModel
+@{
+    ViewData["Title"] = Model.UserDetail.Name;
+}
+
+<div class="flex items-center gap-4 mb-6">
+    @if (Model.UserDetail.ImageUrl is not null)
+    {
+        <img src="@Model.UserDetail.ImageUrl" alt="@Model.UserDetail.Name" class="avatar" style="width:3rem;height:3rem;" />
+    }
+    <div>
+        <h1 class="text-2xl font-bold">@Model.UserDetail.Name</h1>
+        <p class="text-muted-foreground text-sm">@Model.UserDetail.Username</p>
+    </div>
+</div>
+
+@if (Model.UserDetail.Tournaments.Count == 0)
+{
+    <p class="text-muted-foreground">Har ikke deltaget i nogen turneringer endnu.</p>
+}
+else
+{
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Turnering</th>
+                    <th>Score</th>
+                    <th>Sejre</th>
+                    <th>Nederlag</th>
+                    <th>Kampe</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stats in Model.UserDetail.Tournaments)
+                {
+                    <tr>
+                        <td><a href="/tournaments/@stats.TournamentId" class="underline">@stats.TournamentName</a></td>
+                        <td>@stats.Score.ToString("0.#")</td>
+                        <td>@stats.WinCount</td>
+                        <td>@stats.LoseCount</td>
+                        <td>@stats.MatchCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

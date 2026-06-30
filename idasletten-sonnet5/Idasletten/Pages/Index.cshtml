@@ -1,0 +1,41 @@
+@page "/"
+@model IndexModel
+@{
+    ViewData["Title"] = "Idasletten";
+}
+
+<section class="hero mb-8">
+    <h1 class="text-3xl font-bold mb-4">Idasletten</h1>
+    <p class="max-w-2xl mx-auto">
+        Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her
+        vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til
+        Ragnarok. Hver aften er Idasletten rød af blod.
+    </p>
+</section>
+
+<section>
+    <h2 class="text-xl font-semibold mb-4">Aktive turneringer</h2>
+
+    @if (Model.PublicTournaments.Count == 0)
+    {
+        <p class="text-muted-foreground">Ingen åbne turneringer lige nu.</p>
+    }
+    else
+    {
+        <div class="tournament-grid">
+            @foreach (var tournament in Model.PublicTournaments)
+            {
+                <a href="/tournaments/@tournament.Id" class="card">
+                    <header>
+                        <h3>@tournament.Name</h3>
+                        <p>@tournament.ScoreSystem &middot; @tournament.PlayerCount spillere</p>
+                    </header>
+                </a>
+            }
+        </div>
+    }
+</section>
+
+<p class="mt-8 text-sm">
+    <a href="/tournaments" class="text-muted-foreground underline">Se historiske turneringer</a>
+</p>

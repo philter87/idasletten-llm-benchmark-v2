@@ -1,0 +1,140 @@
+@page "/tournaments/{tournamentId:guid}"
+@model Idasletten.Pages.Tournaments.DetailModel
+@{
+    ViewData["Title"] = Model.Tournament.Name;
+}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">@Model.Tournament.Name</h1>
+        <p class="text-muted-foreground text-sm">
+            @Model.Tournament.ScoreSystem &middot; hold på @Model.Tournament.TeamSize &middot; først til @Model.Tournament.PointsToWin point
+            @if (Model.Tournament.RoundNumber is { } round)
+            {
+                <text> &middot; runde @round</text>
+            }
+        </p>
+    </div>
+</div>
+
+<div class="split-layout">
+    <div class="split-main">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Stilling</h2>
+            <button type="button" class="btn" data-size="sm" onclick="document.getElementById('add-player-dialog').showModal()">Tilføj spiller</button>
+        </div>
+
+        @if (Model.Players.Count == 0)
+        {
+            <p class="text-muted-foreground">Ingen spillere endnu.</p>
+        }
+        else
+        {
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Spiller</th>
+                            <th>Sejre</th>
+                            <th>Nederlag</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var player in Model.Players)
+                        {
+                            <tr>
+                                <td><a href="/users/@player.UserId" class="font-medium">@player.Username</a></td>
+                                <td>@player.WinCount</td>
+                                <td>@player.LoseCount</td>
+                                <td>
+                                    @player.Score.ToString("0.#")
+                                    @if (player.ScoreDiff != 0)
+                                    {
+                                        <span class="text-muted-foreground text-sm">(@(player.ScoreDiff > 0 ? "+" : "")@player.ScoreDiff.ToString("0.#"))</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <aside class="split-aside">
+        <form method="post" asp-page-handler="CreateMatch" asp-route-tournamentId="@Model.Tournament.Id">
+            <button type="submit" class="btn w-full">Opret kamp</button>
+        </form>
+
+        <div class="card">
+            <header><h3>Planlagte kampe</h3></header>
+            <section>
+                @if (Model.PlannedMatches.Count == 0)
+                {
+                    <p class="text-muted-foreground text-sm">Ingen planlagte kampe.</p>
+                }
+                else
+                {
+                    <ul class="flex flex-col gap-2">
+                        @foreach (var match in Model.PlannedMatches)
+                        {
+                            <li><a href="/tournaments/@Model.Tournament.Id/create-match/@match.Id" class="text-sm underline">@match.Label</a></li>
+                        }
+                    </ul>
+                }
+            </section>
+        </div>
+
+        <div class="card">
+            <header><h3>Seneste resultater</h3></header>
+            <section>
+                @if (Model.RecentMatches.Count == 0)
+                {
+                    <p class="text-muted-foreground text-sm">Ingen spillede kampe endnu.</p>
+                }
+                else
+                {
+                    <ul class="flex flex-col gap-2">
+                        @foreach (var match in Model.RecentMatches)
+                        {
+                            <li>
+                                <a href="/tournaments/@Model.Tournament.Id/create-match/@match.Id" class="text-sm underline">
+                                    @match.Label &mdash; @match.ScoreLabel
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+        </div>
+
+        <a href="/tournaments/@Model.Tournament.Id/matches" class="text-sm underline text-center">Se alle kampe</a>
+        <a href="/tournaments/@Model.Tournament.Id/players" class="text-sm underline text-center">Administrer spillere</a>
+    </aside>
+</div>
+
+<dialog id="add-player-dialog" class="dialog" aria-labelledby="add-player-title" onclick="if (event.target === this) this.close()">
+    <div class="dialog-content">
+        <header>
+            <h2 id="add-player-title">Tilføj spiller</h2>
+            <p>Indtast initialer for en eksisterende eller ny spiller.</p>
+        </header>
+        <section>
+            <form method="post" asp-page-handler="AddPlayer" asp-route-tournamentId="@Model.Tournament.Id" id="add-player-form" class="form grid gap-4">
+                <div role="group" class="field">
+                    <label for="PlayerUsername">Initialer</label>
+                    <input type="text" id="PlayerUsername" name="PlayerUsername" required />
+                </div>
+                <div role="group" class="field">
+                    <label for="PlayerName">Navn (valgfri)</label>
+                    <input type="text" id="PlayerName" name="PlayerName" />
+                </div>
+            </form>
+        </section>
+        <footer>
+            <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Annullér</button>
+            <button type="submit" form="add-player-form" class="btn">Tilføj</button>
+        </footer>
+    </div>
+</dialog>

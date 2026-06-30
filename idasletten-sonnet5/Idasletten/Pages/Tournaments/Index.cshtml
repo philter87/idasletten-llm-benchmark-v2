@@ -1,0 +1,61 @@
+@page "/tournaments"
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Turneringer";
+}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold">Turneringer</h1>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a href="/tournaments/create" class="btn">Opret turnering</a>
+    }
+    else
+    {
+        <a href="/login" class="btn" data-variant="outline" title="Log ind for at oprette en turnering">Log ind for at oprette</a>
+    }
+</div>
+
+@if (Model.Tournaments.Count == 0)
+{
+    <p class="text-muted-foreground">Ingen turneringer endnu.</p>
+}
+else
+{
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Navn</th>
+                    <th>Scoresystem</th>
+                    <th>Spillere</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tournament in Model.Tournaments)
+                {
+                    <tr>
+                        <td><a href="/tournaments/@tournament.Id" class="font-medium">@tournament.Name</a></td>
+                        <td>@tournament.ScoreSystem</td>
+                        <td>@tournament.PlayerCount</td>
+                        <td>
+                            @if (tournament.IsArchived)
+                            {
+                                <span class="badge" data-variant="secondary">Arkiveret</span>
+                            }
+                            else if (tournament.IsPublic)
+                            {
+                                <span class="badge">Offentlig</span>
+                            }
+                            else
+                            {
+                                <span class="badge" data-variant="outline">Privat</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

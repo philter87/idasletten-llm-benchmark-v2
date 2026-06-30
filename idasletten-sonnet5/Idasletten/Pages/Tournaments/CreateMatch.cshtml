@@ -1,0 +1,83 @@
+@page "/tournaments/{tournamentId:guid}/create-match/{matchId:guid}"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = "Kamp";
+}
+
+<h1 class="text-2xl font-bold mb-2">@Model.Tournament.Name</h1>
+<p class="text-muted-foreground mb-6">
+    @(Model.ReadOnly ? "Kampresultat" : Model.Match.State == Idasletten.Features.Matches.MatchState.Done ? "Redigér kampresultat" : "Indtast kamp")
+</p>
+
+<form method="post" asp-antiforgery="true" class="flex flex-col gap-6 max-w-2xl">
+    @for (var i = 0; i < Model.Teams.Count; i++)
+    {
+        <div class="card">
+            <header><h3>Hold @(i + 1)</h3></header>
+            <section class="grid gap-4">
+                <div role="group" class="field">
+                    <label for="Teams_@(i)__InitialsCsv">Initialer (kommasepareret)</label>
+                    <input type="text" id="Teams_@(i)__InitialsCsv" name="Teams[@i].InitialsCsv"
+                           value="@Model.Teams[i].InitialsCsv" disabled="@Model.ReadOnly" placeholder="ABC, DEF" />
+                </div>
+                @if (!Model.ReadOnly)
+                {
+                    <button type="button" class="btn self-start" data-variant="link" data-size="sm"
+                            onclick="document.getElementById('select-players-@i').showModal()">
+                        Vælg fra liste
+                    </button>
+                }
+                <div role="group" class="field">
+                    <label for="Teams_@(i)__Score">Score</label>
+                    <input type="number" id="Teams_@(i)__Score" name="Teams[@i].Score" min="0"
+                           value="@Model.Teams[i].Score" disabled="@Model.ReadOnly" />
+                </div>
+            </section>
+        </div>
+
+        <dialog id="select-players-@i" class="dialog" aria-labelledby="select-players-@(i)-title" onclick="if (event.target === this) this.close()">
+            <div class="dialog-content">
+                <header><h2 id="select-players-@(i)-title">Vælg spillere til hold @(i + 1)</h2></header>
+                <section class="-mx-4 max-h-[50vh] overflow-y-auto px-4">
+                    <div class="flex flex-col gap-2">
+                        @foreach (var player in Model.TournamentPlayers)
+                        {
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" class="select-player-checkbox" data-team="@i" value="@player.Username" />
+                                @player.Username &mdash; @player.Name
+                            </label>
+                        }
+                    </div>
+                </section>
+                <footer>
+                    <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Annullér</button>
+                    <button type="button" class="btn" onclick="appendSelectedPlayers(@i)">Tilføj valgte</button>
+                </footer>
+            </div>
+        </dialog>
+    }
+
+    @if (!Model.ReadOnly)
+    {
+        <div class="flex items-center gap-2">
+            <button type="submit" name="recordResult" value="false" class="btn" data-variant="outline">Gem som planlagt</button>
+            <button type="submit" name="recordResult" value="true" class="btn">Gem resultat</button>
+        </div>
+    }
+</form>
+
+@section Scripts {
+    <script>
+        function appendSelectedPlayers(teamIndex) {
+            var checkboxes = document.querySelectorAll('.select-player-checkbox[data-team="' + teamIndex + '"]:checked');
+            if (checkboxes.length === 0) return;
+            var input = document.getElementById('Teams_' + teamIndex + '__InitialsCsv');
+            var existing = input.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            checkboxes.forEach(function (cb) {
+                if (existing.indexOf(cb.value) === -1) existing.push(cb.value);
+            });
+            input.value = existing.join(', ');
+            document.getElementById('select-players-' + teamIndex).close();
+        }
+    </script>
+}

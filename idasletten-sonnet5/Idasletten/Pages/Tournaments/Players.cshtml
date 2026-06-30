@@ -1,0 +1,93 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    ViewData["Title"] = "Spillere";
+    var currentUserIds = Model.Players.Select(p => p.UserId).ToHashSet();
+}
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold">Spillere &mdash; @Model.Tournament.Name</h1>
+    <button type="button" class="btn" onclick="document.getElementById('add-player-dialog').showModal()">Tilføj spiller</button>
+</div>
+
+<div class="table-container mb-8">
+    <table class="table">
+        <thead><tr><th>Spiller</th><th>Score</th></tr></thead>
+        <tbody>
+            @foreach (var player in Model.Players)
+            {
+                <tr>
+                    <td><a href="/users/@player.UserId" class="underline">@player.Username</a> &mdash; @player.Name</td>
+                    <td>@player.Score.ToString("0.#")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<section>
+    <h2 class="text-lg font-semibold mb-4">Tilføj spillere fra tidligere turnering</h2>
+
+    @if (Model.SeedTournament is null)
+    {
+        <form method="post" asp-page-handler="SetSeedTournament" asp-route-tournamentId="@Model.Tournament.Id" class="flex items-center gap-2">
+            <select class="input" name="seedTournamentId">
+                @foreach (var t in Model.CandidateSeedTournaments)
+                {
+                    <option value="@t.Id">@t.Name</option>
+                }
+            </select>
+            <button type="submit" class="btn" data-variant="outline">Vælg</button>
+        </form>
+    }
+    else
+    {
+        <p class="text-muted-foreground mb-4">Baseret på: @Model.SeedTournament.Name</p>
+        <ul class="flex flex-col gap-2">
+            @foreach (var seedPlayer in Model.SeedTournamentPlayers)
+            {
+                var alreadyAdded = currentUserIds.Contains(seedPlayer.UserId);
+                <li class="flex items-center gap-2">
+                    @if (alreadyAdded)
+                    {
+                        <span class="line-through text-muted-foreground">@seedPlayer.Username &mdash; @seedPlayer.Name</span>
+                        <form method="post" asp-page-handler="RemoveFromSeed" asp-route-tournamentId="@Model.Tournament.Id">
+                            <input type="hidden" name="userId" value="@seedPlayer.UserId" />
+                            <button type="submit" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Fjern">&minus;</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span>@seedPlayer.Username &mdash; @seedPlayer.Name</span>
+                        <form method="post" asp-page-handler="AddFromSeed" asp-route-tournamentId="@Model.Tournament.Id">
+                            <input type="hidden" name="username" value="@seedPlayer.Username" />
+                            <button type="submit" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Tilføj">+</button>
+                        </form>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+<dialog id="add-player-dialog" class="dialog" aria-labelledby="add-player-title" onclick="if (event.target === this) this.close()">
+    <div class="dialog-content">
+        <header><h2 id="add-player-title">Tilføj spiller</h2></header>
+        <section>
+            <form method="post" asp-page-handler="AddPlayer" asp-route-tournamentId="@Model.Tournament.Id" id="add-player-form" class="form grid gap-4">
+                <div role="group" class="field">
+                    <label for="PlayerUsername">Initialer</label>
+                    <input type="text" id="PlayerUsername" name="PlayerUsername" required />
+                </div>
+                <div role="group" class="field">
+                    <label for="PlayerName">Navn (valgfri)</label>
+                    <input type="text" id="PlayerName" name="PlayerName" />
+                </div>
+            </form>
+        </section>
+        <footer>
+            <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Annullér</button>
+            <button type="submit" form="add-player-form" class="btn">Tilføj</button>
+        </footer>
+    </div>
+</dialog>

@@ -1,0 +1,43 @@
+@page "/login"
+@model Idasletten.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Log ind";
+}
+
+<h1 class="text-2xl font-bold mb-6">Log ind</h1>
+
+@if (Model.Error is not null)
+{
+    <div class="alert mb-4" data-variant="destructive"><p>@Model.Error</p></div>
+}
+
+<div class="flex flex-col gap-6 max-w-sm">
+    <form method="post" asp-page-handler="Microsoft">
+        <input type="hidden" name="returnUrl" value="@Request.Query["returnUrl"]" />
+        <button type="submit" class="btn w-full" disabled="@(!Model.MicrosoftLoginEnabled)"
+                title="@(Model.MicrosoftLoginEnabled ? null : "Azure AD er ikke konfigureret")">
+            Log ind med Microsoft
+        </button>
+    </form>
+
+    @if (Model.TestLoginEnabled)
+    {
+        <div class="card">
+            <header><h3>Test-login</h3></header>
+            <section>
+                <form method="post" asp-page-handler="TestLogin" class="form grid gap-4">
+                    <input type="hidden" name="returnUrl" value="@Request.Query["returnUrl"]" />
+                    <div role="group" class="field">
+                        <label for="Email">E-mail</label>
+                        <input type="email" id="Email" name="Email" required />
+                    </div>
+                    <div role="group" class="field">
+                        <label for="Password">Adgangskode</label>
+                        <input type="password" id="Password" name="Password" required />
+                    </div>
+                    <button type="submit" class="btn" data-variant="outline">Log ind som testbruger</button>
+                </form>
+            </section>
+        </div>
+    }
+</div>

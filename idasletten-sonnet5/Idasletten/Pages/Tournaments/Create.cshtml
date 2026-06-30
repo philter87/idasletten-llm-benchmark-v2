@@ -1,0 +1,54 @@
+@page "/tournaments/create"
+@model Idasletten.Pages.Tournaments.CreateModel
+@using Idasletten.Features.Tournaments
+@{
+    ViewData["Title"] = "Opret turnering";
+}
+
+<h1 class="text-2xl font-bold mb-6">Opret turnering</h1>
+
+<form method="post" asp-antiforgery="true" class="form grid gap-4 max-w-md">
+    <div role="group" class="field">
+        <label for="Name">Navn</label>
+        <input type="text" id="Name" name="Name" value="@Model.Name" required />
+    </div>
+
+    <div role="group" class="field">
+        <label for="TeamSize">Holdstørrelse</label>
+        <input type="number" id="TeamSize" name="TeamSize" value="@Model.TeamSize" min="1" required />
+    </div>
+
+    <div role="group" class="field">
+        <label for="PointsToWin">Point for at vinde</label>
+        <input type="number" id="PointsToWin" name="PointsToWin" value="@Model.PointsToWin" min="1" required />
+    </div>
+
+    <div role="group" class="field">
+        <label for="MaxPlayerCount">Maks antal spillere (valgfri)</label>
+        <input type="number" id="MaxPlayerCount" name="MaxPlayerCount" value="@Model.MaxPlayerCount" min="1" />
+    </div>
+
+    <div role="group" class="field">
+        <label for="ScoreSystem">Scoresystem</label>
+        <select class="input" id="ScoreSystem" name="ScoreSystem">
+            @foreach (var system in Enum.GetValues<ScoreSystem>())
+            {
+                <option value="@system" selected="@(system == Model.ScoreSystem)">@system</option>
+            }
+        </select>
+        <p class="text-muted-foreground text-sm">
+            Elo: klassisk styrkerangering. TrueSkill: Microsofts mere avancerede rangeringssystem.
+            Lives: spillere mister et liv ved tab. WinCount: antal sejre tæller som score.
+        </p>
+    </div>
+
+    <label class="flex items-center gap-2">
+        <input type="checkbox" id="IsPublic" name="IsPublic" value="true" checked="@Model.IsPublic" />
+        Offentlig (vises på forsiden)
+    </label>
+
+    <div class="flex items-center gap-2 mt-2">
+        <button type="submit" name="andPlan" value="false" class="btn">Opret</button>
+        <button type="submit" name="andPlan" value="true" class="btn" data-variant="outline">Opret og planlæg</button>
+    </div>
+</form>
