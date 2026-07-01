@@ -1,0 +1,102 @@
+@page
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    ViewData["Title"] = "Players";
+    var t = Model.Tournament;
+}
+
+<div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.5rem;">
+    <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Players &mdash; @t.Name</h1>
+    <a asp-page="/Tournaments/Details" asp-route-id="@t.TournamentId" class="text-sm" style="text-decoration: underline;">Back to tournament</a>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Players</h2>
+    <button type="button" class="btn" data-size="sm" onclick="document.getElementById('add-player-dialog').showModal()">Add a player</button>
+</div>
+
+<div class="table-container" style="margin-bottom: 2rem;">
+    <table class="table">
+        <thead><tr><th>Initials</th><th>Name</th><th class="text-end">Score</th></tr></thead>
+        <tbody>
+            @foreach (var player in Model.Players)
+            {
+                <tr>
+                    <td class="font-medium">@player.Username</td>
+                    <td><a asp-page="/Users/Details" asp-route-id="@player.UserId" style="text-decoration: underline;">@player.Name</a></td>
+                    <td class="text-end">@player.Score.ToString("0.##")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem;">Add players based on a previous tournament</h2>
+
+@if (t.SeedTournamentId is null)
+{
+    <form method="post" asp-page-handler="SetSeedTournament" style="display: flex; gap: 0.5rem; align-items: center;">
+        <select name="SeedTournamentId" class="select">
+            @foreach (var seed in Model.SeedableTournaments)
+            {
+                <option value="@seed.Id">@seed.Name (@seed.PlayerCount players)</option>
+            }
+        </select>
+        <button type="submit" class="btn" data-variant="outline">Use tournament</button>
+    </form>
+}
+else if (Model.SeedPlayers is not null)
+{
+    <div class="table-container">
+        <table class="table">
+            <thead><tr><th>#</th><th>Player</th><th class="text-end">Score there</th><th></th></tr></thead>
+            <tbody>
+                @{ var rank = 0; }
+                @foreach (var sp in Model.SeedPlayers)
+                {
+                    rank++;
+                    <tr>
+                        <td>@rank</td>
+                        <td style="@(sp.AlreadyAdded ? "text-decoration: line-through; color: var(--muted-foreground);" : "")">@sp.Name (@sp.Username)</td>
+                        <td class="text-end">@sp.ScoreInSeedTournament.ToString("0.##")</td>
+                        <td class="text-end">
+                            @if (sp.AlreadyAdded)
+                            {
+                                <span class="badge" data-variant="secondary">Added</span>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="AddFromSeed" style="display:inline;">
+                                    <input type="hidden" name="AddUserId" value="@sp.UserId" />
+                                    <button type="submit" class="btn" data-variant="outline" data-size="icon-sm" aria-label="Add player">+</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<dialog id="add-player-dialog" class="dialog" aria-labelledby="add-player-title">
+    <div class="sm:max-w-sm">
+        <form method="post" asp-page-handler="AddPlayer">
+            <header><h2 id="add-player-title">Add a player</h2></header>
+            <section style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div role="group" class="field">
+                    <label for="AddPlayerUsername">Initials</label>
+                    <input type="text" id="AddPlayerUsername" name="AddPlayerUsername" class="input" maxlength="16" required />
+                </div>
+                <div role="group" class="field">
+                    <label for="AddPlayerName">Name (optional)</label>
+                    <input type="text" id="AddPlayerName" name="AddPlayerName" class="input" />
+                </div>
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Cancel</button>
+                <button type="submit" class="btn">Add</button>
+            </footer>
+        </form>
+    </div>
+</dialog>

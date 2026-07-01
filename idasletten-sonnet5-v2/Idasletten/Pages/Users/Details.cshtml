@@ -1,0 +1,54 @@
+@page
+@model Idasletten.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = Model.Profile.Name;
+    var p = Model.Profile;
+}
+
+<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+    @if (p.ImageUrl is not null)
+    {
+        <img src="@p.ImageUrl" alt="@p.Name" style="width: 4rem; height: 4rem; border-radius: 9999px; object-fit: cover;" />
+    }
+    <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">@p.Name</h1>
+        <p class="text-muted-foreground">@p.Username</p>
+    </div>
+</div>
+
+<h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem;">Tournament history</h2>
+
+@if (p.Tournaments.Count == 0)
+{
+    <p class="text-muted-foreground">Hasn't joined any tournaments yet.</p>
+}
+else
+{
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tournament</th>
+                    <th>Score system</th>
+                    <th class="text-end">Score</th>
+                    <th class="text-end">Won</th>
+                    <th class="text-end">Lost</th>
+                    <th class="text-end">Played</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stat in p.Tournaments)
+                {
+                    <tr style="cursor: pointer;" onclick="location.href='@Url.Page("/Tournaments/Details", new { id = stat.TournamentId })'">
+                        <td class="font-medium">@stat.TournamentName</td>
+                        <td>@stat.ScoreSystem</td>
+                        <td class="text-end">@stat.Score.ToString("0.##")</td>
+                        <td class="text-end">@stat.WinCount</td>
+                        <td class="text-end">@stat.LoseCount</td>
+                        <td class="text-end">@stat.MatchCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,56 @@
+@using Microsoft.AspNetCore.Authentication.Cookies
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Idasletten</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/basecoat.cdn.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.1/dist/js/all.min.js" defer></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+    <header class="border-b bg-background" style="display: flex; justify-content: center;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 72rem; padding: 0.75rem 1rem; gap: 1rem;">
+            <a asp-page="/Index" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.125rem; text-decoration: none; color: inherit;">
+                ⚔️ Idasletten
+            </a>
+            <nav style="display: flex; align-items: center; gap: 1rem;">
+                <a asp-page="/Index" class="btn" data-variant="ghost" data-size="sm">Home</a>
+                <a asp-page="/Tournaments/Index" class="btn" data-variant="ghost" data-size="sm">Tournaments</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="text-muted-foreground text-sm">@User.Identity!.Name</span>
+                    <form asp-page="/Logout" method="post" style="display:inline;">
+                        <button type="submit" class="btn" data-variant="outline" data-size="sm">Log out</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-page="/Login" class="btn" data-variant="outline" data-size="sm">Log in</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main style="flex: 1; display: flex; justify-content: center; width: 100%;">
+        <div style="width: 100%; max-width: 72rem; padding: 1.5rem 1rem;">
+            @if (TempData["Error"] is string errorMessage)
+            {
+                <div class="alert" data-variant="destructive" style="margin-bottom: 1rem;">
+                    <section>@errorMessage</section>
+                </div>
+            }
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="border-t text-muted-foreground text-sm" style="display: flex; justify-content: center;">
+        <div style="width: 100%; max-width: 72rem; padding: 1rem; text-align: center;">
+            &copy; @DateTime.UtcNow.Year Idasletten &mdash; Iðavöllr
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

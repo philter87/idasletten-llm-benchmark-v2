@@ -1,0 +1,57 @@
+@page
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Create tournament";
+}
+
+<div style="display: flex; justify-content: center;">
+    <form method="post" class="card" style="width: 100%; max-width: 32rem; display: flex; flex-direction: column; gap: 1rem;">
+        <header>
+            <h2>Create tournament</h2>
+        </header>
+        <section style="display: flex; flex-direction: column; gap: 1rem;">
+            <div role="group" class="field">
+                <label for="Name">Name</label>
+                <input type="text" id="Name" name="Name" class="input" value="@Model.Name" required />
+            </div>
+
+            <div role="group" class="field">
+                <label for="TeamSize">Team size</label>
+                <input type="number" id="TeamSize" name="TeamSize" class="input" value="@Model.TeamSize" min="1" required />
+            </div>
+
+            <div role="group" class="field">
+                <label for="PointsToWin">Points to win</label>
+                <input type="number" id="PointsToWin" name="PointsToWin" class="input" value="@Model.PointsToWin" min="1" required />
+            </div>
+
+            <div role="group" class="field">
+                <label for="ScoreSystem">Score system</label>
+                <select id="ScoreSystem" name="ScoreSystem" class="select">
+                    @foreach (var system in Enum.GetValues<Idasletten.Shared.Entities.ScoreSystem>())
+                    {
+                        <option value="@system" selected="@(system == Model.ScoreSystem)">@system</option>
+                    }
+                </select>
+                <p class="text-muted-foreground text-sm">
+                    Elo: classic head-to-head rating. TrueSkill: Bayesian skill rating, good for multi-player teams.
+                    Lives: lose a life each defeat. WinCount: simple win tally.
+                </p>
+            </div>
+
+            <div role="group" class="field">
+                <label for="MaxPlayerCount">Max players (optional)</label>
+                <input type="number" id="MaxPlayerCount" name="MaxPlayerCount" class="input" value="@Model.MaxPlayerCount" min="1" />
+            </div>
+
+            <div role="group" class="field" data-orientation="horizontal">
+                <input type="checkbox" id="IsPublic" name="IsPublic" class="input" value="true" checked="@Model.IsPublic" />
+                <label for="IsPublic">Public (shown on the home page)</label>
+            </div>
+        </section>
+        <footer style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <button type="submit" class="btn" style="width: 100%;">Create</button>
+            <button type="submit" name="andPlan" value="true" class="btn" data-variant="link">Create and plan matches</button>
+        </footer>
+    </form>
+</div>

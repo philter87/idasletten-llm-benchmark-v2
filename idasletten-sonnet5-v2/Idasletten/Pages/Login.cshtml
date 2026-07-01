@@ -1,0 +1,45 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<div style="display: flex; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 24rem;">
+        <header>
+            <h2>Log in to Idasletten</h2>
+            <p>Logging in lets you create tournaments and edit completed match results.</p>
+        </header>
+        <section style="display: flex; flex-direction: column; gap: 1rem;">
+            @if (Model.ErrorMessage is not null)
+            {
+                <div class="alert" data-variant="destructive">
+                    <section>@Model.ErrorMessage</section>
+                </div>
+            }
+
+            <form method="post" asp-page-handler="Microsoft" asp-route-returnUrl="@Model.ReturnUrl">
+                <button type="submit" class="btn" style="width: 100%;">Log in with Microsoft</button>
+            </form>
+
+            @if (Model.TestLoginEnabled)
+            {
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--muted-foreground);">
+                    <hr style="flex: 1;" /> <span class="text-sm">or</span> <hr style="flex: 1;" />
+                </div>
+
+                <form method="post" asp-page-handler="TestLogin" asp-route-returnUrl="@Model.ReturnUrl" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div role="group" class="field">
+                        <label for="email">Test user email</label>
+                        <input type="email" id="email" name="Email" class="input" required />
+                    </div>
+                    <div role="group" class="field">
+                        <label for="password">Test user password</label>
+                        <input type="password" id="password" name="Password" class="input" required />
+                    </div>
+                    <button type="submit" class="btn" data-variant="outline" style="width: 100%;">Log in as test user</button>
+                </form>
+            }
+        </section>
+    </div>
+</div>

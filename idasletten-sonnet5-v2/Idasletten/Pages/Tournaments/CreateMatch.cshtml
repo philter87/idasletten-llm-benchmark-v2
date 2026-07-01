@@ -1,0 +1,108 @@
+@page
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    ViewData["Title"] = "Match";
+    var readOnly = Model.IsReadOnly;
+}
+
+<h1 style="font-size: 1.75rem; font-weight: 700;">
+    @(Model.ExistingMatch is null ? "Record match" : Model.ExistingMatch.State == Idasletten.Shared.Entities.MatchState.Done ? "Match result" : "Complete planned match")
+    &mdash; @Model.Tournament.Name
+</h1>
+
+@if (readOnly)
+{
+    <div class="alert" data-variant="default" style="margin-bottom: 1rem;">
+        <section>This match is already completed. <a asp-page="/Login" asp-route-returnUrl="@(Request.Path + Request.QueryString)" style="text-decoration: underline;">Log in</a> to edit it.</section>
+    </div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert" data-variant="destructive" style="margin-bottom: 1rem;">
+        <section>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <p>@error.ErrorMessage</p>
+            }
+        </section>
+    </div>
+}
+
+<form method="post" style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 40rem;">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="MatchId" />
+
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <div class="card" style="flex: 1 1 16rem;">
+            <header><h2>Team 1</h2></header>
+            <section style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div role="group" class="field">
+                    <label for="Team1Initials">Player initials</label>
+                    <input type="text" id="Team1Initials" name="Team1Initials" class="input" value="@Model.Team1Initials" placeholder="e.g. AB, CD" disabled="@readOnly" />
+                </div>
+                <button type="button" class="btn" data-variant="link" data-size="sm" onclick="document.getElementById('select-team1-dialog').showModal()" disabled="@readOnly">Select from list</button>
+                <div role="group" class="field">
+                    <label for="Team1Goals">Goals</label>
+                    <input type="number" id="Team1Goals" name="Team1Goals" class="input" value="@Model.Team1Goals" min="0" disabled="@readOnly" />
+                </div>
+            </section>
+        </div>
+
+        <div class="card" style="flex: 1 1 16rem;">
+            <header><h2>Team 2</h2></header>
+            <section style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div role="group" class="field">
+                    <label for="Team2Initials">Player initials</label>
+                    <input type="text" id="Team2Initials" name="Team2Initials" class="input" value="@Model.Team2Initials" placeholder="e.g. EF, GH" disabled="@readOnly" />
+                </div>
+                <button type="button" class="btn" data-variant="link" data-size="sm" onclick="document.getElementById('select-team2-dialog').showModal()" disabled="@readOnly">Select from list</button>
+                <div role="group" class="field">
+                    <label for="Team2Goals">Goals</label>
+                    <input type="number" id="Team2Goals" name="Team2Goals" class="input" value="@Model.Team2Goals" min="0" disabled="@readOnly" />
+                </div>
+            </section>
+        </div>
+    </div>
+
+    @if (!readOnly)
+    {
+        <button type="submit" class="btn">Save result</button>
+    }
+</form>
+
+@{ var players = Model.ExistingPlayers; }
+@foreach (var (dialogId, targetInputId) in new[] { ("select-team1-dialog", "Team1Initials"), ("select-team2-dialog", "Team2Initials") })
+{
+    <dialog id="@dialogId" class="dialog" aria-labelledby="@(dialogId)-title">
+        <div class="sm:max-w-sm">
+            <header><h2 id="@(dialogId)-title">Select players</h2></header>
+            <section style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 50vh; overflow-y: auto;">
+                @foreach (var player in players)
+                {
+                    <div role="group" class="field" data-orientation="horizontal">
+                        <input type="checkbox" class="input select-player-checkbox" value="@player.Username" id="@(dialogId)-@player.Username" />
+                        <label for="@(dialogId)-@player.Username">@player.Name (@player.Username)</label>
+                    </div>
+                }
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Cancel</button>
+                <button type="button" class="btn" onclick="Idasletten.applySelectedPlayers('@dialogId', '@targetInputId')">Add selected</button>
+            </footer>
+        </div>
+    </dialog>
+}
+
+<script>
+    window.Idasletten = window.Idasletten || {};
+    Idasletten.applySelectedPlayers = function (dialogId, targetInputId) {
+        var dialog = document.getElementById(dialogId);
+        var checked = Array.from(dialog.querySelectorAll('.select-player-checkbox:checked')).map(function (c) { return c.value; });
+        var input = document.getElementById(targetInputId);
+        var existing = input.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        checked.forEach(function (u) { if (existing.indexOf(u) === -1) existing.push(u); });
+        input.value = existing.join(', ');
+        dialog.close();
+    };
+</script>

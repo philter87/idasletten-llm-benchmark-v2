@@ -1,0 +1,132 @@
+@page
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    ViewData["Title"] = "Matches";
+    var t = Model.Tournament;
+}
+
+<div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.5rem;">
+    <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Matches &mdash; @t.Name</h1>
+    <a asp-page="/Tournaments/Details" asp-route-id="@t.TournamentId" class="text-sm" style="text-decoration: underline;">Back to tournament</a>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Planned matches</h2>
+    <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn" data-variant="outline" data-size="sm" onclick="document.getElementById('add-planned-dialog').showModal()">Add planned match</button>
+        <button type="button" class="btn" data-size="sm" onclick="document.getElementById('plan-several-dialog').showModal()">Plan several matches</button>
+    </div>
+</div>
+
+<div class="table-container" style="margin-bottom: 2rem;">
+    <table class="table">
+        <thead><tr><th>#</th><th>Team 1</th><th>Team 2</th></tr></thead>
+        <tbody>
+            @if (Model.Matches.PlannedMatches.Count == 0)
+            {
+                <tr><td colspan="3" class="text-muted-foreground">No planned matches.</td></tr>
+            }
+            @foreach (var match in Model.Matches.PlannedMatches)
+            {
+                <tr style="cursor: pointer;" onclick="location.href='@Url.Page("/Tournaments/CreateMatch", new { id = t.TournamentId, matchId = match.MatchId })'">
+                    <td>@match.Order</td>
+                    <td>@(match.Teams.Count > 0 ? string.Join("+", match.Teams[0].PlayerUsernames) : "")</td>
+                    <td>@(match.Teams.Count > 1 ? string.Join("+", match.Teams[1].PlayerUsernames) : "")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem;">Match results</h2>
+<div class="table-container">
+    <table class="table">
+        <thead><tr><th>#</th><th>Team 1</th><th class="text-end">Score</th><th>Team 2</th><th class="text-end">Score</th></tr></thead>
+        <tbody>
+            @if (Model.Matches.CompletedMatches.Count == 0)
+            {
+                <tr><td colspan="5" class="text-muted-foreground">No completed matches.</td></tr>
+            }
+            @foreach (var match in Model.Matches.CompletedMatches)
+            {
+                <tr style="cursor: pointer;" onclick="location.href='@Url.Page("/Tournaments/CreateMatch", new { id = t.TournamentId, matchId = match.MatchId })'">
+                    <td>@match.Order</td>
+                    <td>@(match.Teams.Count > 0 ? string.Join("+", match.Teams[0].PlayerUsernames) : "")</td>
+                    <td class="text-end">@(match.Teams.Count > 0 ? match.Teams[0].GoalsWon : null)</td>
+                    <td>@(match.Teams.Count > 1 ? string.Join("+", match.Teams[1].PlayerUsernames) : "")</td>
+                    <td class="text-end">@(match.Teams.Count > 1 ? match.Teams[1].GoalsWon : null)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<dialog id="add-planned-dialog" class="dialog" aria-labelledby="add-planned-title">
+    <div class="sm:max-w-sm">
+        <form method="post" asp-page-handler="AddPlannedMatch">
+            <header><h2 id="add-planned-title">Add planned match</h2></header>
+            <section style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div role="group" class="field">
+                    <label for="PlannedTeam1Initials">Team 1 initials</label>
+                    <input type="text" id="PlannedTeam1Initials" name="PlannedTeam1Initials" class="input" placeholder="e.g. AB, CD" />
+                </div>
+                <div role="group" class="field">
+                    <label for="PlannedTeam2Initials">Team 2 initials</label>
+                    <input type="text" id="PlannedTeam2Initials" name="PlannedTeam2Initials" class="input" placeholder="e.g. EF, GH" />
+                </div>
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Cancel</button>
+                <button type="submit" class="btn">Add</button>
+            </footer>
+        </form>
+    </div>
+</dialog>
+
+<dialog id="plan-several-dialog" class="dialog" aria-labelledby="plan-several-title">
+    <div class="sm:max-w-sm">
+        <form method="post" asp-page-handler="PlanSeveral">
+            <header><h2 id="plan-several-title">Plan several matches</h2></header>
+            <section style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div role="group" class="field">
+                    <label for="SeedTournamentId">Plan based on a previous tournament (optional)</label>
+                    @if (t.SeedTournamentId is { } fixedSeed)
+                    {
+                        <input type="hidden" name="SeedTournamentId" value="@fixedSeed" />
+                        <input type="text" class="input" disabled value="@(Model.SeedableTournaments.FirstOrDefault(s => s.Id == fixedSeed)?.Name)" />
+                    }
+                    else
+                    {
+                        <select id="SeedTournamentId" name="SeedTournamentId" class="select">
+                            <option value="">None</option>
+                            @foreach (var seed in Model.SeedableTournaments)
+                            {
+                                <option value="@seed.Id">@seed.Name (@seed.PlayerCount players)</option>
+                            }
+                        </select>
+                    }
+                </div>
+                <div role="group" class="field">
+                    <label for="GamesPerPlayer">Number of games per player</label>
+                    <input type="number" id="GamesPerPlayer" name="GamesPerPlayer" class="input" value="1" min="1" />
+                </div>
+                <div role="group" class="field" data-orientation="horizontal">
+                    <input type="checkbox" id="FixedTeams" name="FixedTeams" class="input" value="true" />
+                    <label for="FixedTeams">Fixed teams (don't reshuffle after each match)</label>
+                </div>
+                <div role="group" class="field">
+                    <label for="SeedingType">Seeding type</label>
+                    <select id="SeedingType" name="SeedingType" class="select">
+                        <option value="Random">Random</option>
+                        <option value="Equality">Equality (best vs worst)</option>
+                        <option value="Fair">Fair (top half vs bottom half)</option>
+                    </select>
+                </div>
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Cancel</button>
+                <button type="submit" class="btn">Plan matches</button>
+            </footer>
+        </form>
+    </div>
+</dialog>
