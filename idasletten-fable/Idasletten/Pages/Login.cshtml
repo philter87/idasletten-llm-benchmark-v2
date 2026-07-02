@@ -1,0 +1,46 @@
+@page "/login"
+@model Idasletten.Pages.LoginModel
+@{
+    ViewData["Title"] = "Log ind";
+}
+
+<div class="card login-card">
+    <header>
+        <h2>Log ind</h2>
+        <p>Login kræves kun for at oprette turneringer og rette færdigspillede kampe.</p>
+    </header>
+    <section class="login-buttons">
+        @if (Model.AzureAdEnabled)
+        {
+            <a class="btn" href="/login/microsoft?returnUrl=@(Model.ReturnUrl ?? "/")">
+                <svg width="16" height="16" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+                Log ind med Microsoft
+            </a>
+        }
+        else
+        {
+            <p class="muted small">Microsoft-login er ikke konfigureret i dette miljø.</p>
+        }
+
+        @if (Model.TestUserEnabled)
+        {
+            <hr />
+            <form method="post" asp-page-handler="TestLogin" class="form-grid">
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div class="field">
+                    <label class="label" for="test-email">E-mail (testbruger)</label>
+                    <input class="input" type="email" id="test-email" name="email" required />
+                </div>
+                <div class="field">
+                    <label class="label" for="test-password">Adgangskode</label>
+                    <input class="input" type="password" id="test-password" name="password" required />
+                </div>
+                @if (Model.ErrorMessage is not null)
+                {
+                    <p class="neg-delta small">@Model.ErrorMessage</p>
+                }
+                <button type="submit" class="btn" data-variant="outline">Log ind som testbruger</button>
+            </form>
+        }
+    </section>
+</div>

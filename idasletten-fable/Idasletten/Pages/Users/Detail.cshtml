@@ -1,0 +1,73 @@
+@page "/users/{userId:guid}"
+@model Idasletten.Pages.Users.DetailModel
+@{
+    var user = Model.Stats.User;
+    ViewData["Title"] = user.Name;
+}
+
+<div class="row">
+    @if (user.ImageUrl is string img)
+    {
+        <img class="avatar" style="width:56px;height:56px" src="@img" alt="" />
+    }
+    <div class="stack-sm">
+        <h1 class="page-title">@user.Name</h1>
+        <p class="muted">@user.UserName @(user.Email is not null ? $"· {user.Email}" : "")</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="card grow">
+        <header><h2>Kampe</h2></header>
+        <section><span class="page-title">@Model.Stats.TotalMatches</span></section>
+    </div>
+    <div class="card grow">
+        <header><h2>Vundet</h2></header>
+        <section><span class="page-title pos-delta">@Model.Stats.TotalWins</span></section>
+    </div>
+    <div class="card grow">
+        <header><h2>Tabt</h2></header>
+        <section><span class="page-title neg-delta">@Model.Stats.TotalLosses</span></section>
+    </div>
+    <div class="card grow">
+        <header><h2>Målscore</h2></header>
+        <section><span class="page-title">@Model.Stats.TotalPointsWon–@Model.Stats.TotalPointsLost</span></section>
+    </div>
+</div>
+
+<div class="card">
+    <header><h2>Turneringer</h2></header>
+    <section class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Turnering</th>
+                    <th>Scoresystem</th>
+                    <th>Kampe</th>
+                    <th>Vundet</th>
+                    <th>Tabt</th>
+                    <th>Mål</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in Model.Stats.Tournaments)
+                {
+                    <tr class="clickable" onclick="location.href='/tournaments/@entry.Tournament.Id'">
+                        <td><a href="/tournaments/@entry.Tournament.Id">@entry.Tournament.Name</a></td>
+                        <td>@entry.Tournament.ScoreSystem</td>
+                        <td>@entry.Player.MatchCount</td>
+                        <td>@entry.Player.WinCount</td>
+                        <td>@entry.Player.LoseCount</td>
+                        <td>@entry.Player.PointsWon–@entry.Player.PointsLost</td>
+                        <td><strong>@entry.Player.Score.ToString("0.##")</strong></td>
+                    </tr>
+                }
+                @if (Model.Stats.Tournaments.Count == 0)
+                {
+                    <tr><td colspan="7" class="muted">Har ikke deltaget i nogen turneringer endnu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</div>

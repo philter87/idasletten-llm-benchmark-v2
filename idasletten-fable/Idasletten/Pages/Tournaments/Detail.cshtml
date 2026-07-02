@@ -1,0 +1,202 @@
+@page "/tournaments/{tournamentId:guid}"
+@using Idasletten.Features.Matches
+@using Idasletten.Features.Tournaments
+@model Idasletten.Pages.Tournaments.DetailModel
+@{
+    var t = Model.Detail.Tournament;
+    ViewData["Title"] = t.Name;
+    var isLives = t.ScoreSystem == ScoreSystem.Lives;
+
+    string TeamLabel(TournamentTeamMatchResult r) =>
+        string.Join(" + ", r.Team.Players.Select(p => p.User.UserName));
+}
+
+<div class="spread">
+    <div class="stack-sm">
+        <h1 class="page-title">@t.Name</h1>
+        <div class="row small muted">
+            <span class="badge" data-variant="secondary">@t.ScoreSystem</span>
+            <span>@t.TeamSize mod @t.TeamSize</span>
+            <span>· Først til @t.PointsToWin mål</span>
+            @if (t.RoundNumber is int round)
+            {
+                <span>· Runde @round</span>
+            }
+            @if (t.IsArchived)
+            {
+                <span class="badge" data-variant="outline">Arkiveret</span>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <a class="btn" data-variant="outline" href="/tournaments/@t.Id/players">Spillere</a>
+        <a class="btn" data-variant="outline" href="/tournaments/@t.Id/matches">Kampe</a>
+    </div>
+</div>
+
+<div class="detail-layout">
+    <div class="detail-main">
+        <div class="card">
+            <header class="spread">
+                <h2>Stillingen</h2>
+                <button type="button" class="btn" data-variant="outline" data-size="sm"
+                        onclick="document.getElementById('add-player-dialog').showModal()">
+                    Tilføj spiller
+                </button>
+            </header>
+            <section class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Spiller</th>
+                            <th>Vundet</th>
+                            <th>Tabt</th>
+                            <th>Mål</th>
+                            @if (isLives)
+                            {
+                                <th>Liv</th>
+                            }
+                            <th>Score</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Detail.Scoreboard.Count; i++)
+                        {
+                            var p = Model.Detail.Scoreboard[i];
+                            <tr class="clickable" onclick="location.href='/users/@p.UserId'">
+                                <td>@(i + 1)</td>
+                                <td>
+                                    <span class="row">
+                                        @if (p.User.ImageUrl is string img)
+                                        {
+                                            <img class="avatar" src="@img" alt="" />
+                                        }
+                                        <strong>@p.User.UserName</strong>
+                                        <span class="muted">@p.User.Name</span>
+                                    </span>
+                                </td>
+                                <td>@p.WinCount</td>
+                                <td>@p.LoseCount</td>
+                                <td>@p.PointsWon–@p.PointsLost</td>
+                                @if (isLives)
+                                {
+                                    <td>@string.Concat(Enumerable.Repeat("❤", Math.Max(0, p.Lives)))</td>
+                                }
+                                <td><strong>@p.Score.ToString("0.##")</strong></td>
+                                <td>
+                                    @if (p.MatchCount > 0 && Math.Abs(p.ScoreDiff) > 0.001)
+                                    {
+                                        <span class="small @(p.ScoreDiff >= 0 ? "pos-delta" : "neg-delta")">
+                                            @(p.ScoreDiff >= 0 ? "+" : "")@p.ScoreDiff.ToString("0.##")
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.Detail.Scoreboard.Count == 0)
+                        {
+                            <tr><td colspan="8" class="muted">Ingen spillere endnu — tilføj den første kriger.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        @if (Model.Detail.Rounds.Count > 0)
+        {
+            <div class="card">
+                <header><h2>Senere runder</h2></header>
+                <section class="stack-sm">
+                    @foreach (var childRound in Model.Detail.Rounds)
+                    {
+                        <a href="/tournaments/@childRound.Id">Runde @childRound.RoundNumber — @childRound.Name</a>
+                    }
+                </section>
+            </div>
+        }
+    </div>
+
+    <aside class="detail-side">
+        <a class="btn" href="/tournaments/@t.Id/create-match?matchId=@Guid.NewGuid()">Opret kamp</a>
+
+        <div class="card">
+            <header><h2>Næste kampe</h2></header>
+            <section class="stack-sm">
+                @foreach (var match in Model.Detail.NextPlannedMatches)
+                {
+                    <a class="match-line" href="/tournaments/@t.Id/create-match?matchId=@match.Id">
+                        <span>@string.Join(" vs ", match.Results.Select(TeamLabel))</span>
+                        <span class="badge" data-variant="outline">#@match.Order</span>
+                    </a>
+                }
+                @if (Model.Detail.NextPlannedMatches.Count == 0)
+                {
+                    <p class="muted small">Ingen planlagte kampe.</p>
+                }
+            </section>
+        </div>
+
+        <div class="card">
+            <header><h2>Seneste resultater</h2></header>
+            <section class="stack-sm">
+                @foreach (var match in Model.Detail.RecentPlayedMatches)
+                {
+                    var ordered = match.Results.OrderByDescending(r => r.GoalsWon).ToList();
+                    <a class="match-line" href="/tournaments/@t.Id/create-match?matchId=@match.Id">
+                        <span>
+                            <span class="winner">@TeamLabel(ordered[0])</span>
+                            <span class="muted">vs</span>
+                            @TeamLabel(ordered[^1])
+                        </span>
+                        <span class="score">@string.Join("–", ordered.Select(r => r.GoalsWon))</span>
+                    </a>
+                }
+                @if (Model.Detail.RecentPlayedMatches.Count == 0)
+                {
+                    <p class="muted small">Ingen spillede kampe endnu.</p>
+                }
+            </section>
+        </div>
+
+        <a class="small muted" href="/tournaments/@t.Id/matches">Vis alle kampe →</a>
+
+        @if (Model.Detail.Rounds.Count == 0 && Model.Detail.Scoreboard.Count > 0)
+        {
+            <form method="post" asp-page-handler="CreateNextRound" class="stack-sm">
+                <button type="submit" class="btn" data-variant="outline" data-size="sm">
+                    Opret næste runde
+                </button>
+                <span class="small muted">Spillerne fortsætter i en ny runde med nulstillet score (kræver login).</span>
+            </form>
+        }
+    </aside>
+</div>
+
+<dialog id="add-player-dialog" class="dialog" aria-labelledby="add-player-title"
+        onclick="if (event.target === this) this.close()">
+    <div>
+        <header>
+            <h2 id="add-player-title">Tilføj spiller</h2>
+            <p>Nye initialer opretter automatisk en ny spiller.</p>
+        </header>
+        <section>
+            <form method="post" asp-page-handler="AddPlayer" class="form-grid" id="add-player-form">
+                <div class="field">
+                    <label class="label" for="add-player-initials">Initialer</label>
+                    <input class="input" type="text" id="add-player-initials" name="initials"
+                           maxlength="5" required placeholder="F.eks. THO" />
+                </div>
+                <div class="field">
+                    <label class="label" for="add-player-name">Navn (valgfrit)</label>
+                    <input class="input" type="text" id="add-player-name" name="name" placeholder="Thor Odinson" />
+                </div>
+            </form>
+        </section>
+        <footer>
+            <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Annuller</button>
+            <button type="submit" form="add-player-form" class="btn">Tilføj</button>
+        </footer>
+    </div>
+</dialog>

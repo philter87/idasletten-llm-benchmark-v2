@@ -1,0 +1,52 @@
+@page "/"
+@model Idasletten.Pages.IndexModel
+@{
+    ViewData["Title"] = "Hjem";
+}
+
+<div class="hero">
+    <img src="~/img/hero.svg" alt="Einherjerne kæmper på Idasletten foran Valhals porte" />
+    <p class="hero-text">
+        &raquo;Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte.
+        Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag,
+        som øvelse til Ragnarok. Hver aften er Idasletten rød af blod.&laquo;
+    </p>
+</div>
+
+<section class="stack">
+    <div class="spread">
+        <h1 class="section-title">Aktive turneringer</h1>
+    </div>
+
+    @if (Model.PublicTournaments.Count == 0)
+    {
+        <p class="muted">Ingen offentlige turneringer endnu. Slaget venter stadig.</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var item in Model.PublicTournaments)
+            {
+                <a href="/tournaments/@item.Tournament.Id">
+                    <div class="card">
+                        <header>
+                            <h2>@item.Tournament.Name</h2>
+                            <p>@item.Tournament.ScoreSystem · @item.Tournament.TeamSize v @item.Tournament.TeamSize · Først til @item.Tournament.PointsToWin</p>
+                        </header>
+                        <section>
+                            <div class="row small muted">
+                                <span>@item.PlayerCount spillere</span>
+                                <span>·</span>
+                                <span>@item.MatchCount kampe</span>
+                            </div>
+                        </section>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    <p class="small">
+        <a class="muted" href="/tournaments">Se historiske turneringer →</a>
+    </p>
+</section>

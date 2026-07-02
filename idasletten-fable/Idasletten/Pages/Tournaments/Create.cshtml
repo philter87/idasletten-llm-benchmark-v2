@@ -1,0 +1,55 @@
+@page "/tournaments/create"
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Opret turnering";
+}
+
+<h1 class="page-title">Opret turnering</h1>
+
+<form method="post" class="form-grid">
+    <div class="field">
+        <label class="label" for="name">Navn</label>
+        <input class="input" type="text" id="name" asp-for="Name" required autofocus />
+    </div>
+
+    <div class="field-row">
+        <div class="field">
+            <label class="label" for="teamSize">Holdstørrelse</label>
+            <input class="input" type="number" id="teamSize" asp-for="TeamSize" min="1" max="4" />
+        </div>
+        <div class="field">
+            <label class="label" for="pointsToWin">Point for at vinde</label>
+            <input class="input" type="number" id="pointsToWin" asp-for="PointsToWin" min="1" />
+        </div>
+        <div class="field">
+            <label class="label" for="maxPlayers">Maks. antal spillere</label>
+            <input class="input" type="number" id="maxPlayers" asp-for="MaxPlayerCount" min="2" placeholder="Ubegrænset" />
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="label" for="scoreSystem">Scoresystem</label>
+        <select class="select" id="scoreSystem" asp-for="ScoreSystem">
+            <option value="Elo">Elo</option>
+            <option value="TrueSkill">TrueSkill</option>
+            <option value="Lives">Liv</option>
+            <option value="WinCount">Antal sejre</option>
+        </select>
+        <p class="muted small">
+            <strong>Elo</strong>: klassisk skakrating, hold bruger gennemsnittet ·
+            <strong>TrueSkill</strong>: Microsofts ratingsystem med usikkerhed ·
+            <strong>Liv</strong>: alle starter med 3 liv og mister ét pr. tabt kamp ·
+            <strong>Antal sejre</strong>: scoren er antal vundne kampe.
+        </p>
+    </div>
+
+    <label class="label row">
+        <input type="checkbox" class="input" asp-for="IsPublic" />
+        Offentlig turnering (vises på forsiden)
+    </label>
+
+    <div class="stack-sm">
+        <button type="submit" class="btn">Opret</button>
+        <button type="submit" name="next" value="plan" class="btn" data-variant="link">Opret og planlæg kampe</button>
+    </div>
+</form>

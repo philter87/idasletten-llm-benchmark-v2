@@ -1,0 +1,141 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    var t = Model.Players.Tournament;
+    ViewData["Title"] = $"Spillere — {t.Name}";
+    var currentUserIds = Model.Players.Players.Select(p => p.UserId).ToHashSet();
+}
+
+<div class="spread">
+    <div class="stack-sm">
+        <h1 class="page-title">Spillere</h1>
+        <p class="muted"><a href="/tournaments/@t.Id">@t.Name</a></p>
+    </div>
+    <button type="button" class="btn"
+            onclick="document.getElementById('add-player-dialog').showModal()">
+        Tilføj spiller
+    </button>
+</div>
+
+<div class="card">
+    <section class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Initialer</th>
+                    <th>Navn</th>
+                    <th>Kampe</th>
+                    <th>Vundet</th>
+                    <th>Tabt</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.Players.Players.Count; i++)
+                {
+                    var p = Model.Players.Players[i];
+                    <tr class="clickable" onclick="location.href='/users/@p.UserId'">
+                        <td>@(i + 1)</td>
+                        <td><strong>@p.User.UserName</strong></td>
+                        <td>@p.User.Name</td>
+                        <td>@p.MatchCount</td>
+                        <td>@p.WinCount</td>
+                        <td>@p.LoseCount</td>
+                        <td>@p.Score.ToString("0.##")</td>
+                    </tr>
+                }
+                @if (Model.Players.Players.Count == 0)
+                {
+                    <tr><td colspan="7" class="muted">Ingen spillere endnu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</div>
+
+@if (t.ParentTournamentId is null)
+{
+    <div class="card">
+        <header>
+            <h2>Tilføj spillere fra en tidligere turnering</h2>
+        </header>
+        <section class="stack">
+            @if (Model.Players.SeedTournament is null)
+            {
+                <form method="post" asp-page-handler="SelectSeed" class="row">
+                    <select class="select" name="seedTournamentId" required>
+                        <option value="">Vælg turnering …</option>
+                        @foreach (var seed in Model.Players.AvailableSeedTournaments)
+                        {
+                            <option value="@seed.Id">@seed.Name</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn" data-variant="outline">Brug som seed-turnering</button>
+                </form>
+            }
+            else
+            {
+                <p class="muted small">
+                    Seed-turnering: <strong>@Model.Players.SeedTournament.Name</strong> — spillere sorteret efter deres score dér.
+                </p>
+                <table class="table">
+                    <tbody>
+                        @foreach (var seedPlayer in Model.Players.SeedPlayers)
+                        {
+                            var alreadyIn = currentUserIds.Contains(seedPlayer.UserId);
+                            <tr>
+                                <td class="@(alreadyIn ? "struck" : null)">
+                                    <strong>@seedPlayer.User.UserName</strong>
+                                    <span class="muted">@seedPlayer.User.Name</span>
+                                </td>
+                                <td>@seedPlayer.Score.ToString("0.##")</td>
+                                <td>
+                                    @if (alreadyIn)
+                                    {
+                                        <form method="post" asp-page-handler="RemovePlayer">
+                                            <input type="hidden" name="userId" value="@seedPlayer.UserId" />
+                                            <button type="submit" class="btn" data-variant="outline" data-size="icon-sm" aria-label="Fjern @seedPlayer.User.UserName">−</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="AddSeedPlayer">
+                                            <input type="hidden" name="initials" value="@seedPlayer.User.UserName" />
+                                            <button type="submit" class="btn" data-variant="outline" data-size="icon-sm" aria-label="Tilføj @seedPlayer.User.UserName">+</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    </div>
+}
+
+<dialog id="add-player-dialog" class="dialog" aria-labelledby="add-player-title"
+        onclick="if (event.target === this) this.close()">
+    <div>
+        <header>
+            <h2 id="add-player-title">Tilføj spiller</h2>
+        </header>
+        <section>
+            <form method="post" asp-page-handler="AddPlayer" class="form-grid" id="add-player-form">
+                <div class="field">
+                    <label class="label" for="add-initials">Initialer</label>
+                    <input class="input" type="text" id="add-initials" name="initials" maxlength="5" required placeholder="F.eks. THO" />
+                </div>
+                <div class="field">
+                    <label class="label" for="add-name">Navn (valgfrit)</label>
+                    <input class="input" type="text" id="add-name" name="name" placeholder="Thor Odinson" />
+                </div>
+            </form>
+        </section>
+        <footer>
+            <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Annuller</button>
+            <button type="submit" form="add-player-form" class="btn">Tilføj</button>
+        </footer>
+    </div>
+</dialog>

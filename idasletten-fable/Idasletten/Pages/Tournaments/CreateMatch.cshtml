@@ -1,0 +1,136 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@using Idasletten.Features.Matches
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    var t = Model.Tournament;
+    ViewData["Title"] = Model.ExistingMatch?.State == MatchState.Done ? "Kampresultat" : "Registrér kamp";
+    var readOnly = Model.IsReadOnly;
+}
+
+<div class="stack-sm">
+    <h1 class="page-title">
+        @(Model.ExistingMatch?.State switch
+        {
+            MatchState.Done => "Kampresultat",
+            MatchState.Planned => "Spil planlagt kamp",
+            _ => "Registrér kamp"
+        })
+    </h1>
+    <p class="muted">
+        <a href="/tournaments/@t.Id">@t.Name</a> · Først til @t.PointsToWin mål
+    </p>
+</div>
+
+@if (readOnly)
+{
+    <div class="alert" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <h2>Kampen er færdigspillet</h2>
+        <section><a href="/login?returnUrl=/tournaments/@t.Id/create-match?matchId=@Model.MatchId">Log ind</a> for at redigere resultatet.</section>
+    </div>
+}
+else if (Model.IsEditOfDoneMatch)
+{
+    <div class="alert" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <h2>Du redigerer en færdigspillet kamp</h2>
+        <section>Når du gemmer, genberegnes hele turneringens stilling.</section>
+    </div>
+}
+
+<form method="post" class="stack">
+    <input type="hidden" asp-for="MatchId" />
+    <div class="team-panels">
+        @for (var teamIndex = 0; teamIndex < 2; teamIndex++)
+        {
+            var team = Model.Teams.Count > teamIndex ? Model.Teams[teamIndex] : new CreateMatchModel.TeamFormModel();
+            if (teamIndex == 1)
+            {
+                <div class="vs-divider">VS</div>
+            }
+            <div class="card team-panel">
+                <header><h2>Hold @(teamIndex + 1)</h2></header>
+                <section class="stack-sm">
+                    @for (var playerIndex = 0; playerIndex < t.TeamSize; playerIndex++)
+                    {
+                        <input class="input team-initials" type="text"
+                               name="Teams[@teamIndex].Initials[@playerIndex]"
+                               value="@(team.Initials.Count > playerIndex ? team.Initials[playerIndex] : null)"
+                               placeholder="Initialer" maxlength="5"
+                               data-team="@teamIndex"
+                               disabled="@readOnly" />
+                    }
+                    @if (!readOnly)
+                    {
+                        <button type="button" class="btn" data-variant="link" data-size="sm"
+                                onclick="document.getElementById('select-players-@teamIndex').showModal()">
+                            Vælg fra liste
+                        </button>
+                    }
+                    <div class="field">
+                        <label class="label" for="goals-@teamIndex">Mål</label>
+                        <input class="input goals-input" type="number" id="goals-@teamIndex"
+                               name="Teams[@teamIndex].Goals" value="@team.Goals"
+                               min="0" max="99" disabled="@readOnly" />
+                    </div>
+                </section>
+            </div>
+        }
+    </div>
+
+    @if (!readOnly)
+    {
+        <div class="row">
+            <button type="submit" class="btn">@(Model.IsEditOfDoneMatch ? "Gem og genberegn" : "Gem resultat")</button>
+            <a class="btn" data-variant="ghost" href="/tournaments/@t.Id">Annuller</a>
+        </div>
+        <p class="muted small">Ukendte initialer opretter automatisk nye spillere i turneringen.</p>
+    }
+    else
+    {
+        <a class="btn" data-variant="outline" href="/tournaments/@t.Id">Tilbage til turneringen</a>
+    }
+</form>
+
+@for (var teamIndex = 0; teamIndex < 2; teamIndex++)
+{
+    <dialog id="select-players-@teamIndex" class="dialog" aria-labelledby="select-players-title-@teamIndex"
+            onclick="if (event.target === this) this.close()">
+        <div>
+            <header>
+                <h2 id="select-players-title-@teamIndex">Vælg spillere til hold @(teamIndex + 1)</h2>
+                <p>Vælg op til @t.TeamSize spillere.</p>
+            </header>
+            <section class="stack-sm">
+                @foreach (var player in Model.ExistingPlayers)
+                {
+                    <label class="label row">
+                        <input type="checkbox" class="input player-check-@teamIndex" value="@player.User.UserName" />
+                        <strong>@player.User.UserName</strong>
+                        <span class="muted">@player.User.Name</span>
+                    </label>
+                }
+                @if (Model.ExistingPlayers.Count == 0)
+                {
+                    <p class="muted small">Ingen spillere i turneringen endnu.</p>
+                }
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline" onclick="this.closest('dialog').close()">Annuller</button>
+                <button type="button" class="btn" onclick="applySelection(@teamIndex)">Brug valgte</button>
+            </footer>
+        </div>
+    </dialog>
+}
+
+@section Scripts {
+    <script>
+        function applySelection(teamIndex) {
+            const checked = [...document.querySelectorAll('.player-check-' + teamIndex + ':checked')]
+                .map(c => c.value);
+            const inputs = [...document.querySelectorAll('.team-initials[data-team="' + teamIndex + '"]')];
+            inputs.forEach((input, i) => input.value = checked[i] ?? '');
+            document.getElementById('select-players-' + teamIndex).close();
+        }
+    </script>
+}

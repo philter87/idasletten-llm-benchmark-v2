@@ -1,0 +1,57 @@
+@page "/tournaments"
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Turneringer";
+}
+
+<div class="spread">
+    <h1 class="page-title">Alle turneringer</h1>
+    <a class="btn" href="/tournaments/create">Opret turnering</a>
+</div>
+
+<div class="table-wrap card">
+    <section>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Navn</th>
+                    <th>Scoresystem</th>
+                    <th>Holdstørrelse</th>
+                    <th>Spillere</th>
+                    <th>Kampe</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Tournaments)
+                {
+                    <tr class="clickable" onclick="location.href='/tournaments/@item.Tournament.Id'">
+                        <td><a href="/tournaments/@item.Tournament.Id">@item.Tournament.Name</a></td>
+                        <td>@item.Tournament.ScoreSystem</td>
+                        <td>@item.Tournament.TeamSize</td>
+                        <td>@item.PlayerCount</td>
+                        <td>@item.MatchCount</td>
+                        <td>
+                            @if (item.Tournament.IsArchived)
+                            {
+                                <span class="badge" data-variant="secondary">Arkiveret</span>
+                            }
+                            else if (!item.Tournament.IsPublic)
+                            {
+                                <span class="badge" data-variant="outline">Privat</span>
+                            }
+                            else
+                            {
+                                <span class="badge">Aktiv</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Tournaments.Count == 0)
+                {
+                    <tr><td colspan="6" class="muted">Ingen turneringer endnu.</td></tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</div>
