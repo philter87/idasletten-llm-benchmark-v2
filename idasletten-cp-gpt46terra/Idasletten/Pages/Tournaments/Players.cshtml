@@ -1,0 +1,13 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@model PlayersModel
+@{
+    ViewData["Title"] = "Spillere";
+    var tournament = Model.Tournament!;
+}
+<section class="page-heading"><div><p class="eyebrow">@tournament.Name</p><h1>Spillere</h1></div></section>
+<div class="two-column"><section class="form-card"><h2>Tilføj spiller</h2><form method="post" asp-page-handler="Add" class="stack"><label>Initialer <input asp-for="Initials" required /></label><label>Navn (valgfrit) <input asp-for="Name" /></label><button class="button">Tilføj</button></form></section>
+<section><h2>Nuværende krigere</h2><div class="initial-list">@foreach (var player in tournament.Players) { <span><strong>@player.Initials</strong> @player.Name</span> }</div></section></div>
+<section class="seed-section"><p class="eyebrow">Genbrug krigere</p><h2>Tilføj fra tidligere turnering</h2>
+@if (!Model.SeedPlayers.Any()) { <div class="initial-list">@foreach (var seed in Model.PreviousTournaments) { <a asp-route-seedTournamentId="@seed.Id">@seed.Name</a> }</div> }
+else { <div class="seed-list">@foreach (var player in Model.SeedPlayers) { <form method="post" asp-page-handler="Add"><input name="Initials" value="@player.Initials" type="hidden" /><button class="seed-add">+</button><span class="@(tournament.Players.Any(x => x.Initials == player.Initials) ? "struck" : "")">@player.Initials · @player.Score.ToString("0")</span></form> }</div> }
+</section>

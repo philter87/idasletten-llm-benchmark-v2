@@ -1,0 +1,19 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@model MatchesModel
+@{
+    ViewData["Title"] = "Kampe";
+    var tournament = Model.Tournament!;
+}
+<section class="page-heading"><div><p class="eyebrow">@tournament.Name</p><h1>Kampe</h1></div><a class="button" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id" asp-route-planned="true">Tilføj planlagt kamp</a></section>
+<div class="two-column">
+<section class="form-card"><h2>Planlæg flere kampe</h2><form method="post" asp-page-handler="Plan" class="stack">
+    <label>Antal spil pr. spiller <input asp-for="GamesPerPlayer" type="number" min="1" /></label>
+    <label>Seed fra tidligere turnering <select asp-for="SeedTournamentId"><option value="">Ingen</option>@foreach (var seed in Model.Seeds) { <option value="@seed.Id">@seed.Name</option>}</select></label>
+    <label>Seedtype <select asp-for="SeedingType" asp-items="Html.GetEnumSelectList<SeedingType>()"></select></label>
+    <label class="checkbox"><input asp-for="FixedTeams" /> Faste hold</label>
+    <button class="button">Planlæg kampe</button>
+</form></section>
+<section><h2>Planlagte kampe</h2><div class="table-wrap"><table><thead><tr><th>#</th><th>Hold</th><th></th></tr></thead><tbody>
+@foreach (var match in Model.Matches.Where(x => x.State == MatchState.Planned)) { <tr><td>@match.Order</td><td>@match.Teams</td><td><a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id" asp-route-matchId="@match.Id">Registrer</a></td></tr> }
+</tbody></table></div></section></div>
+<section class="results-section"><h2>Resultater</h2><div class="table-wrap"><table><thead><tr><th>#</th><th>Hold</th><th>Resultat</th></tr></thead><tbody>@foreach (var match in Model.Matches.Where(x => x.State == MatchState.Done)) { <tr><td>@match.Order</td><td><a asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id" asp-route-matchId="@match.Id">@match.Teams</a></td><td>@match.Score</td></tr> }</tbody></table></div></section>

@@ -1,0 +1,19 @@
+@page "/tournaments"
+@model IndexModel
+@{
+    ViewData["Title"] = "Turneringer";
+}
+<section class="page-heading">
+    <div><p class="eyebrow">Krøniken</p><h1>Turneringer</h1></div>
+    @if (User.Identity?.IsAuthenticated ?? false) { <a class="button" asp-page="/Tournaments/Create">Opret turnering</a> }
+</section>
+<p class="muted">Alle historiske turneringer. <a asp-route-showRounds="true">Vis også senere runder</a>.</p>
+<div class="tournament-grid">
+@foreach (var tournament in Model.Tournaments)
+{
+    <a class="tournament-card" asp-page="/Tournaments/Details" asp-route-tournamentId="@tournament.Id">
+        <span class="rune-disc">ᛏ</span>
+        <div><h3>@tournament.Name</h3><p>@tournament.PlayerCount krigere · @tournament.ScoreSystem @(tournament.IsArchived ? "· Arkiveret" : "")</p></div><span>→</span>
+    </a>
+}
+</div>

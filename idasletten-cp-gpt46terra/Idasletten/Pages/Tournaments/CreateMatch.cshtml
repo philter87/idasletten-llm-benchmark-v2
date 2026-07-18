@@ -1,0 +1,23 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@model CreateMatchModel
+@{
+    ViewData["Title"] = Model.IsPlanned ? "Planlæg kamp" : "Registrer kamp";
+    var tournament = Model.Tournament!;
+    var readonlyMatch = Model.ExistingMatch?.State == MatchState.Done && !(User.Identity?.IsAuthenticated ?? false);
+}
+<section class="narrow-page">
+    <p class="eyebrow">@tournament.Name</p><h1>@(Model.IsPlanned ? "Planlæg kamp" : readonlyMatch ? "Kampresultat" : "Registrer kamp")</h1>
+    @if (readonlyMatch) { <p class="notice">Dette resultat er afsluttet. Log ind for at redigere det.</p> }
+    <form method="post" class="form-card stack">
+        <input asp-for="MatchId" type="hidden" /><input asp-for="IsPlanned" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="validation"></div>
+        <div class="versus-inputs">
+            <label>Hold 1 <input asp-for="TeamOne" placeholder="IDA, THR" readonly="@readonlyMatch" /><span>Kommaadskilte initialer</span></label>
+            <div class="vs">VS</div>
+            <label>Hold 2 <input asp-for="TeamTwo" placeholder="FRE, LOK" readonly="@readonlyMatch" /><span>Ukendte initialer oprettes automatisk</span></label>
+        </div>
+        @if (!Model.IsPlanned) { <div class="score-inputs"><label>Hold 1 score <input asp-for="TeamOneScore" type="number" min="0" readonly="@readonlyMatch" /></label><strong>–</strong><label>Hold 2 score <input asp-for="TeamTwoScore" type="number" min="0" readonly="@readonlyMatch" /></label></div> }
+        <details><summary>Vælg fra liste</summary><div class="initial-list">@foreach (var player in tournament.Players) { <span>@player.Initials</span> }</div></details>
+        @if (!readonlyMatch) { <button class="button">@(Model.IsPlanned ? "Planlæg kamp" : "Gem resultat")</button> }
+    </form>
+</section>

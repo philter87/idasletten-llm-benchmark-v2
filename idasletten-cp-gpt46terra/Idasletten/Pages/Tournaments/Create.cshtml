@@ -1,0 +1,28 @@
+@page "/tournaments/create"
+@model CreateModel
+@{
+    ViewData["Title"] = "Opret turnering";
+}
+<section class="narrow-page">
+    <p class="eyebrow">Ny kampplads</p><h1>Opret turnering</h1>
+    <form method="post" class="form-card stack">
+        <div asp-validation-summary="ModelOnly" class="validation"></div>
+        <label>Navn <input asp-for="Input.Name" placeholder="Fx Fredagsduellen" /></label>
+        <div class="form-grid">
+            <label>Spillere pr. hold <input asp-for="Input.TeamSize" type="number" min="1" max="20" /></label>
+            <label>Point for sejr <input asp-for="Input.PointsToWin" type="number" min="1" max="100" /></label>
+        </div>
+        <label>Maks. antal spillere <input asp-for="Input.MaxPlayerCount" type="number" min="2" placeholder="Ingen grænse" /></label>
+        <label>Scoresystem
+            <select asp-for="Input.ScoreSystem" asp-items="Html.GetEnumSelectList<ScoreSystem>()"></select>
+        </label>
+        <p class="help">Elo beregner rating mod modstanderens gennemsnit. TrueSkill bruger en usikkerhedsbaseret rating. Lives fjerner et liv ved nederlag. WinCount tæller sejre.</p>
+        <label>Fortsæt fra tidligere runde
+            <select asp-for="Input.ParentTournamentId"><option value="">Ny, selvstændig turnering</option>@foreach (var parent in Model.ParentTournaments) { <option value="@parent.Id">@parent.Name</option>}</select>
+        </label>
+        <p class="help">En ny runde kopierer deltagerne, nulstiller deres score og får automatisk næste rundenummer.</p>
+        <label class="checkbox"><input asp-for="Input.IsPublic" /> Vis offentligt på forsiden</label>
+        <button class="button" type="submit">Opret</button>
+        <button class="link-button centered" type="submit" name="plan" value="true">Opret og planlæg kampe →</button>
+    </form>
+</section>

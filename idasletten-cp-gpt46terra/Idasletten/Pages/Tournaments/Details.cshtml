@@ -1,0 +1,30 @@
+@page "/tournaments/{tournamentId:guid}"
+@model DetailsModel
+@{
+    ViewData["Title"] = Model.Tournament?.Name;
+    var tournament = Model.Tournament!;
+}
+<section class="page-heading">
+    <div><p class="eyebrow">@tournament.ScoreSystem · først til @tournament.PointsToWin</p><h1>@tournament.Name</h1></div>
+    <div class="header-actions"><a class="button button-outline" asp-page="/Tournaments/Players" asp-route-tournamentId="@tournament.Id">Spillere</a><a class="button" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id">Opret kamp</a></div>
+</section>
+<div class="dashboard">
+    <section class="scoreboard">
+        <div class="card-title"><h2>Stilling</h2><button class="button button-small" onclick="document.getElementById('add-player').showModal()">Tilføj spiller</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Spiller</th><th>V</th><th>T</th><th>Kampe</th><th>Point</th><th>Score</th></tr></thead>
+        <tbody>@foreach (var player in tournament.Players) { <tr><td><a asp-page="/Users/Details" asp-route-userId="@player.UserId"><strong>@player.Initials</strong> <span class="muted">@player.Name</span></a></td><td>@player.Won</td><td>@player.Lost</td><td>@player.Games</td><td>@player.PointsWon–@player.PointsLost</td><td><strong>@player.Score.ToString("0.##")</strong> <span class="@(player.ScoreDiff >= 0 ? "positive" : "negative")">@(player.ScoreDiff >= 0 ? "+" : "")@player.ScoreDiff.ToString("0.##")</span>@if (player.Lives is not null) { <span class="lives">♥ @player.Lives</span> }</td></tr> }</tbody>
+        </table></div>
+    </section>
+    <aside class="match-sidebar">
+        <div class="side-card"><div class="card-title"><h3>Næste kampe</h3><span>@tournament.Planned.Count</span></div>
+            @if (!tournament.Planned.Any()) { <p class="muted">Ingen planlagte kampe.</p> }
+            @foreach (var match in tournament.Planned) { <a class="match-link" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id" asp-route-matchId="@match.Id"><span>#@match.Order</span><strong>@match.Teams</strong></a> }
+        </div>
+        <div class="side-card"><div class="card-title"><h3>Seneste slag</h3></div>
+            @if (!tournament.Recent.Any()) { <p class="muted">Ingen resultater endnu.</p> }
+            @foreach (var match in tournament.Recent) { <a class="match-link" asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id" asp-route-matchId="@match.Id"><span>@match.Score</span><strong>@match.Teams</strong></a> }
+        </div>
+        <a class="muted-link" asp-page="/Tournaments/Matches" asp-route-tournamentId="@tournament.Id">Se alle kampe →</a>
+    </aside>
+</div>
+<dialog id="add-player"><form method="post" asp-page-handler="AddPlayer" class="stack dialog-card"><div class="card-title"><h2>Tilføj spiller</h2><button type="button" class="close-button" onclick="this.closest('dialog').close()">×</button></div><label>Initialer <input asp-for="Initials" maxlength="10" required /></label><label>Navn <input asp-for="PlayerName" /></label><button class="button">Tilføj til slaget</button></form></dialog>

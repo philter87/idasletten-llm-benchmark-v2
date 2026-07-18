@@ -1,0 +1,3 @@
+Code generation elapsed time: 11 minutes, 56 seconds
+Source timestamp range: 2026-07-17 23:16:10 to 2026-07-17 23:28:05 (CEST)
+AIC: 342 AIC

@@ -1,0 +1,26 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Log ind";
+}
+<section class="narrow-page">
+    <p class="eyebrow">For jarler</p>
+    <h1>Log ind</h1>
+    <p class="muted">Du behøver kun login for at oprette en turnering eller ændre et afsluttet resultat.</p>
+    <div asp-validation-summary="ModelOnly" class="validation"></div>
+    @if (Model.AzureEnabled)
+    {
+        <form method="post" asp-page-handler="Microsoft"><button class="button full-width">Fortsæt med Microsoft</button></form>
+    }
+    @if (Model.TestLoginEnabled)
+    {
+        <form method="post" asp-page-handler="Test" class="stack">
+            <label>Testadgangskode <input type="password" name="password" required /></label>
+            <button class="button button-outline full-width">Log ind som testbruger</button>
+        </form>
+    }
+    @if (!Model.AzureEnabled && !Model.TestLoginEnabled)
+    {
+        <div class="empty-state">Login er ikke konfigureret. Tilføj Azure AD eller TestUser-miljøvariabler.</div>
+    }
+</section>

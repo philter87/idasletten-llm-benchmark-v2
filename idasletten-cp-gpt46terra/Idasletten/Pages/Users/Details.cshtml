@@ -1,0 +1,8 @@
+@page "/users/{userId:guid}"
+@model DetailsModel
+@{
+    ViewData["Title"] = Model.UserStats?.Name;
+    var user = Model.UserStats!;
+}
+<section class="page-heading"><div><p class="eyebrow">Krigersaga</p><h1>@user.Name <span class="muted">@user.Initials</span></h1></div></section>
+<div class="table-wrap"><table><thead><tr><th>Turnering</th><th>V</th><th>T</th><th>Kampe</th><th>Score</th></tr></thead><tbody>@foreach (var result in user.Results) { <tr><td>@result.Name</td><td>@result.Won</td><td>@result.Lost</td><td>@result.Games</td><td>@result.Score.ToString("0.##")</td></tr> }</tbody></table></div>

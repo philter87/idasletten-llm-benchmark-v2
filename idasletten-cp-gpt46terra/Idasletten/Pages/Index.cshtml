@@ -1,0 +1,35 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Hjem";
+}
+<section class="hero">
+    <div>
+        <p class="eyebrow">Bordfodbold i Valhal</p>
+        <h1>Kæmp på<br /><em>Idasletten.</em></h1>
+        <p class="hero-copy">Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte. Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag, som øvelse til Ragnarok. Hver aften er Idasletten rød af blod.</p>
+        <a class="button" asp-page="/Tournaments/Index">Se alle turneringer</a>
+    </div>
+    <div class="hero-runes" aria-hidden="true">ᚦ<br />ᛟ<br />ᚱ</div>
+</section>
+<section class="section-heading">
+    <div><p class="eyebrow">Åbne kampe</p><h2>Offentlige turneringer</h2></div>
+    <a class="muted-link" asp-page="/Tournaments/Index">Historiske turneringer →</a>
+</section>
+@if (Model.Tournaments.Count == 0)
+{
+    <div class="empty-state">Ingen offentlige turneringer endnu.</div>
+}
+else
+{
+    <div class="tournament-grid">
+    @foreach (var tournament in Model.Tournaments)
+    {
+        <a class="tournament-card" asp-page="/Tournaments/Details" asp-route-tournamentId="@tournament.Id">
+            <span class="rune-disc">ᚠ</span>
+            <div><h3>@tournament.Name</h3><p>@tournament.PlayerCount krigere · @tournament.ScoreSystem</p></div>
+            <span>→</span>
+        </a>
+    }
+    </div>
+}
