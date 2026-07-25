@@ -1,0 +1,53 @@
+name: Deploy to Fly.io
+
+# Pushes to main are built, tested and deployed. The workflow lives next to the app; move or copy it
+# to the repository root (.github/workflows) for GitHub to pick it up when the app is not the root.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'idasletten-opus5/**'
+  workflow_dispatch:
+
+env:
+  APP_DIRECTORY: idasletten-opus5
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+        working-directory: ${{ env.APP_DIRECTORY }}
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+        working-directory: ${{ env.APP_DIRECTORY }}
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
+        working-directory: ${{ env.APP_DIRECTORY }}
+
+  deploy:
+    name: Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    concurrency: deploy-group
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        working-directory: ${{ env.APP_DIRECTORY }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

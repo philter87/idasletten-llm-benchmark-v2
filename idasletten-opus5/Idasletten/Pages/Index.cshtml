@@ -1,0 +1,93 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Idasletten";
+}
+
+<div class="stack-lg">
+    <section class="hero">
+        <img class="hero-image" src="~/img/hero.svg" alt="Idasletten ved solnedgang med Valhals porte" />
+        <div class="hero-body">
+            <h1>Idasletten</h1>
+            <p class="hero-quote">
+                Idasletten (Iðavöllr) findes i nordisk mytologi lige uden for Valhals porte.
+                Det er her vikingerne som er døde i krig udkæmper deres drabelige slag hver dag,
+                som øvelse til Ragnarok. Hver aften er Idasletten rød af blod.
+            </p>
+        </div>
+    </section>
+
+    <section class="stack">
+        <div class="split">
+            <div class="stack-sm">
+                <h2>Aktive turneringer</h2>
+                <p class="muted small">Vælg en turnering for at se stillingen eller melde et resultat.</p>
+            </div>
+            <a class="btn" data-variant="outline" asp-page="/Tournaments/Index">Alle turneringer</a>
+        </div>
+
+        @if (Model.Tournaments.Count == 0)
+        {
+            <div class="card">
+                <section class="empty-state">
+                    Ingen offentlige turneringer endnu. Log ind og opret den første.
+                </section>
+            </div>
+        }
+        else
+        {
+            <div class="card-grid">
+                @foreach (var tournament in Model.Tournaments)
+                {
+                    <a class="card tournament-card" asp-page="/Tournaments/Detail"
+                       asp-route-tournamentId="@tournament.Id">
+                        <header>
+                            <h3>@tournament.Name</h3>
+                            <p>
+                                @tournament.ScoreSystem.Title() &middot;
+                                @tournament.TeamSize mod @tournament.TeamSize &middot;
+                                først til @tournament.PointsToWin
+                            </p>
+                        </header>
+                        <section>
+                            <div class="stat-row">
+                                <div class="stat">
+                                    <span class="stat-value">@tournament.PlayerCount</span>
+                                    <span class="stat-label">Spillere</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">@tournament.PlayedMatchCount</span>
+                                    <span class="stat-label">Kampe spillet</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">@tournament.PlannedMatchCount</span>
+                                    <span class="stat-label">Planlagt</span>
+                                </div>
+                            </div>
+                        </section>
+                        <footer>
+                            <div class="cluster-sm small">
+                                @if (tournament.LeaderName is not null)
+                                {
+                                    <span class="badge">Fører: @tournament.LeaderName</span>
+                                }
+                                @if (tournament.RoundCount > 0)
+                                {
+                                    <span class="badge" data-variant="outline">@tournament.RoundCount runder</span>
+                                }
+                            </div>
+                        </footer>
+                    </a>
+                }
+            </div>
+        }
+
+        <p class="small muted">
+            Leder du efter noget ældre?
+            <a asp-page="/Tournaments/Index" style="text-decoration: underline">
+                Se de historiske turneringer
+            </a>
+            - de arkiverede og de private.
+        </p>
+    </section>
+</div>

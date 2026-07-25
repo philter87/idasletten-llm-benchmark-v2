@@ -1,0 +1,293 @@
+@page "/tournaments/{tournamentId:guid}/matches"
+@using Idasletten.Shared.Ui
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    var tournament = Model.Tournament;
+    ViewData["Title"] = $"Kampe - {tournament.Name}";
+    var seedingTypes = Enum.GetValues<SeedingType>();
+}
+
+<div class="stack">
+    <div class="page-head">
+        <div class="stack-sm">
+            <nav class="breadcrumbs">
+                <a asp-page="/Index">Forsiden</a> <span>/</span>
+                <a asp-page="/Tournaments/Detail" asp-route-tournamentId="@tournament.Id">@tournament.Name</a>
+                <span>/</span> <span>Kampe</span>
+            </nav>
+            <h1>Kampe</h1>
+            <p class="muted small">
+                @Model.Matches.Planned.Count planlagte og @Model.Matches.Played.Count spillede kampe.
+            </p>
+        </div>
+        <div class="cluster">
+            <button type="button" class="btn" data-variant="outline"
+                    onclick="document.getElementById('plan-one-dialog').showModal()">
+                Tilføj planlagt kamp
+            </button>
+            <button type="button" class="btn"
+                    onclick="document.getElementById('plan-several-dialog').showModal()">
+                Planlæg flere kampe
+            </button>
+            <a class="btn" data-variant="ghost"
+               asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id">Opret kamp</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <header>
+            <h2>Planlagte kampe</h2>
+            <p>Klik på en kamp for at melde resultatet.</p>
+        </header>
+        <section>
+            @if (Model.Matches.Planned.Count == 0)
+            {
+                <div class="empty-state">Ingen planlagte kampe.</div>
+            }
+            else
+            {
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 4rem">Nr.</th>
+                                <th>Hold</th>
+                                <th>Mod</th>
+                                <th class="right"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var match in Model.Matches.Planned)
+                            {
+                                <tr>
+                                    <td class="numeric">@match.Order</td>
+                                    <td>@(match.Teams.ElementAtOrDefault(0)?.PlayerInitials ?? "-")</td>
+                                    <td>@(match.Teams.ElementAtOrDefault(1)?.PlayerInitials ?? "-")</td>
+                                    <td>
+                                        <a class="btn" data-variant="outline" data-size="sm"
+                                           asp-page="/Tournaments/CreateMatch"
+                                           asp-route-tournamentId="@tournament.Id"
+                                           asp-route-matchId="@match.Id">Meld resultat</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+
+    <div class="card">
+        <header>
+            <h2>Resultater</h2>
+            <p>De spillede kampe, nyeste først.</p>
+        </header>
+        <section>
+            @if (Model.Matches.Played.Count == 0)
+            {
+                <div class="empty-state">Der er ikke spillet nogen kampe endnu.</div>
+            }
+            else
+            {
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 4rem">Nr.</th>
+                                <th>Vinder</th>
+                                <th>Taber</th>
+                                <th class="center">Resultat</th>
+                                <th>Spillet</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var match in Model.Matches.Played)
+                            {
+                                var winners = match.Winners;
+                                var losers = match.Teams.Where(team => !match.IsWinner(team)).ToList();
+                                <tr>
+                                    <td class="numeric">@match.Order</td>
+                                    <td class="team-winner">
+                                        @(winners.Count > 0
+                                            ? string.Join(", ", winners.Select(team => team.PlayerInitials))
+                                            : "uafgjort")
+                                    </td>
+                                    <td class="team-loser">
+                                        @string.Join(", ", losers.Select(team => team.PlayerInitials))
+                                    </td>
+                                    <td class="center numeric"><strong>@match.ScoreLine</strong></td>
+                                    <td class="small muted">@Format.When(match.PlayedUtc)</td>
+                                    <td>
+                                        <a class="btn" data-variant="ghost" data-size="sm"
+                                           asp-page="/Tournaments/CreateMatch"
+                                           asp-route-tournamentId="@tournament.Id"
+                                           asp-route-matchId="@match.Id">Se kampen</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+</div>
+
+<dialog id="plan-one-dialog" class="dialog" aria-labelledby="plan-one-title">
+    <article>
+        <form method="dialog"><button aria-label="Luk">&times;</button></form>
+        <header>
+            <h2 id="plan-one-title">Tilføj planlagt kamp</h2>
+            <p>Skriv initialerne på de spillere der skal mødes.</p>
+        </header>
+        <form method="post" asp-page-handler="PlanOne" asp-route-tournamentId="@tournament.Id">
+            <section class="dialog-form">
+                <div class="field">
+                    <label class="label">Hold 1</label>
+                    <div class="initials-row">
+                        @for (var index = 0; index < tournament.TeamSize; index++)
+                        {
+                            <input class="input" type="text" name="teamOne" maxlength="5"
+                                   placeholder="Initialer" aria-label="Hold 1 spiller @(index + 1)"
+                                   style="text-transform: uppercase" />
+                        }
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Hold 2</label>
+                    <div class="initials-row">
+                        @for (var index = 0; index < tournament.TeamSize; index++)
+                        {
+                            <input class="input" type="text" name="teamTwo" maxlength="5"
+                                   placeholder="Initialer" aria-label="Hold 2 spiller @(index + 1)"
+                                   style="text-transform: uppercase" />
+                        }
+                    </div>
+                </div>
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline"
+                        onclick="document.getElementById('plan-one-dialog').close()">Fortryd</button>
+                <button type="submit" class="btn">Planlæg kampen</button>
+            </footer>
+        </form>
+    </article>
+</dialog>
+
+<dialog id="plan-several-dialog" class="dialog" aria-labelledby="plan-several-title">
+    <article>
+        <form method="dialog"><button aria-label="Luk">&times;</button></form>
+        <header>
+            <h2 id="plan-several-title">Planlæg flere kampe</h2>
+            <p>Antallet af kampe regnes ud fra hvor mange kampe hver spiller skal have.</p>
+        </header>
+        <form method="post" asp-page-handler="PlanSeveral" asp-route-tournamentId="@tournament.Id">
+            <section class="dialog-form">
+                @if (Model.TournamentPlayers.Count < tournament.TeamSize * 2)
+                {
+                    <div class="alert" data-variant="destructive">
+                        <h2>Der mangler spillere</h2>
+                        <section>
+                            <p>
+                                Der skal mindst være @(tournament.TeamSize * 2) spillere.
+                                <a asp-page="/Tournaments/Players" asp-route-tournamentId="@tournament.Id"
+                                   style="text-decoration: underline">Tilføj spillere først</a>.
+                            </p>
+                        </section>
+                    </div>
+                }
+
+                <div class="field">
+                    <label class="label" for="seed-tournament">Planlæg ud fra en tidligere turnering</label>
+                    @if (!tournament.CanBeSeeded)
+                    {
+                        <p class="small muted">
+                            Turneringen er runde @tournament.RoundNumber af
+                            @tournament.ParentTournamentName og kan derfor ikke seedes.
+                        </p>
+                    }
+                    else if (tournament.SeedTournamentId is not null)
+                    {
+                        <p class="small muted">Seedet fra <strong>@tournament.SeedTournamentName</strong>.</p>
+                    }
+                    else
+                    {
+                        <select class="select" id="seed-tournament" name="seedTournamentId">
+                            <option value="">Ingen - brug stillingen i denne turnering</option>
+                            @foreach (var previous in Model.PreviousTournaments)
+                            {
+                                <option value="@previous.Id">@previous.Name</option>
+                            }
+                        </select>
+                    }
+                </div>
+
+                <div class="field">
+                    <label class="label" for="games-per-player">Antal kampe pr. spiller</label>
+                    <input class="input" type="number" id="games-per-player" name="gamesPerPlayer"
+                           min="1" max="20" value="3" />
+                    <p class="tiny muted" id="plan-preview"></p>
+                </div>
+
+                <label class="label" style="gap: 0.6rem">
+                    <input class="input" type="checkbox" name="fixedTeams" value="true" />
+                    Faste hold - holdene bliver ikke blandet mellem kampene
+                </label>
+                <input type="hidden" name="fixedTeams" value="false" />
+
+                <div class="field">
+                    <label class="label" for="seeding">Seeding</label>
+                    <select class="select" id="seeding" name="seeding">
+                        @foreach (var type in seedingTypes)
+                        {
+                            <option value="@((int)type)">@type.Title()</option>
+                        }
+                    </select>
+                    @foreach (var type in seedingTypes)
+                    {
+                        <p class="tiny muted seeding-help" data-seeding="@((int)type)"
+                           hidden="@(type != SeedingType.Random)">@type.Description()</p>
+                    }
+                </div>
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline"
+                        onclick="document.getElementById('plan-several-dialog').close()">Fortryd</button>
+                <button type="submit" class="btn">Planlæg kampene</button>
+            </footer>
+        </form>
+    </article>
+</dialog>
+
+@section Scripts {
+    <script>
+        const playerCount = @Model.TournamentPlayers.Count;
+        const teamSize = @tournament.TeamSize;
+
+        function updatePlanPreview() {
+            const games = parseInt(document.getElementById('games-per-player').value || '0', 10);
+            const teams = Math.floor(playerCount / teamSize);
+            const matches = Math.floor(teams / 2) * games;
+            document.getElementById('plan-preview').textContent =
+                matches > 0
+                    ? matches + ' kampe bliver oprettet med ' + playerCount + ' spillere.'
+                    : 'Der er ikke spillere nok til at planlægge kampe.';
+        }
+
+        document.getElementById('games-per-player').addEventListener('input', updatePlanPreview);
+        updatePlanPreview();
+
+        document.getElementById('seeding').addEventListener('change', function (event) {
+            document.querySelectorAll('.seeding-help').forEach(function (help) {
+                help.hidden = help.dataset.seeding !== event.target.value;
+            });
+        });
+
+        @if (Model.Plan)
+        {
+            <text>document.getElementById('plan-several-dialog').showModal();</text>
+        }
+    </script>
+}

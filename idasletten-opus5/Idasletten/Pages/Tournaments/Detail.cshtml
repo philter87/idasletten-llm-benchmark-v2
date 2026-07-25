@@ -1,0 +1,242 @@
+@page "/tournaments/{tournamentId:guid}"
+@using Idasletten.Shared.Ui
+@model Idasletten.Pages.Tournaments.DetailModel
+@{
+    var tournament = Model.Tournament;
+    ViewData["Title"] = tournament.Name;
+    var isLives = tournament.ScoreSystem == ScoreSystem.Lives;
+}
+
+<div class="stack">
+    <div class="page-head">
+        <div class="stack-sm">
+            <nav class="breadcrumbs">
+                <a asp-page="/Index">Forsiden</a> <span>/</span>
+                <a asp-page="/Tournaments/Index">Turneringer</a> <span>/</span>
+                <span>@tournament.Name</span>
+            </nav>
+            <h1>@tournament.Name</h1>
+            <div class="cluster-sm small muted">
+                <span class="badge" data-variant="secondary">@tournament.ScoreSystem.Title()</span>
+                <span>@tournament.TeamSize mod @tournament.TeamSize</span>
+                <span>&middot;</span>
+                <span>først til @tournament.PointsToWin</span>
+                <span>&middot;</span>
+                <span>@tournament.PlayerCount spillere@(tournament.MaxPlayerCount is { } max ? $" af {max}" : "")</span>
+                @if (tournament.ParentTournamentId is not null)
+                {
+                    <span>&middot;</span>
+                    <a asp-page="/Tournaments/Detail" asp-route-tournamentId="@tournament.ParentTournamentId">
+                        runde @tournament.RoundNumber af @tournament.ParentTournamentName
+                    </a>
+                }
+                @if (tournament.SeedTournamentName is not null)
+                {
+                    <span>&middot;</span>
+                    <span>seedet fra @tournament.SeedTournamentName</span>
+                }
+                @if (tournament.IsArchived)
+                {
+                    <span class="badge" data-variant="secondary">Arkiveret</span>
+                }
+                @if (!tournament.IsPublic)
+                {
+                    <span class="badge" data-variant="outline">Privat</span>
+                }
+            </div>
+        </div>
+
+        <div class="cluster">
+            <a class="btn" data-variant="outline" data-size="sm"
+               asp-page="/Tournaments/Players" asp-route-tournamentId="@tournament.Id">Spillere</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="btn" data-variant="outline" data-size="sm"
+                   asp-page="/Tournaments/Create" asp-route-parentTournamentId="@tournament.Id">
+                    Opret næste runde
+                </a>
+                <form method="post" asp-page-handler="Archive"
+                      asp-route-tournamentId="@tournament.Id">
+                    <input type="hidden" name="archived" value="@((!tournament.IsArchived).ToString().ToLowerInvariant())" />
+                    <button type="submit" class="btn" data-variant="ghost" data-size="sm">
+                        @(tournament.IsArchived ? "Genåbn" : "Arkivér")
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="detail-layout">
+        <div class="detail-main stack">
+            <div class="card">
+                <header>
+                    <h2>Stilling</h2>
+                    <p>@tournament.ScoreSystem.Description()</p>
+                    <menu class="card-action">
+                        <button type="button" class="btn" data-size="sm"
+                                onclick="document.getElementById('add-player-dialog').showModal()">
+                            Tilføj spiller
+                        </button>
+                    </menu>
+                </header>
+                <section>
+                    @if (Model.Scoreboard.Count == 0)
+                    {
+                        <div class="empty-state">
+                            Ingen spillere endnu. Tilføj den første viking med knappen ovenfor.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 3rem">#</th>
+                                        <th>Spiller</th>
+                                        <th class="center">Kampe</th>
+                                        <th class="center">Vundet</th>
+                                        <th class="center">Tabt</th>
+                                        <th class="center">Mål</th>
+                                        <th class="center">@tournament.ScoreSystem.ScoreLabel()</th>
+                                        <th class="center">Ændring</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in Model.Scoreboard)
+                                    {
+                                        <tr class="@(row.IsKnockedOut ? "knocked-out" : "")">
+                                            <td><span class="@Format.RankClass(row.Rank)">@row.Rank</span></td>
+                                            <td>
+                                                <a class="player-cell"
+                                                   asp-page="/Users/Detail" asp-route-userId="@row.UserId">
+                                                    <span class="avatar-fallback">
+                                                        @if (row.ImageUrl is not null)
+                                                        {
+                                                            <img src="@row.ImageUrl" alt="@row.Initials" />
+                                                        }
+                                                        else
+                                                        {
+                                                            @row.Initials
+                                                        }
+                                                    </span>
+                                                    <span class="stack-sm" style="gap:0">
+                                                        <span class="player-name">@row.DisplayName</span>
+                                                        <span class="tiny muted">@row.Initials</span>
+                                                    </span>
+                                                </a>
+                                            </td>
+                                            <td class="center numeric">@row.MatchCount</td>
+                                            <td class="center numeric">@row.WinCount</td>
+                                            <td class="center numeric">@row.LoseCount</td>
+                                            <td class="center numeric">@row.PointsWon - @row.PointsLost</td>
+                                            <td class="center numeric">
+                                                @if (isLives)
+                                                {
+                                                    <span class="lives">@Format.Lives(row.Lives)</span>
+                                                }
+                                                else
+                                                {
+                                                    <strong>@Format.Score(row.Score, tournament.ScoreSystem)</strong>
+                                                }
+                                            </td>
+                                            <td class="center @Format.DeltaClass(row.ScoreDiff)">
+                                                @Format.Delta(row.ScoreDiff, tournament.ScoreSystem)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </section>
+            </div>
+
+            @if (tournament.Rounds.Count > 0)
+            {
+                <div class="card">
+                    <header><h2>Runder</h2></header>
+                    <section class="stack-sm">
+                        @foreach (var round in tournament.Rounds)
+                        {
+                            <a class="match-item" asp-page="/Tournaments/Detail"
+                               asp-route-tournamentId="@round.Id">
+                                <span>Runde @round.RoundNumber &middot; @round.Name</span>
+                                <span class="match-score small muted">@round.PlayerCount spillere</span>
+                            </a>
+                        }
+                    </section>
+                </div>
+            }
+        </div>
+
+        <aside class="detail-aside">
+            <a class="btn" style="width: 100%"
+               asp-page="/Tournaments/CreateMatch" asp-route-tournamentId="@tournament.Id">
+                Opret kamp
+            </a>
+
+            @if (Model.Matches.Planned.Count > 0)
+            {
+                <div class="card" data-size="sm">
+                    <header><h3>Næste kampe</h3></header>
+                    <section class="stack-sm">
+                        @foreach (var match in Model.Matches.Planned)
+                        {
+                            <partial name="_MatchLink" model="new MatchLinkModel(tournament.Id, match)" />
+                        }
+                    </section>
+                </div>
+            }
+
+            @if (Model.Matches.Played.Count > 0)
+            {
+                <div class="card" data-size="sm">
+                    <header><h3>Seneste resultater</h3></header>
+                    <section class="stack-sm">
+                        @foreach (var match in Model.Matches.Played)
+                        {
+                            <partial name="_MatchLink" model="new MatchLinkModel(tournament.Id, match, true)" />
+                        }
+                    </section>
+                </div>
+            }
+
+            <a class="small muted" style="text-decoration: underline"
+               asp-page="/Tournaments/Matches" asp-route-tournamentId="@tournament.Id">
+                Se alle kampe
+            </a>
+        </aside>
+    </div>
+</div>
+
+<dialog id="add-player-dialog" class="dialog" aria-labelledby="add-player-title">
+    <article>
+        <form method="dialog">
+            <button aria-label="Luk">&times;</button>
+        </form>
+        <header>
+            <h2 id="add-player-title">Tilføj spiller</h2>
+            <p>Initialer der ikke er brugt før, opretter en ny bruger.</p>
+        </header>
+        <form method="post" asp-page-handler="AddPlayer" asp-route-tournamentId="@tournament.Id">
+            <section class="dialog-form">
+                <div class="field">
+                    <label class="label" for="add-player-initials">Initialer</label>
+                    <input class="input" type="text" id="add-player-initials" name="initials"
+                           maxlength="5" required placeholder="THO" style="text-transform: uppercase" />
+                </div>
+                <div class="field">
+                    <label class="label" for="add-player-name">Navn (valgfrit)</label>
+                    <input class="input" type="text" id="add-player-name" name="name"
+                           placeholder="Thor Odinson" />
+                </div>
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline"
+                        onclick="document.getElementById('add-player-dialog').close()">Fortryd</button>
+                <button type="submit" class="btn">Tilføj</button>
+            </footer>
+        </form>
+    </article>
+</dialog>

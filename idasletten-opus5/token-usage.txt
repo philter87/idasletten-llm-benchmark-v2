@@ -1,0 +1,19 @@
+Idasletten (Opus 5) — token usage and timing
+============================================
+
+Work duration (from file modification times in this folder)
+----------------------------------------------------------
+First file written:  2026-07-24 22:37:43  (Idasletten/appsettings.Development.json)
+Last file written:   2026-07-24 23:41:37  (AGENTS.md)
+Elapsed:             1h 3m 54s
+
+Reported session totals
+-----------------------
+Total cost:            $53.47
+Total duration (API):  53m 43s
+Total duration (wall): 11h 4m 22s
+Total code changes:    8170 lines added, 212 lines removed
+
+Usage by model:
+       claude-opus-5:  4.0k input, 261.2k output, 85.4m cache read, 422.2k cache write ($53.46)
+    claude-haiku-4-5:  7.8k input, 390 output, 0 cache read, 0 cache write ($0.0097)

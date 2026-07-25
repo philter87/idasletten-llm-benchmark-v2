@@ -1,0 +1,129 @@
+@page "/users/{userId:guid}"
+@using Idasletten.Shared.Ui
+@model Idasletten.Pages.Users.DetailModel
+@{
+    var stats = Model.Stats;
+    ViewData["Title"] = stats.DisplayName;
+}
+
+<div class="stack">
+    <div class="stack-sm">
+        <nav class="breadcrumbs">
+            <a asp-page="/Index">Forsiden</a> <span>/</span> <span>@stats.DisplayName</span>
+        </nav>
+        <div class="cluster">
+            <span class="avatar-fallback" style="width: 3.5rem; height: 3.5rem; font-size: 1rem">
+                @if (stats.ImageUrl is not null)
+                {
+                    <img src="@stats.ImageUrl" alt="@stats.Initials" />
+                }
+                else
+                {
+                    @stats.Initials
+                }
+            </span>
+            <div class="stack-sm" style="gap: 0.15rem">
+                <h1>@stats.DisplayName</h1>
+                <span class="muted small">
+                    @stats.Initials@(stats.Email is not null ? $" · {stats.Email}" : "")
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <header><h2>På tværs af alle turneringer</h2></header>
+        <section>
+            <div class="stat-row">
+                <div class="stat">
+                    <span class="stat-value">@stats.TournamentCount</span>
+                    <span class="stat-label">Turneringer</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@stats.MatchCount</span>
+                    <span class="stat-label">Kampe</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@stats.WinCount</span>
+                    <span class="stat-label">Vundet</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@stats.LoseCount</span>
+                    <span class="stat-label">Tabt</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@stats.WinRate.ToString("F0")%</span>
+                    <span class="stat-label">Sejrsrate</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">@stats.PointsWon - @stats.PointsLost</span>
+                    <span class="stat-label">Mål scoret / lukket ind</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="card">
+        <header><h2>Turneringer</h2></header>
+        <section>
+            @if (stats.Tournaments.Count == 0)
+            {
+                <div class="empty-state">@stats.DisplayName har ikke spillet endnu.</div>
+            }
+            else
+            {
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Turnering</th>
+                                <th>Pointsystem</th>
+                                <th class="center">Placering</th>
+                                <th class="center">Kampe</th>
+                                <th class="center">Vundet</th>
+                                <th class="center">Tabt</th>
+                                <th class="center">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tournament in stats.Tournaments)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-page="/Tournaments/Detail"
+                                           asp-route-tournamentId="@tournament.TournamentId">
+                                            <strong>@tournament.TournamentName</strong>
+                                        </a>
+                                        <div class="cluster-sm tiny muted">
+                                            @if (tournament.IsArchived)
+                                            {
+                                                <span class="badge" data-variant="secondary">Arkiveret</span>
+                                            }
+                                            @if (tournament.RoundNumber > 1)
+                                            {
+                                                <span class="badge" data-variant="outline">
+                                                    Runde @tournament.RoundNumber
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>@tournament.ScoreSystem.Title()</td>
+                                    <td class="center">
+                                        <span class="@Format.RankClass(tournament.Rank)">@tournament.Rank</span>
+                                        <span class="tiny muted">/ @tournament.PlayerCount</span>
+                                    </td>
+                                    <td class="center numeric">@tournament.MatchCount</td>
+                                    <td class="center numeric">@tournament.WinCount</td>
+                                    <td class="center numeric">@tournament.LoseCount</td>
+                                    <td class="center numeric">
+                                        <strong>@Format.Score(tournament.Score, tournament.ScoreSystem)</strong>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+</div>

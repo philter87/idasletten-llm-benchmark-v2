@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Idasletten ved solnedgang: Valhals porte, spyd og ravne">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b1024"/>
+      <stop offset="38%" stop-color="#4a1424"/>
+      <stop offset="68%" stop-color="#98301f"/>
+      <stop offset="88%" stop-color="#d76a2a"/>
+      <stop offset="100%" stop-color="#f0a04a"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ffd08a" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#ff9a45" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ff7a30" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5c1a19"/>
+      <stop offset="45%" stop-color="#2c0d13"/>
+      <stop offset="100%" stop-color="#170710"/>
+    </linearGradient>
+    <linearGradient id="hall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1220"/>
+      <stop offset="100%" stop-color="#160a14"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffb066" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffb066" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <!-- low evening sun over the plain -->
+  <circle cx="1010" cy="612" r="300" fill="url(#sunGlow)"/>
+  <circle cx="1010" cy="612" r="96" fill="#ffcf87" opacity="0.92"/>
+
+  <!-- far mountains -->
+  <path d="M0 600 L140 512 L232 566 L352 470 L470 574 L556 522 L660 596 L760 540 L860 604 L980 548 L1090 606 L1210 526 L1320 590 L1432 520 L1600 606 L1600 660 L0 660 Z"
+        fill="#2b1226" opacity="0.85"/>
+
+  <!-- Valhalla: the hall with the golden gate just outside Idasletten -->
+  <g fill="url(#hall)">
+    <path d="M560 636 L800 448 L1040 636 Z"/>
+    <rect x="596" y="628" width="408" height="132"/>
+    <path d="M800 430 L820 452 L800 474 L780 452 Z" fill="#e8b357" opacity="0.9"/>
+  </g>
+  <path d="M742 760 L742 664 Q800 606 858 664 L858 760 Z" fill="#e8b357" opacity="0.28"/>
+  <path d="M742 760 L742 664 Q800 606 858 664 L858 760" fill="none" stroke="#f3c877" stroke-width="5" opacity="0.75"/>
+  <g stroke="#e8b357" stroke-width="3" opacity="0.35">
+    <path d="M604 700 L996 700"/>
+    <path d="M604 736 L996 736"/>
+  </g>
+
+  <!-- the plain itself -->
+  <path d="M0 660 Q400 626 800 656 Q1200 686 1600 648 L1600 900 L0 900 Z" fill="url(#ground)"/>
+  <path d="M0 660 Q400 626 800 656 Q1200 686 1600 648 L1600 720 L0 720 Z" fill="url(#mist)"/>
+
+  <!-- the shield wall: spears and banners of the einherjar -->
+  <g stroke="#0d040c" stroke-width="7" stroke-linecap="round" opacity="0.95">
+    <path d="M120 900 L104 690"/><path d="M188 900 L200 706"/><path d="M262 900 L250 676"/>
+    <path d="M336 900 L348 700"/><path d="M410 900 L398 686"/><path d="M486 900 L498 712"/>
+    <path d="M1120 900 L1108 694"/><path d="M1196 900 L1208 708"/><path d="M1268 900 L1256 678"/>
+    <path d="M1344 900 L1356 702"/><path d="M1420 900 L1408 688"/><path d="M1496 900 L1508 710"/>
+  </g>
+  <g fill="#0d040c" opacity="0.95">
+    <circle cx="150" cy="828" r="52"/><circle cx="300" cy="846" r="46"/><circle cx="452" cy="834" r="50"/>
+    <circle cx="1150" cy="838" r="48"/><circle cx="1300" cy="852" r="44"/><circle cx="1452" cy="832" r="50"/>
+  </g>
+  <g stroke="#7d2020" stroke-width="4" opacity="0.55">
+    <path d="M118 828 L182 828 M150 796 L150 860"/>
+    <path d="M1118 838 L1182 838 M1150 806 L1150 870"/>
+  </g>
+
+  <!-- Hugin and Munin -->
+  <g fill="none" stroke="#1a0a14" stroke-width="7" stroke-linecap="round" opacity="0.9">
+    <path d="M300 262 q34 -30 68 0 q34 -30 68 0"/>
+    <path d="M470 350 q26 -22 52 0 q26 -22 52 0"/>
+    <path d="M1230 214 q30 -26 60 0 q30 -26 60 0"/>
+  </g>
+</svg>

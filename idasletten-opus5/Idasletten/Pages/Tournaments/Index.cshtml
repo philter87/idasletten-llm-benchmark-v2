@@ -1,0 +1,96 @@
+@page "/tournaments"
+@using Idasletten.Shared.Ui
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Turneringer";
+}
+
+<div class="stack">
+    <div class="page-head">
+        <div class="stack-sm">
+            <nav class="breadcrumbs">
+                <a asp-page="/Index">Forsiden</a> <span>/</span> <span>Turneringer</span>
+            </nav>
+            <h1>Alle turneringer</h1>
+            <p class="muted small">Både de aktive, de private og dem der er lagt i arkivet.</p>
+        </div>
+        <div class="cluster">
+            <a class="btn" data-variant="outline" data-size="sm"
+               asp-page="/Tournaments/Index" asp-route-showRounds="@(!Model.ShowRounds)">
+                @(Model.ShowRounds ? "Skjul runder" : "Vis runder")
+            </a>
+            <a class="btn" asp-page="/Tournaments/Create">Opret turnering</a>
+        </div>
+    </div>
+
+    @if (Model.Tournaments.Count == 0)
+    {
+        <div class="card"><section class="empty-state">Der er ingen turneringer endnu.</section></div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Turnering</th>
+                            <th>Pointsystem</th>
+                            <th class="center">Spillere</th>
+                            <th class="center">Spillet</th>
+                            <th class="center">Planlagt</th>
+                            <th>Fører</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tournament in Model.Tournaments)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/Tournaments/Detail" asp-route-tournamentId="@tournament.Id">
+                                        <strong>@tournament.Name</strong>
+                                    </a>
+                                    <div class="tiny muted">
+                                        @tournament.TeamSize mod @tournament.TeamSize &middot;
+                                        først til @tournament.PointsToWin &middot;
+                                        oprettet @Format.When(tournament.CreatedUtc)
+                                    </div>
+                                </td>
+                                <td>@tournament.ScoreSystem.Title()</td>
+                                <td class="center numeric">@tournament.PlayerCount</td>
+                                <td class="center numeric">@tournament.PlayedMatchCount</td>
+                                <td class="center numeric">@tournament.PlannedMatchCount</td>
+                                <td>@(tournament.LeaderName ?? "-")</td>
+                                <td>
+                                    <div class="cluster-sm">
+                                        @if (tournament.IsArchived)
+                                        {
+                                            <span class="badge" data-variant="secondary">Arkiveret</span>
+                                        }
+                                        @if (!tournament.IsPublic)
+                                        {
+                                            <span class="badge" data-variant="outline">Privat</span>
+                                        }
+                                        @if (tournament.ParentTournamentId is not null)
+                                        {
+                                            <span class="badge" data-variant="outline">
+                                                Runde @tournament.RoundNumber
+                                            </span>
+                                        }
+                                        else if (tournament.RoundCount > 0)
+                                        {
+                                            <span class="badge" data-variant="outline">
+                                                @tournament.RoundCount runder
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

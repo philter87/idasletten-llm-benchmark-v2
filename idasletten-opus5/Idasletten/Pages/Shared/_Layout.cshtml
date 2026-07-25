@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] &middot; Idasletten</title>
+    <link rel="icon" href="~/img/valknut.svg" type="image/svg+xml" />
+    <!-- basecoat via CDN - Tailwind is part of this bundle, so it is not installed separately. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/js/all.min.js" defer></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a class="brand" asp-page="/Index">
+                <partial name="_Valknut" />
+                <span class="stack-sm" style="gap:0">
+                    <span class="brand-name">Idasletten</span>
+                    <span class="brand-tag">Bordfodbold</span>
+                </span>
+            </a>
+
+            <nav class="site-nav">
+                <a class="nav-link" asp-page="/Index">Forsiden</a>
+                <a class="nav-link" asp-page="/Tournaments/Index">Turneringer</a>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="nav-link" asp-page="/Users/Detail" asp-route-userId="@User.GetAppUserId()">
+                        @(User.GetInitials() ?? User.Identity!.Name)
+                    </a>
+                    <form method="post" asp-page="/Login" asp-page-handler="Logout">
+                        <button type="submit" class="btn" data-variant="ghost" data-size="sm">Log ud</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="btn" data-variant="outline" data-size="sm" asp-page="/Login">Log ind</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container stack">
+            @if (TempData["Error"] is string errorMessage)
+            {
+                <div class="alert" data-variant="destructive">
+                    <h2>Det gik ikke</h2>
+                    <section><p>@errorMessage</p></section>
+                </div>
+            }
+            @if (TempData["Message"] is string flashMessage)
+            {
+                <div class="alert">
+                    <h2>Klaret</h2>
+                    <section><p>@flashMessage</p></section>
+                </div>
+            }
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container split">
+            <span>Idasletten &middot; hver aften rød af blod</span>
+            <span>Bygget med ASP.NET Core, MediatR og basecoat</span>
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

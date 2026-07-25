@@ -1,0 +1,136 @@
+@page "/tournaments/create"
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Opret turnering";
+    var scoreSystems = Enum.GetValues<ScoreSystem>();
+}
+
+<div class="stack" style="max-width: 44rem; margin: 0 auto;">
+    <div class="stack-sm">
+        <nav class="breadcrumbs">
+            <a asp-page="/Index">Forsiden</a> <span>/</span>
+            <a asp-page="/Tournaments/Index">Turneringer</a> <span>/</span>
+            <span>Ny turnering</span>
+        </nav>
+        <h1>Opret turnering</h1>
+    </div>
+
+    @if (Model.Parent is not null)
+    {
+        <div class="alert">
+            <h2>Ny runde af @Model.Parent.Name</h2>
+            <section>
+                <p>
+                    Spillerne fra @Model.Parent.Name går videre til runde
+                    @((Model.Parent.RoundNumber ?? 1) + 1) med nulstillet score.
+                    En runde kan ikke seedes fra en anden turnering - den arver sine spillere.
+                </p>
+            </section>
+        </div>
+    }
+
+    <form method="post" class="card">
+        <section class="stack">
+            <div asp-validation-summary="ModelOnly" class="muted small"></div>
+
+            <input type="hidden" asp-for="Input.ParentTournamentId" />
+
+            <div class="field">
+                <label class="label" asp-for="Input.Name">Navn</label>
+                <input class="input" type="text" asp-for="Input.Name" placeholder="Ragnarok Cup 2026" />
+                <span asp-validation-for="Input.Name" class="small" style="color: var(--destructive)"></span>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label class="label" asp-for="Input.TeamSize">Spillere pr. hold</label>
+                    <input class="input" type="number" min="1" max="10" asp-for="Input.TeamSize" />
+                    <p class="tiny muted">2 er almindelig bordfodbold, 1 er single.</p>
+                </div>
+
+                <div class="field">
+                    <label class="label" asp-for="Input.PointsToWin">Point for at vinde</label>
+                    <input class="input" type="number" min="1" max="100" asp-for="Input.PointsToWin" />
+                    <p class="tiny muted">Antal mål der skal til for at vinde en kamp.</p>
+                </div>
+
+                <div class="field">
+                    <label class="label" asp-for="Input.MaxPlayerCount">Maks antal spillere</label>
+                    <input class="input" type="number" min="1" max="1000" asp-for="Input.MaxPlayerCount"
+                           placeholder="Ubegrænset" />
+                    <p class="tiny muted">Lad feltet stå tomt for ingen grænse.</p>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label" asp-for="Input.ScoreSystem">
+                    Pointsystem
+                    <span class="info-icon" title="Vælg et system og læs beskrivelsen nedenfor">i</span>
+                </label>
+                <select class="select" asp-for="Input.ScoreSystem" id="score-system">
+                    @foreach (var system in scoreSystems)
+                    {
+                        <option value="@((int)system)">@system.Title()</option>
+                    }
+                </select>
+                @foreach (var system in scoreSystems)
+                {
+                    <p class="tiny muted score-system-help" data-system="@((int)system)"
+                       hidden="@(Model.Input.ScoreSystem != system)">
+                        @system.Description()
+                    </p>
+                }
+            </div>
+
+            @if (Model.Parent is null)
+            {
+                <div class="field">
+                    <label class="label" asp-for="Input.SeedTournamentId">
+                        Planlæg ud fra tidligere turnering (valgfrit)
+                    </label>
+                    <select class="select" asp-for="Input.SeedTournamentId">
+                        <option value="">Ingen</option>
+                        @foreach (var tournament in Model.PreviousTournaments)
+                        {
+                            <option value="@tournament.Id">@tournament.Name</option>
+                        }
+                    </select>
+                    <p class="tiny muted">
+                        Bruges når holdene skal sættes efter en tidligere rangering.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="field">
+                    <label class="label" asp-for="Input.AdvancingPlayerCount">Spillere der går videre</label>
+                    <input class="input" type="number" min="2" max="1000" asp-for="Input.AdvancingPlayerCount" />
+                    <p class="tiny muted">De bedste spillere fra @Model.Parent.Name går videre.</p>
+                </div>
+            }
+
+            <label class="label" style="gap: 0.6rem">
+                <input class="input" type="checkbox" asp-for="Input.IsPublic" />
+                Offentlig - vises på forsiden
+            </label>
+        </section>
+
+        <footer class="stack-sm" style="align-items: flex-start">
+            <button type="submit" name="plan" value="false" class="btn">Opret</button>
+            <button type="submit" name="plan" value="true" class="btn" data-variant="link">
+                Opret og planlæg kampe
+            </button>
+        </footer>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Show the description of the selected score system.
+        document.getElementById('score-system').addEventListener('change', function (event) {
+            document.querySelectorAll('.score-system-help').forEach(function (help) {
+                help.hidden = help.dataset.system !== event.target.value;
+            });
+        });
+    </script>
+}

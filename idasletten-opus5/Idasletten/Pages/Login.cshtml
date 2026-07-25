@@ -1,0 +1,72 @@
+@page "/login"
+@model LoginModel
+@{
+    ViewData["Title"] = "Log ind";
+}
+
+<div class="login-layout">
+    <div class="card login-card">
+        <header>
+            <h2>Log ind</h2>
+            <p>
+                Du behøver kun at logge ind for at oprette en turnering eller rette en kamp der
+                allerede er spillet. Alle andre må gerne melde resultater.
+            </p>
+        </header>
+        <section class="stack">
+            @if (Model.ErrorMessage is not null)
+            {
+                <div class="alert" data-variant="destructive">
+                    <h2>Kunne ikke logge ind</h2>
+                    <section><p>@Model.ErrorMessage</p></section>
+                </div>
+            }
+
+            @if (Model.AzureAdEnabled)
+            {
+                <form method="post" asp-page-handler="Microsoft" asp-route-returnUrl="@Model.ReturnUrl">
+                    <button type="submit" class="btn" style="width:100%">
+                        Log ind med Microsoft
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="alert">
+                    <h2>Microsoft-login er ikke konfigureret</h2>
+                    <section>
+                        <p>
+                            Sæt <code>AzureAd:TenantId</code> og <code>AzureAd:ClientId</code> for at
+                            slå login med Azure AD til.
+                        </p>
+                    </section>
+                </div>
+            }
+
+            @if (Model.TestLoginEnabled)
+            {
+                <div class="field-separator">
+                    <hr role="separator" />
+                    <span class="small muted">eller testbruger</span>
+                </div>
+
+                <form method="post" asp-page-handler="TestUser" asp-route-returnUrl="@Model.ReturnUrl"
+                      class="dialog-form">
+                    <div class="field">
+                        <label class="label" for="test-email">E-mail</label>
+                        <input class="input" type="email" id="test-email" name="Email"
+                               value="@Model.Email" autocomplete="username" required />
+                    </div>
+                    <div class="field">
+                        <label class="label" for="test-password">Adgangskode</label>
+                        <input class="input" type="password" id="test-password" name="Password"
+                               autocomplete="current-password" required />
+                    </div>
+                    <button type="submit" class="btn" data-variant="outline" style="width:100%">
+                        Log ind som testbruger
+                    </button>
+                </form>
+            }
+        </section>
+    </div>
+</div>

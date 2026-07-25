@@ -1,0 +1,36 @@
+@using Idasletten.Shared.Ui
+@model MatchLinkModel
+@{
+    var match = Model.Match;
+}
+
+<a class="match-item" asp-page="/Tournaments/CreateMatch"
+   asp-route-tournamentId="@Model.TournamentId" asp-route-matchId="@match.Id">
+    <div class="match-teams">
+        @for (var index = 0; index < match.Teams.Count; index++)
+        {
+            var team = match.Teams[index];
+            if (index > 0)
+            {
+                <span class="versus">vs</span>
+            }
+            <span class="@(match.State == MatchState.Done ? (match.IsWinner(team) ? "team-winner" : "team-loser") : string.Empty)">
+                @team.PlayerInitials
+            </span>
+        }
+    </div>
+    <span class="match-score">
+        @if (match.State == MatchState.Done)
+        {
+            @match.ScoreLine
+            if (Model.ShowTime)
+            {
+                <span class="tiny muted nowrap"> @Format.When(match.PlayedUtc)</span>
+            }
+        }
+        else
+        {
+            <span class="badge" data-variant="outline">#@match.Order</span>
+        }
+    </span>
+</a>

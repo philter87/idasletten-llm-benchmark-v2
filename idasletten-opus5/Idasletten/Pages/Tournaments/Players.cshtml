@@ -1,0 +1,201 @@
+@page "/tournaments/{tournamentId:guid}/players"
+@using Idasletten.Shared.Ui
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    var tournament = Model.Tournament;
+    ViewData["Title"] = $"Spillere - {tournament.Name}";
+}
+
+<div class="stack">
+    <div class="page-head">
+        <div class="stack-sm">
+            <nav class="breadcrumbs">
+                <a asp-page="/Index">Forsiden</a> <span>/</span>
+                <a asp-page="/Tournaments/Detail" asp-route-tournamentId="@tournament.Id">@tournament.Name</a>
+                <span>/</span> <span>Spillere</span>
+            </nav>
+            <h1>Spillere</h1>
+            <p class="muted small">
+                @tournament.PlayerCount spillere@(tournament.MaxPlayerCount is { } max ? $" af højst {max}" : "")
+                i @tournament.Name.
+            </p>
+        </div>
+        <button type="button" class="btn"
+                onclick="document.getElementById('add-player-dialog').showModal()">
+            Tilføj en spiller
+        </button>
+    </div>
+
+    <div class="card">
+        <section>
+            @if (Model.Players.Count == 0)
+            {
+                <div class="empty-state">Ingen spillere endnu.</div>
+            }
+            else
+            {
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 3rem">#</th>
+                                <th>Spiller</th>
+                                <th class="center">Kampe</th>
+                                <th class="center">Vundet</th>
+                                <th class="center">@tournament.ScoreSystem.ScoreLabel()</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var player in Model.Players)
+                            {
+                                <tr>
+                                    <td><span class="@Format.RankClass(player.Rank)">@player.Rank</span></td>
+                                    <td>
+                                        <a class="player-cell" asp-page="/Users/Detail"
+                                           asp-route-userId="@player.UserId">
+                                            <span class="avatar-fallback">@player.Initials</span>
+                                            <span class="stack-sm" style="gap:0">
+                                                <span class="player-name">@player.DisplayName</span>
+                                                <span class="tiny muted">@player.Initials</span>
+                                            </span>
+                                        </a>
+                                    </td>
+                                    <td class="center numeric">@player.MatchCount</td>
+                                    <td class="center numeric">@player.WinCount</td>
+                                    <td class="center numeric">
+                                        @Format.Score(player.Score, tournament.ScoreSystem)
+                                    </td>
+                                    <td>
+                                        @if (player.MatchCount == 0)
+                                        {
+                                            <form method="post" asp-page-handler="RemovePlayer"
+                                                  asp-route-tournamentId="@tournament.Id">
+                                                <input type="hidden" name="tournamentPlayerId"
+                                                       value="@player.TournamentPlayerId" />
+                                                <button type="submit" class="btn" data-variant="ghost"
+                                                        data-size="sm" title="Fjern spilleren">Fjern</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+
+    <div class="card">
+        <header>
+            <h2>Tilføj spillere fra en tidligere turnering</h2>
+            @if (Model.SourceTournamentName is not null)
+            {
+                <p>
+                    Spillerne fra <strong>@Model.SourceTournamentName</strong>, bedste først.
+                    Tryk + for at tage en spiller med.
+                </p>
+            }
+            else
+            {
+                <p>Vælg den turnering spillerne skal hentes fra.</p>
+            }
+        </header>
+        <section class="stack">
+            <form method="post" asp-page-handler="SelectSource" asp-route-tournamentId="@tournament.Id"
+                  class="cluster">
+                <select class="select" name="sourceTournamentId" aria-label="Tidligere turnering"
+                        style="max-width: 22rem">
+                    @foreach (var previous in Model.PreviousTournaments)
+                    {
+                        <option value="@previous.Id" selected="@(previous.Id == Model.SourceTournamentId)">
+                            @previous.Name (@previous.PlayerCount spillere)
+                        </option>
+                    }
+                </select>
+                <button type="submit" class="btn" data-variant="outline"
+                        disabled="@(Model.PreviousTournaments.Count == 0)">
+                    Vis spillerne
+                </button>
+                @if (tournament.CanBeSeeded && tournament.SeedTournamentId is not null)
+                {
+                    <span class="badge" data-variant="secondary">
+                        Seedet fra @tournament.SeedTournamentName
+                    </span>
+                }
+            </form>
+
+            @if (Model.SourcePlayers.Count > 0)
+            {
+                <div class="checkbox-list">
+                    @foreach (var candidate in Model.SourcePlayers)
+                    {
+                        <div class="checkbox-row @(candidate.IsAlreadyAdded ? "is-added" : "")">
+                            <span class="rank">@candidate.Rank</span>
+                            <span class="avatar-fallback">@candidate.Initials</span>
+                            <span class="stack-sm grow" style="gap:0">
+                                <span class="player-name">@candidate.DisplayName</span>
+                                <span class="tiny muted">@candidate.Initials</span>
+                            </span>
+                            @if (candidate.IsAlreadyAdded)
+                            {
+                                <form method="post" asp-page-handler="RemovePlayer"
+                                      asp-route-tournamentId="@tournament.Id"
+                                      asp-route-sourceTournamentId="@Model.SourceTournamentId">
+                                    <input type="hidden" name="tournamentPlayerId"
+                                           value="@Model.TournamentPlayerIdFor(candidate.UserId)" />
+                                    <button type="submit" class="btn" data-variant="outline"
+                                            data-size="icon-sm" title="Fjern fra turneringen">&minus;</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="AddFromTournament"
+                                      asp-route-tournamentId="@tournament.Id">
+                                    <input type="hidden" name="sourceTournamentId"
+                                           value="@Model.SourceTournamentId" />
+                                    <input type="hidden" name="userId" value="@candidate.UserId" />
+                                    <button type="submit" class="btn" data-size="icon-sm"
+                                            title="Tilføj til turneringen">+</button>
+                                </form>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else if (Model.SourceTournamentName is not null)
+            {
+                <div class="empty-state">Der var ingen spillere i @Model.SourceTournamentName.</div>
+            }
+        </section>
+    </div>
+</div>
+
+<dialog id="add-player-dialog" class="dialog" aria-labelledby="add-player-title">
+    <article>
+        <form method="dialog"><button aria-label="Luk">&times;</button></form>
+        <header>
+            <h2 id="add-player-title">Tilføj spiller</h2>
+            <p>Initialer der ikke er brugt før opretter en ny bruger.</p>
+        </header>
+        <form method="post" asp-page-handler="AddPlayer" asp-route-tournamentId="@tournament.Id">
+            <section class="dialog-form">
+                <div class="field">
+                    <label class="label" for="initials">Initialer</label>
+                    <input class="input" type="text" id="initials" name="initials" maxlength="5"
+                           required placeholder="THO" style="text-transform: uppercase" />
+                </div>
+                <div class="field">
+                    <label class="label" for="name">Navn (valgfrit)</label>
+                    <input class="input" type="text" id="name" name="name" placeholder="Thor Odinson" />
+                </div>
+            </section>
+            <footer>
+                <button type="button" class="btn" data-variant="outline"
+                        onclick="document.getElementById('add-player-dialog').close()">Fortryd</button>
+                <button type="submit" class="btn">Tilføj</button>
+            </footer>
+        </form>
+    </article>
+</dialog>

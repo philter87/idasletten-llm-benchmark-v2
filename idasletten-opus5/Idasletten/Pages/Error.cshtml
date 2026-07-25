@@ -1,0 +1,19 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Der gik noget galt";
+}
+
+<div class="card" style="max-width: 40rem; margin: 0 auto;">
+    <header>
+        <h2>Slaget gik ikke som planlagt</h2>
+        <p>Der skete en fejl mens siden blev hentet.</p>
+    </header>
+    <section class="stack">
+        @if (Model.ShowRequestId)
+        {
+            <p class="small muted">Forespørgsel: <code>@Model.RequestId</code></p>
+        }
+        <a class="btn" data-variant="outline" asp-page="/Index">Tilbage til forsiden</a>
+    </section>
+</div>

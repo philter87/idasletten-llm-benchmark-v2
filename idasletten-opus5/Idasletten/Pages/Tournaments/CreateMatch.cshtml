@@ -1,0 +1,210 @@
+@page "/tournaments/{tournamentId:guid}/create-match"
+@using Idasletten.Shared.Ui
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    var tournament = Model.Tournament;
+    var readOnly = !Model.CanEdit;
+    ViewData["Title"] = Model.IsPlayed ? "Kamp" : "Opret kamp";
+    var request = ViewContext.HttpContext.Request;
+    var loginReturnUrl = request.Path + request.QueryString;
+}
+
+<div class="stack" style="max-width: 56rem; margin: 0 auto;">
+    <div class="stack-sm">
+        <nav class="breadcrumbs">
+            <a asp-page="/Index">Forsiden</a> <span>/</span>
+            <a asp-page="/Tournaments/Detail" asp-route-tournamentId="@tournament.Id">@tournament.Name</a>
+            <span>/</span>
+            <a asp-page="/Tournaments/Matches" asp-route-tournamentId="@tournament.Id">Kampe</a>
+            <span>/</span>
+            <span>@(Model.IsPlayed ? "Kamp " + Model.Match!.Order : "Ny kamp")</span>
+        </nav>
+        <div class="split">
+            <h1>@(Model.IsPlayed ? $"Kamp {Model.Match!.Order}" : "Meld et resultat")</h1>
+            <span class="small muted">
+                @tournament.TeamSize mod @tournament.TeamSize &middot; først til @tournament.PointsToWin
+                @if (Model.IsPlayed)
+                {
+                    <text>&middot; spillet @Format.When(Model.Match!.PlayedUtc)</text>
+                }
+            </span>
+        </div>
+    </div>
+
+    @if (Model.ErrorMessage is not null)
+    {
+        <div class="alert" data-variant="destructive">
+            <h2>Kampen blev ikke gemt</h2>
+            <section><p>@Model.ErrorMessage</p></section>
+        </div>
+    }
+
+    @if (readOnly)
+    {
+        <div class="alert">
+            <h2>Kampen er allerede spillet</h2>
+            <section>
+                <p>
+                    Log ind for at rette resultatet - så bliver alle spilleres score regnet ud på ny.
+                    <a asp-page="/Login" asp-route-returnUrl="@loginReturnUrl"
+                       style="text-decoration: underline">Log ind</a>
+                </p>
+            </section>
+        </div>
+    }
+    else if (Model.IsPlayed)
+    {
+        <div class="alert">
+            <h2>Du retter et spillet resultat</h2>
+            <section><p>Hele turneringens stilling bliver regnet ud igen når du gemmer.</p></section>
+        </div>
+    }
+
+    <form method="post" asp-route-tournamentId="@tournament.Id" asp-route-matchId="@Model.MatchId">
+        <div class="team-inputs">
+            @for (var teamIndex = 0; teamIndex < Model.Teams.Count; teamIndex++)
+            {
+                var team = Model.Teams[teamIndex];
+                if (teamIndex > 0)
+                {
+                    <div class="versus-divider">mod</div>
+                }
+
+                <div class="team-input-card">
+                    <div class="split">
+                        <h3>Hold @(teamIndex + 1)</h3>
+                        @if (!readOnly && Model.TournamentPlayers.Count > 0)
+                        {
+                            <button type="button" class="btn" data-variant="link" data-size="sm"
+                                    onclick="document.getElementById('pick-players-@teamIndex').showModal()">
+                                Vælg fra listen
+                            </button>
+                        }
+                    </div>
+
+                    <div class="initials-row">
+                        @for (var playerIndex = 0; playerIndex < team.Initials.Count; playerIndex++)
+                        {
+                            <input class="input initials-input" type="text"
+                                   name="Teams[@teamIndex].Initials[@playerIndex]"
+                                   value="@team.Initials[playerIndex]"
+                                   maxlength="5" placeholder="Initialer"
+                                   aria-label="Spiller @(playerIndex + 1) på hold @(teamIndex + 1)"
+                                   data-team="@teamIndex" data-player="@playerIndex"
+                                   disabled="@readOnly" />
+                        }
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="goals-@teamIndex">Mål</label>
+                        <input class="input goal-input" type="number" min="0" max="99"
+                               id="goals-@teamIndex" name="Teams[@teamIndex].Goals"
+                               value="@team.Goals" disabled="@readOnly" />
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (!readOnly)
+        {
+            <div class="cluster" style="margin-top: 1.5rem">
+                <button type="submit" name="planned" value="false" class="btn">
+                    @(Model.IsPlayed ? "Gem rettelsen" : "Gem resultat")
+                </button>
+                @if (!Model.IsPlayed)
+                {
+                    <button type="submit" name="planned" value="true" class="btn" data-variant="outline">
+                        Gem som planlagt kamp
+                    </button>
+                }
+                <a class="btn" data-variant="ghost"
+                   asp-page="/Tournaments/Detail" asp-route-tournamentId="@tournament.Id">Fortryd</a>
+
+                @if (Model.Match is not null && !Model.IsCancelled)
+                {
+                    <button type="submit" formaction="@Url.Page("/Tournaments/CreateMatch", "Cancel", new { tournamentId = tournament.Id, matchId = Model.MatchId })"
+                            class="btn right" data-variant="ghost" data-size="sm">
+                        Aflys kampen
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="cluster" style="margin-top: 1.5rem">
+                <a class="btn" data-variant="outline"
+                   asp-page="/Tournaments/Detail" asp-route-tournamentId="@tournament.Id">
+                    Tilbage til stillingen
+                </a>
+            </div>
+        }
+    </form>
+
+    <p class="small muted">
+        Ukendte initialer opretter både spilleren og brugeren, så du behøver ikke registrere nogen på forhånd.
+    </p>
+</div>
+
+@if (!readOnly)
+{
+    @for (var teamIndex = 0; teamIndex < Model.Teams.Count; teamIndex++)
+    {
+        var dialogId = $"pick-players-{teamIndex}";
+        <dialog id="@dialogId" class="dialog" aria-labelledby="@(dialogId)-title">
+            <article>
+                <form method="dialog"><button aria-label="Luk">&times;</button></form>
+                <header>
+                    <h2 id="@(dialogId)-title">Vælg spillere til hold @(teamIndex + 1)</h2>
+                    <p>Vælg op til @tournament.TeamSize spillere fra turneringen.</p>
+                </header>
+                <section>
+                    <div class="checkbox-list">
+                        @foreach (var player in Model.TournamentPlayers)
+                        {
+                            <label class="checkbox-row">
+                                <input class="input" type="checkbox" value="@player.Initials"
+                                       data-picker="@teamIndex" />
+                                <span class="avatar-fallback">@player.Initials</span>
+                                <span class="stack-sm" style="gap:0">
+                                    <span class="player-name">@player.DisplayName</span>
+                                    <span class="tiny muted">@player.Initials</span>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                </section>
+                <footer>
+                    <button type="button" class="btn" data-variant="outline"
+                            onclick="document.getElementById('@dialogId').close()">Fortryd</button>
+                    <button type="button" class="btn"
+                            onclick="applyPickedPlayers(@teamIndex, '@dialogId')">Sæt på holdet</button>
+                </footer>
+            </article>
+        </dialog>
+    }
+}
+
+@section Scripts {
+    <script>
+        // Copies the players checked in the dialog into the initials fields of that team.
+        function applyPickedPlayers(teamIndex, dialogId) {
+            const picked = Array.from(
+                document.querySelectorAll('[data-picker="' + teamIndex + '"]:checked'))
+                .map(function (input) { return input.value; });
+
+            const inputs = document.querySelectorAll('.initials-input[data-team="' + teamIndex + '"]');
+            inputs.forEach(function (input, index) {
+                input.value = picked[index] || '';
+            });
+
+            document.getElementById(dialogId).close();
+        }
+
+        // Initials are always written in upper case.
+        document.querySelectorAll('.initials-input').forEach(function (input) {
+            input.addEventListener('blur', function () {
+                input.value = input.value.trim().toUpperCase();
+            });
+        });
+    </script>
+}
