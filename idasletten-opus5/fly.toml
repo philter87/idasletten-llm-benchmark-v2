@@ -1,5 +1,5 @@
-# Fly.io configuration. The app name is the folder name, as the build conventions ask for.
-app = "idasletten-opus5"
+# Fly.io configuration.
+app = "idasletten"
 primary_region = "arn"
 
 [build]
