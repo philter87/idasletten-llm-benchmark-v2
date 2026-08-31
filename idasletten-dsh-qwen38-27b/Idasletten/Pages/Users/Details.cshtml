@@ -1,0 +1,88 @@
+@page "/users/{id:guid}"
+@model Idasletten.Pages.Users.DetailsModel
+@{
+    if (Model.User is null) return;
+    ViewData["Title"] = Model.User.Username;
+    var u = Model.User;
+}
+
+<div class="page-title-row">
+    <div style="display:flex;align-items:center;gap:1rem">
+        @if (!string.IsNullOrEmpty(u.ImageUrl))
+        {
+            <img src="@u.ImageUrl" alt="" style="width:56px;height:56px;border-radius:999px;object-fit:cover" />
+        }
+        <div>
+            <h2 style="margin:0">@u.Username <span class="muted" style="font-weight:400">@u.Name</span></h2>
+            <p class="muted" style="margin:.25rem 0 0">
+                Cross-tournament stats
+                @if (!string.IsNullOrEmpty(u.Email))
+                {
+                    <text> · @u.Email</text>
+                }
+            </p>
+        </div>
+    </div>
+    <a class="btn" data-variant="outline" asp-page="/Tournaments/Details" asp-route-id="@u.Tournaments.FirstOrDefault()?.TournamentId">To a tournament →</a>
+</div>
+
+<div class="card-row">
+    <div class="card"><div class="card-content" style="text-align:center">
+        <div style="font-size:1.6rem;font-weight:700">@u.TotalMatches</div>
+        <div class="muted small">Matches played</div>
+    </div></div>
+    <div class="card"><div class="card-content" style="text-align:center">
+        <div style="font-size:1.6rem;font-weight:700;color:#16a34a">@u.TotalWins</div>
+        <div class="muted small">Wins</div>
+    </div></div>
+    <div class="card"><div class="card-content" style="text-align:center">
+        <div style="font-size:1.6rem;font-weight:700;color:#dc2626">@u.TotalLosses</div>
+        <div class="muted small">Losses</div>
+    </div></div>
+    <div class="card"><div class="card-content" style="text-align:center">
+        <div style="font-size:1.6rem;font-weight:700">@u.TotalPointsWon–@u.TotalPointsLost</div>
+        <div class="muted small">Points (goals)</div>
+    </div></div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Tournaments</h3></div>
+    @if (u.Tournaments.Count == 0)
+    {
+        <div class="card-content"><p class="muted">Not in any tournament yet.</p></div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tournament</th>
+                        <th>Scoring</th>
+                        <th class="text-right">Score</th>
+                        <th class="text-right">W–L</th>
+                        <th class="text-right">Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in u.Tournaments)
+                {
+                    <tr>
+                        <td>
+                            <a class="match-link" asp-page="/Tournaments/Details" asp-route-id="@row.TournamentId">@row.TournamentName</a>
+                            @if (row.IsArchived)
+                            {
+                                <span class="badge" data-variant="secondary">Archived</span>
+                            }
+                        </td>
+                        <td>@row.ScoreSystem</td>
+                        <td class="text-right font-semibold">@(row.ScoreSystem == Idasletten.Models.ScoreSystem.TrueSkill ? $"{row.Score:0.00}" : $"{row.Score:0}")</td>
+                        <td class="text-right">@row.WinCount–@row.LoseCount</td>
+                        <td class="text-right muted">@row.PointsWon–@row.PointsLost</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

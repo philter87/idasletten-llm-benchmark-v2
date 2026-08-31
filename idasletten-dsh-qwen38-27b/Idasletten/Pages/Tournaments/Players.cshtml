@@ -1,0 +1,161 @@
+@page "/tournaments/{id:guid}/players"
+@model Idasletten.Pages.Tournaments.PlayersModel
+@{
+    if (Model.Tournament is null) return;
+    ViewData["Title"] = "Players";
+    var t = Model.Tournament;
+}
+
+<div class="page-title-row">
+    <div>
+        <h2 style="margin:0">@t.Name — players</h2>
+        <p class="muted" style="margin:.25rem 0 0">
+            <a asp-page="/Tournaments/Details" asp-route-id="@t.Id">← back to scoreboard</a>
+            @(t.MaxPlayerCount is int max ? $" · max {max} players" : "")
+        </p>
+    </div>
+    <button type="button" class="btn" onclick="document.getElementById('add-player-dialog').showModal()">Add a player</button>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Players</h3>
+        <p class="card-description">@t.PlayerCount of @(t.MaxPlayerCount is int m ? m : "∞")</p>
+    </div>
+    @if (t.Players.Count == 0)
+    {
+        <div class="card-content"><p class="muted">No players yet.</p></div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Name</th>
+                        <th class="text-right">Score</th>
+                        <th class="text-right">W–L</th>
+                        <th class="text-right">Points</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var p in t.Players)
+                {
+                    <tr>
+                        <td><a class="match-link" asp-page="/Users/Details" asp-route-id="@p.UserId"><span class="font-semibold">@p.Initials</span></a></td>
+                        <td class="muted">@p.Name</td>
+                        <td class="text-right">@(t.ScoreSystem == Idasletten.Models.ScoreSystem.TrueSkill ? $"{p.Score:0.00}" : $"{p.Score:0}")</td>
+                        <td class="text-right">@p.WinCount–@p.LoseCount</td>
+                        <td class="text-right muted">@p.PointsWon–@p.PointsLost</td>
+                        <td style="text-align:right">
+                            <form method="post" asp-page="/Tournaments/Players" asp-route-id="@t.Id" class="inline">
+                                <input type="hidden" name="PlayerAction" value="remove" />
+                                <input type="hidden" name="TournamentPlayerId" value="@p.TournamentPlayerId" />
+                                <button type="submit" class="btn" data-variant="ghost" data-size="sm" title="Remove player (only if no matches played)" disabled="@(p.MatchCount > 0 ? "disabled" : null)">−</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Add players based on a previous tournament</h3>
+        <p class="card-description">Bring veterans into this battle field.</p>
+    </div>
+    <div class="card-content" style="display:flex;flex-direction:column;gap:1rem">
+        @if (Model.SourceTournamentId is null)
+        {
+            <form method="post" asp-page="/Tournaments/Players" asp-route-id="@t.Id" class="field" style="flex-direction:row;gap:.5rem;align-items:center">
+                <input type="hidden" name="PlayerAction" value="select-source" />
+                <select name="SourceTournamentId" class="input" style="max-width:340px">
+                    <option value="">Choose a previous tournament…</option>
+                    @foreach (var p in Model.PreviousTournaments)
+                    {
+                        <option value="@p.Id">@p.Name @(p.IsArchived ? "(archived)" : "")</option>
+                    }
+                </select>
+                <button type="submit" class="btn" data-variant="outline">Select</button>
+            </form>
+        }
+        else
+        {
+            <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+                <span class="font-semibold">@Model.SourceTournamentName</span>
+                <a class="muted small" asp-page="/Tournaments/Players" asp-route-id="@t.Id">choose a different tournament</a>
+            </div>
+            @if (Model.SourcePlayers.Count == 0)
+            {
+                <p class="muted small">That tournament has no players.</p>
+            }
+            else
+            {
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.25rem 1.5rem">
+                    @foreach (var p in Model.SourcePlayers)
+                    {
+                        <div class="addplan-row">
+                            <span class="@(p.InTournament ? "strike" : "") small">
+                                @p.Initials — @p.Name
+                                @(p.InTournament ? "(already here)" : "")
+                            </span>
+                            <span style="display:flex;gap:.25rem">
+                                @if (!p.InTournament)
+                                {
+                                    <form method="post" asp-page="/Tournaments/Players" asp-route-id="@t.Id" class="inline">
+                                        <input type="hidden" name="PlayerAction" value="add-from-source" />
+                                        <input type="hidden" name="SourceUserId" value="@p.UserId" />
+                                        <button type="submit" class="btn" data-variant="outline" data-size="sm" title="Add player">+</button>
+                                    </form>
+                                }
+                                @if (p.InTournament && p.TournamentPlayerId != Guid.Empty)
+                                {
+                                    <form method="post" asp-page="/Tournaments/Players" asp-route-id="@t.Id" class="inline">
+                                        <input type="hidden" name="PlayerAction" value="remove" />
+                                        <input type="hidden" name="TournamentPlayerId" value="@p.TournamentPlayerId" />
+                                        <button type="submit" class="btn" data-variant="ghost" data-size="sm" title="Remove from this tournament">−</button>
+                                    </form>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<dialog id="add-player-dialog" class="dialog" onclick="if (event.target === this) this.close()">
+    <div>
+        <header>
+            <h2>Add player</h2>
+            <p>Initials create a new user if they haven't been used before.</p>
+        </header>
+        <section>
+            <form method="post" asp-page="/Tournaments/Players" asp-route-id="@t.Id" style="display:flex;flex-direction:column;gap:.75rem">
+                <input type="hidden" name="PlayerAction" value="add" />
+                <div class="field">
+                    <label asp-for="Initials">Initials</label>
+                    <input asp-for="Initials" class="input initials-input" required minlength="2" maxlength="20" placeholder="THO" />
+                </div>
+                <div class="field">
+                    <label asp-for="PlayerName">Name <span class="muted small">(optional)</span></label>
+                    <input asp-for="PlayerName" class="input" placeholder="Thor Odinson" />
+                </div>
+                <div style="display:flex;gap:.5rem;justify-content:flex-end">
+                    <button type="button" class="btn" data-variant="ghost" onclick="this.closest('dialog').close()">Cancel</button>
+                    <button type="submit" class="btn">Add</button>
+                </div>
+            </form>
+        </section>
+        <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Close dialog"
+                onclick="this.closest('dialog').close()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+</dialog>

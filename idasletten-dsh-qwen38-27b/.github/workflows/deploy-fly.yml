@@ -1,0 +1,34 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        run: dotnet build Idasletten.sln -c Release
+
+      - name: Test
+        run: dotnet test Idasletten.Tests -c Release --no-build
+
+      - name: Publish
+        run: dotnet publish Idasletten/Idasletten.csproj -c Release -o ./publish
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only --image-name idasletten
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
