@@ -1,0 +1,74 @@
+@page
+@model Idasletten.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Tournaments";
+}
+
+<div class="page-title-row">
+    <div>
+        <h2 style="margin:0">All tournaments</h2>
+        <p class="muted" style="margin:.25rem 0 0">The full chronicle — archived and private battle fields included.</p>
+    </div>
+    <a class="btn" asp-page="/Tournaments/Create">Create tournament</a>
+</div>
+
+<div class="card">
+    <div class="card-content">
+        <form method="get" class="field" style="flex-direction:row;align-items:center;gap:.5rem">
+            <input type="checkbox" id="includeChildren" name="includeChildren" value="true" @(Model.IncludeChildren ? "checked" : "") />
+            <label for="includeChildren" style="font-weight:400">Include child rounds</label>
+        </form>
+    </div>
+</div>
+
+@if (Model.Tournaments.Count == 0)
+{
+    <div class="card"><div class="card-content"><p class="muted">No tournaments yet.</p></div></div>
+}
+else
+{
+    <div class="card">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Scoring</th>
+                        <th>Teams</th>
+                        <th>Players</th>
+                        <th>Round</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var t in Model.Tournaments)
+                {
+                    <tr>
+                        <td><a class="match-link" asp-page="/Tournaments/Details" asp-route-id="@t.Id">@t.Name</a></td>
+                        <td>@t.ScoreSystem</td>
+                        <td>of @t.TeamSize</td>
+                        <td>@t.PlayerCount</td>
+                        <td>@(t.IsChild ? ("R" + t.RoundNumber) : "—")</td>
+                        <td>
+                            @if (t.IsArchived)
+                            {
+                                <span class="badge" data-variant="secondary">Archived</span>
+                            }
+                            @if (!t.IsPublic)
+                            {
+                                <span class="badge" data-variant="outline">Private</span>
+                            }
+                            @if (t.IsPublic && !t.IsArchived)
+                            {
+                                <span class="badge" data-variant="success">Open</span>
+                            }
+                        </td>
+                        <td></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

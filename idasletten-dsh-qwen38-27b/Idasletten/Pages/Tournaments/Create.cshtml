@@ -1,0 +1,99 @@
+@page
+@model Idasletten.Pages.Tournaments.CreateModel
+@{
+    ViewData["Title"] = "Create tournament";
+}
+
+<div class="page-title-row">
+    <div>
+        <h2 style="margin:0">Create tournament</h2>
+        <p class="muted" style="margin:.25rem 0 0">Raise a new banner. You must be signed in to create tournaments.</p>
+    </div>
+</div>
+
+<form method="post" asp-page="/Tournaments/Create" class="card">
+    <script>window.__scoreSystemInfo = @Model.ScoreSystemInfoJson;</script>
+    <div class="card-content" style="display:flex;flex-direction:column;gap:1rem">
+        <div class="field">
+            <label asp-for="Name">Name</label>
+            <input asp-for="Name" class="input" placeholder="e.g. Valkyrior Open" required maxlength="200" />
+        </div>
+
+        <div class="form-row">
+            <div class="field">
+                <label asp-for="TeamSize">Team size</label>
+                <input asp-for="TeamSize" type="number" class="input" min="1" max="8" />
+                <span class="muted small">Players per team (default 2).</span>
+            </div>
+            <div class="field">
+                <label asp-for="PointsToWin">Points to win</label>
+                <input asp-for="PointsToWin" type="number" class="input" min="1" max="99" />
+                <span class="muted small">Goals needed to win a match (default 5).</span>
+            </div>
+            <div class="field">
+                <label asp-for="MaxPlayerCount">Max player count <span class="muted small">(optional)</span></label>
+                <input asp-for="MaxPlayerCount" type="number" class="input" min="1" placeholder="unlimited" />
+                <span class="muted small">Leave empty for no limit.</span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="field">
+                <label asp-for="ScoreSystem">
+                    Score system
+                    <span class="info-icon" title="@Model.ScoreSystemInfo">i</span>
+                </label>
+                <select asp-for="ScoreSystem" class="input" asp-items="Model.ScoreSystemOptions"
+                        onchange="var d=window.__scoreSystemInfo;var s=document.getElementById('score-system-info');if(s&&d&&d[this.value])s.textContent=d[this.value];"></select>
+                <span class="muted small" id="score-system-info">@Model.ScoreSystemInfo</span>
+            </div>
+            <div class="field">
+                <label asp-for="IsPublic">Visibility</label>
+                <select asp-for="IsPublic" class="input" asp-items="Model.VisibilityOptions"></select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label asp-for="ParentTournamentId">
+                Continue from a previous tournament <span class="muted small">(optional — creates a new round)</span>
+            </label>
+            <select name="ParentTournamentId" class="input" onchange="this.form.requestSubmit()">
+                <option value="">— none (this is round 1) —</option>
+                @foreach (var t in Model.AllTournaments.Where(t => !t.IsChild && !t.IsArchived))
+                {
+                    var selected = Model.ParentTournamentId == t.Id;
+                    @if (selected)
+                    {
+                        <option value="@t.Id" selected>@t.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                }
+            </select>
+            @if (Model.ParentTournamentId is not null)
+            {
+                <div class="card" style="margin-top:.5rem">
+                    <div class="card-content" style="padding:.75rem">
+                        <p class="muted small" style="margin-top:0">Choose which players advance to the new round (scores reset):</p>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.25rem .75rem;max-height:220px;overflow:auto">
+                            @foreach (var p in Model.ParentPlayers)
+                            {
+                                <label class="player-check-row" style="cursor:pointer">
+                                    <input type="checkbox" name="carryOver" value="@p.UserId" />
+                                    <span class="small">@p.Initials <span class="muted">@p.Name</span></span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:.5rem;align-items:flex-start">
+            <button type="submit" class="btn" data-size="lg">Create</button>
+            <button type="submit" name="PlanAfter" value="1" class="btn" data-variant="outline">Create and Plan →</button>
+        </div>
+    </div>
+</form>

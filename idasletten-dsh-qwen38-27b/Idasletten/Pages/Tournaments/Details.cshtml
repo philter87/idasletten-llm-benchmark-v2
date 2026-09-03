@@ -1,0 +1,177 @@
+@page "/tournaments/{id:guid}"
+@model Idasletten.Pages.Tournaments.DetailsModel
+@{
+    if (Model.Tournament is null) return;
+    ViewData["Title"] = Model.Tournament.Name;
+    var t = Model.Tournament;
+}
+
+<div class="page-title-row">
+    <div>
+        <h2 style="margin:0">@t.Name</h2>
+        <p class="muted" style="margin:.25rem 0 0">
+            @t.ScoreSystem scoring · teams of @t.TeamSize · to @t.PointsToWin points
+            @(t.IsChild ? $" · round {t.RoundNumber} (from {t.ParentTournamentName})" : "")
+            @if (t.SeedTournamentId is not null)
+            {
+                <text> · seeded by @t.SeedTournamentName</text>
+            }
+            @if (t.IsArchived)
+            {
+                <span class="badge" data-variant="secondary">Archived</span>
+            }
+            @if (!t.IsPublic)
+            {
+                <span class="badge" data-variant="outline">Private</span>
+            }
+        </p>
+    </div>
+    <div>
+        <button type="button" class="btn" onclick="document.getElementById('add-player-dialog').showModal()">Add player</button>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-main">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Scoreboard</h3>
+                <p class="card-description">@t.PlayerCount player(s)</p>
+            </div>
+            @if (t.Players.Count == 0)
+            {
+                <div class="card-content"><p class="muted">No players yet — add one to start the tournament.</p></div>
+            }
+            else
+            {
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Player</th>
+                                <th class="text-right">Won</th>
+                                <th class="text-right">Lost</th>
+                                <th class="text-right">Matches</th>
+                                <th class="text-right">Points</th>
+                                <th class="text-right">Score</th>
+                                <th class="text-right">Δ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < t.Players.Count; i++)
+                            {
+                                var p = t.Players[i];
+                                <tr>
+                                    <td class="muted">@i + 1</td>
+                                    <td>
+                                        <a class="match-link" asp-page="/Users/Details" asp-route-id="@p.UserId">
+                                            <span class="font-semibold">@p.Initials</span>
+                                            <span class="muted small">@p.Name</span>
+                                        </a>
+                                        @if (t.ScoreSystem == Idasletten.Models.ScoreSystem.Lives)
+                                        {
+                                            <span class="badge" data-variant="outline">@p.Lives ♥</span>
+                                        }
+                                    </td>
+                                    <td class="text-right">@p.WinCount</td>
+                                    <td class="text-right">@p.LoseCount</td>
+                                    <td class="text-right">@p.MatchCount</td>
+                                    <td class="text-right muted">@p.PointsWon–@p.PointsLost</td>
+                                    <td class="text-right font-semibold">@(t.ScoreSystem == Idasletten.Models.ScoreSystem.TrueSkill ? $"{p.Score:0.00}" : $"{p.Score:0}")</td>
+                                    <td class="text-right score-diff @(p.ScoreDiff > 0 ? "pos" : p.ScoreDiff < 0 ? "neg" : "muted")">
+                                        @(p.ScoreDiff > 0 ? $"+{p.ScoreDiff:0.##}" : $"{p.ScoreDiff:0.##}")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <p class="small">
+            <a asp-page="/Tournaments/Players" asp-route-id="@t.Id">Manage players →</a>
+        </p>
+    </div>
+
+    <aside class="detail-side">
+        <a class="btn" data-size="lg" asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id">Create match</a>
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Next planned matches</h3></div>
+            @if (t.NextPlannedMatches.Count == 0)
+            {
+                <div class="card-content"><p class="muted small">None planned yet.</p></div>
+            }
+            else
+            {
+                @foreach (var m in t.NextPlannedMatches)
+                {
+                    <a class="match-link" asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" asp-route-match="@m.MatchId">
+                        <div style="padding:.5rem .75rem" class="addplan-row">
+                            <span class="small">
+                                @(string.Join(" vs ", m.Teams.Select(x => string.Join("+", x.Players.Select(c => c.Initials)))))
+                            </span>
+                            <span class="muted small">#@m.Order</span>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Recent results</h3></div>
+            @if (t.RecentPlayedMatches.Count == 0)
+            {
+                <div class="card-content"><p class="muted small">No matches played yet.</p></div>
+            }
+            else
+            {
+                @foreach (var m in t.RecentPlayedMatches)
+                {
+                    <a class="match-link" asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" asp-route-match="@m.MatchId">
+                        <div style="padding:.5rem .75rem" class="addplan-row">
+                            <span class="small">
+                                @string.Join("  vs  ", m.Teams.Select(x => $@"{string.Join("+", x.Players.Select(c => c.Initials))} ({x.Goals})"))
+                            </span>
+                            <span class="muted small">#@m.Order</span>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+
+        <a class="muted small" asp-page="/Tournaments/Matches" asp-route-id="@t.Id">View all matches →</a>
+    </aside>
+</div>
+
+<dialog id="add-player-dialog" class="dialog" onclick="if (event.target === this) this.close()">
+    <div>
+        <header>
+            <h2 id="add-player-title">Add player</h2>
+            <p id="add-player-description">Initials create a new user if they haven't been used before.</p>
+        </header>
+        <section>
+            <form method="post" asp-page="/Tournaments/Details" asp-page-handler="AddPlayer" asp-route-id="@t.Id"
+                  style="display:flex;flex-direction:column;gap:.75rem">
+                <div class="field">
+                    <label for="Initials">Initials</label>
+                    <input id="Initials" asp-for="Initials" class="input initials-input" required minlength="2" maxlength="20" placeholder="THO" />
+                </div>
+                <div class="field">
+                    <label for="PlayerName">Name <span class="muted small">(optional)</span></label>
+                    <input id="PlayerName" asp-for="PlayerName" class="input" placeholder="Thor Odinson" />
+                </div>
+                <div style="display:flex;gap:.5rem;justify-content:flex-end">
+                    <button type="button" class="btn" data-variant="ghost" onclick="this.closest('dialog').close()">Cancel</button>
+                    <button type="submit" class="btn">Add</button>
+                </div>
+            </form>
+        </section>
+        <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Close dialog"
+                onclick="this.closest('dialog').close()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+</dialog>

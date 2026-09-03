@@ -1,0 +1,198 @@
+@page "/tournaments/{id:guid}/matches"
+@model Idasletten.Pages.Tournaments.MatchesModel
+@{
+    if (Model.Tournament is null) return;
+    ViewData["Title"] = "Matches";
+    var t = Model.Tournament;
+}
+
+<div class="page-title-row">
+    <div>
+        <h2 style="margin:0">@t.Name — matches</h2>
+        <p class="muted" style="margin:.25rem 0 0">
+            <a asp-page="/Tournaments/Details" asp-route-id="@t.Id">← back to scoreboard</a>
+        </p>
+    </div>
+    <div class="planned-actions">
+        <button type="button" class="btn" data-variant="outline" onclick="document.getElementById('plan-one-dialog').showModal()">Add planned match</button>
+        <button type="button" class="btn" onclick="document.getElementById('plan-many-dialog').showModal()">Plan several matches</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Planned matches</h3>
+        <p class="card-description">@Model.Planned.Count planned</p>
+    </div>
+    @if (Model.Planned.Count == 0)
+    {
+        <div class="card-content"><p class="muted">Nothing planned yet. Use the buttons above to plan matches.</p></div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr><th>#</th><th>Matchup</th><th></th></tr>
+                </thead>
+                <tbody>
+                @foreach (var m in Model.Planned)
+                {
+                    <tr>
+                        <td class="muted">@m.Order</td>
+                        <td>
+                            <a class="match-link" asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" asp-route-match="@m.MatchId">
+                                @string.Join("  vs  ", m.Teams.Select(x => string.Join("+", x.Players.Select(c => c.Initials))))
+                            </a>
+                        </td>
+                        <td style="text-align:right;white-space:nowrap">
+                            <form method="post" asp-page="/Tournaments/Matches" asp-route-id="@t.Id" class="inline">
+                                <input type="hidden" name="PlanAction" value="cancel" />
+                                <input type="hidden" name="CancelMatchId" value="@m.MatchId" />
+                                <button type="submit" class="btn" data-variant="ghost" data-size="sm" title="Cancel match">✕</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Match results</h3>
+        <p class="card-description">@Model.Results.Count played</p>
+    </div>
+    @if (Model.Results.Count == 0)
+    {
+        <div class="card-content"><p class="muted">No results yet.</p></div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr><th>#</th><th>Matchup</th><th class="text-right">Score</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var m in Model.Results)
+                {
+                    <tr>
+                        <td class="muted">@m.Order</td>
+                        <td>
+                            <a class="match-link" asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" asp-route-match="@m.MatchId">
+                                @string.Join("  vs  ", m.Teams.Select(x => string.Join("+", x.Players.Select(c => c.Initials))))
+                            </a>
+                        </td>
+                        <td class="text-right">@string.Join(" – ", m.Teams.Select(x => x.Goals))</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<dialog id="plan-one-dialog" class="dialog" onclick="if (event.target === this) this.close()">
+    <div>
+        <header>
+            <h2>Add planned match</h2>
+            <p>Enter the initials for one match.</p>
+        </header>
+        <section>
+            <form method="post" asp-page="/Tournaments/Matches" asp-route-id="@t.Id" style="display:flex;gap:1.25rem;flex-wrap:wrap">
+                <input type="hidden" name="PlanAction" value="plan-one" />
+                @for (var i = 0; i < Model.Teams.Count; i++)
+                {
+                    var team = Model.Teams[i];
+                    <div class="field" style="min-width:200px">
+                        <label class="font-semibold">Team @(i + 1)</label>
+                        @for (var j = 0; j < team.PlayerInitials.Count; j++)
+                        {
+                            <input name="Teams[@i].PlayerInitials[@j]" class="input initials-input" maxlength="20" placeholder="Initials @(j + 1)" />
+                        }
+                    </div>
+                }
+                <div style="display:flex;gap:.5rem;align-items:flex-end">
+                    <button type="button" class="btn" data-variant="ghost" onclick="this.closest('dialog').close()">Cancel</button>
+                    <button type="submit" class="btn">Plan match</button>
+                </div>
+            </form>
+        </section>
+        <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Close dialog"
+                onclick="this.closest('dialog').close()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+</dialog>
+
+<dialog id="plan-many-dialog" class="dialog" onclick="if (event.target === this) this.close()">
+    <div>
+        <header>
+            <h2>Plan several matches</h2>
+            <p>
+                @if (t.IsChild)
+                {
+                    <span class="muted small">This tournament has a parent round and cannot be seeded; matches are planned from its current players.</span>
+                }
+            </p>
+        </header>
+        <section>
+            <form method="post" asp-page="/Tournaments/Matches" asp-route-id="@t.Id" style="display:flex;flex-direction:column;gap:.75rem">
+                <input type="hidden" name="PlanAction" value="plan-many" />
+                <div class="field">
+                    <label asp-for="SeedTournamentId">Plan based on a previous tournament <span class="muted small">(optional — used as the seed ranking)</span></label>
+                    @if (t.IsChild)
+                    {
+                        <select name="SeedTournamentId" class="input" disabled>
+                            <option value="">— none (cannot seed: has a parent round) —</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <select name="SeedTournamentId" class="input">
+                            <option value="">— none —</option>
+                            @foreach (var p in Model.PreviousTournaments)
+                            {
+                                @if (t.SeedTournamentId == p.Id)
+                                {
+                                    <option value="@p.Id" selected>@p.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@p.Id">@p.Name</option>
+                                }
+                            }
+                        </select>
+                    }
+                    @if (t.SeedTournamentId is not null)
+                    {
+                        <span class="muted small">Current seed: @(Model.PreviousTournaments.FirstOrDefault(x => x.Id == t.SeedTournamentId)?.Name ?? (t.SeedTournamentId?.ToString() ?? ""))</span>
+                    }
+                </div>
+                <div class="field">
+                    <label asp-for="GamesPerPlayer">Number of games per player</label>
+                    <input asp-for="GamesPerPlayer" type="number" class="input" min="1" max="100" />
+                </div>
+                <div class="field">
+                    <label asp-for="FixedTeams">Fixed team</label>
+                    <select asp-for="FixedTeams" class="input" asp-items="Model.FixedTeamsOptions"></select>
+                </div>
+                <div class="field">
+                    <label asp-for="SeedingType">Seeding type</label>
+                    <select asp-for="SeedingType" class="input" asp-items="Model.SeedingTypeOptions"></select>
+                </div>
+                <div style="display:flex;gap:.5rem;justify-content:flex-end">
+                    <button type="button" class="btn" data-variant="ghost" onclick="this.closest('dialog').close()">Cancel</button>
+                    <button type="submit" class="btn">Plan matches</button>
+                </div>
+            </form>
+        </section>
+        <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Close dialog"
+                onclick="this.closest('dialog').close()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+</dialog>

@@ -1,0 +1,69 @@
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@{
+    var testUserEnabled = !string.IsNullOrWhiteSpace(Config["TestUser:Email"]) && !string.IsNullOrWhiteSpace(Config["TestUser:Password"]);
+    var azureAdEnabled = !string.IsNullOrWhiteSpace(Config["AzureAd:ClientId"]);
+    var displayName = User.Identity?.Name ?? User.FindFirst(Idasletten.Auth.AppClaims.Username)?.Value;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Idasletten</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/js/all.min.js" defer></script>
+</head>
+<body class="min-h-screen">
+    <header class="app-header">
+        <div class="app-header-inner">
+            <a class="brand" asp-page="/Index">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14.5 17.5 3 6V3h3l11.5 11.5"/>
+                    <path d="M13 19l6-6"/>
+                    <path d="M16 16l4 4"/>
+                    <path d="M19 21l2-2"/>
+                </svg>
+                Idasletten
+            </a>
+            <nav class="app-nav">
+                <a asp-page="/Tournaments/Index">Tournaments</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="nav-user">
+                        @if (!string.IsNullOrEmpty(displayName))
+                        {
+                            <span class="badge" data-variant="outline">@displayName</span>
+                        }
+                        <form method="post" asp-page="/Account/SignOut" class="inline">
+                            <button type="submit" class="btn" data-variant="ghost" data-size="sm">Sign out</button>
+                        </form>
+                    </span>
+                }
+                else
+                {
+                    <a class="btn" data-variant="outline" data-size="sm" asp-page="/Login" asp-route-returnUrl="@Context.Request.Path">Sign in</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main class="app-main">
+        @if (TempData["Error"] is string err && !string.IsNullOrEmpty(err))
+        {
+            <div class="alert" data-variant="destructive" role="alert">@err</div>
+        }
+        @if (TempData["Success"] is string ok && !string.IsNullOrEmpty(ok))
+        {
+            <div class="alert" data-variant="success" role="status">@ok</div>
+        }
+        @RenderBody()
+    </main>
+
+    <footer class="app-footer">
+        <p>Idasletten — Iðavöllr, the blood-red battle field before the gates of Valhalla.</p>
+    </footer>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

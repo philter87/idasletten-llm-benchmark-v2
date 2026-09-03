@@ -1,0 +1,185 @@
+@page "/tournaments/{id:guid}/create-match"
+@model Idasletten.Pages.Tournaments.CreateMatchModel
+@{
+    if (Model.Tournament is null) return;
+    ViewData["Title"] = "Match";
+    var t = Model.Tournament;
+    var isReadonly = Model.MatchState == Idasletten.Models.MatchState.Done && !Model.Edit;
+}
+
+<div class="page-title-row">
+    <div>
+        <h2 style="margin:0">
+            @if (Model.MatchState == Idasletten.Models.MatchState.Planned)
+            {
+                <text>Play planned match</text>
+            }
+            else if (isReadonly)
+            {
+                <text>Match result</text>
+            }
+            else if (Model.MatchState == Idasletten.Models.MatchState.Done && Model.Edit)
+            {
+                <text>Edit match result</text>
+            }
+            else
+            {
+                <text>Create match</text>
+            }
+        </h2>
+        <p class="muted" style="margin:.25rem 0 0">
+            @t.Name · teams of @t.TeamSize · first to @t.PointsToWin points
+        </p>
+    </div>
+    @if (Model.MatchId is not null)
+    {
+        <a class="btn" data-variant="outline" asp-page="/Tournaments/Matches" asp-route-id="@t.Id">All matches</a>
+    }
+</div>
+
+@if (isReadonly && Model.MatchId is not null)
+{
+    var m = Model.Teams;
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Final result</h3>
+        </div>
+        <div class="card-content">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr><th>Team</th><th>Players</th><th class="text-right">Goals</th></tr>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < m.Count; i++)
+                    {
+                        <tr>
+                            <td class="font-semibold">Team @(i + 1)</td>
+                            <td>@string.Join(", ", m[i].PlayerInitials.Where(s => !string.IsNullOrEmpty(s)))</td>
+                            <td class="text-right font-semibold">@m[i].Goals</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:1rem;display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="btn" data-variant="outline"
+                       asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id"
+                       asp-route-match="@Model.MatchId" asp-route-edit="true">Edit result (recalculates scores)</a>
+                }
+                else
+                {
+                    <a class="btn" data-variant="outline"
+                       asp-page="/Login"
+                       asp-route-returnUrl="@("/tournaments/" + t.Id + "/create-match?match=" + Model.MatchId + "&edit=true")">Sign in to edit</a>
+                    <span class="muted small">Editing a completed match requires login — it recalculates all tournament scores.</span>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <form method="post" asp-page="/Tournaments/CreateMatch" asp-route-id="@t.Id" class="card">
+        <div class="card-content" style="display:flex;flex-direction:column;gap:1rem">
+            <input type="hidden" asp-for="MatchId" />
+            <div class="detail-grid" style="gap:1.5rem">
+                @for (var i = 0; i < Model.Teams.Count; i++)
+                {
+                    var team = Model.Teams[i];
+                    <div style="flex:1;min-width:0">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+                            <h3 style="margin:0" class="font-semibold">Team @(i + 1)</h3>
+                            <a href="#" onclick="document.getElementById('select-players-dialog').showModal(); return false;" class="muted small">Select from list</a>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:.5rem">
+                            @for (var j = 0; j < team.PlayerInitials.Count; j++)
+                            {
+                                <div class="field" style="flex-direction:row;align-items:center;gap:.5rem">
+                                    <label class="muted small" style="width:64px" for="team-@i-p-@j">Player @(j + 1)</label>
+                                    <input id="team-@i-p-@j" name="Teams[@i].PlayerInitials[@j]" value="@team.PlayerInitials[j]"
+                                           class="input initials-input" maxlength="20" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                <div style="flex:0 0 150px;display:flex;flex-direction:column;gap:.5rem;justify-content:flex-end">
+                    <div class="field">
+                        <label class="font-semibold">Score</label>
+                        <div style="display:flex;align-items:center;gap:.5rem">
+                            @for (var i = 0; i < Model.Teams.Count; i++)
+                            {
+                                <input name="Teams[@i].Goals" type="number" min="0" max="99" value="@Model.Teams[i].Goals"
+                                       class="input" style="width:70px" aria-label="Team @(i + 1) goals" />
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:.5rem">
+                <button type="submit" class="btn" data-size="lg">
+                    @(Model.MatchId is null ? "Record match" : "Save result")
+                </button>
+                <a class="btn" data-variant="ghost" asp-page="/Tournaments/Details" asp-route-id="@t.Id">Cancel</a>
+            </div>
+        </div>
+    </form>
+}
+
+<dialog id="select-players-dialog" class="dialog" onclick="if (event.target === this) this.close()">
+    <div>
+        <header>
+            <h2>Select players</h2>
+            <p>Pick up to @t.TeamSize player(s) per team. "Apply selection" fills the initials boxes.</p>
+        </header>
+        <section style="display:flex;gap:1.5rem;flex-wrap:wrap">
+            @for (var i = 0; i < Model.Teams.Count; i++)
+            {
+                <div class="field" style="min-width:220px">
+                    <label class="font-semibold">Team @(i + 1)</label>
+                    <div style="display:flex;flex-direction:column;gap:.1rem;max-height:260px;overflow:auto">
+                        @foreach (var p in Model.SelectablePlayers)
+                        {
+                            <label class="player-check-row" style="cursor:pointer">
+                                <input type="checkbox" class="sel-player" data-team="@i" value="@p.Initials" />
+                                <span class="small">@p.Initials <span class="muted">@p.Name</span></span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+        <footer>
+            <button type="button" class="btn" data-variant="ghost" onclick="this.closest('dialog').close()">Cancel</button>
+            <button type="button" class="btn" id="apply-selection">Apply selection</button>
+        </footer>
+        <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Close dialog"
+                onclick="this.closest('dialog').close()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+</dialog>
+
+@section Scripts {
+    <script>
+        (function () {
+            var btn = document.getElementById('apply-selection');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                for (var i = 0; i < @Model.Teams.Count; i++) {
+                    var inputs = document.querySelectorAll('input[id^="team-' + i + '-p-"]');
+                    var checked = Array.prototype.filter.call(
+                        document.querySelectorAll('.sel-player[data-team="' + i + '"]'),
+                        function (c) { return c.checked; });
+                    for (var j = 0; j < inputs.length; j++) {
+                        inputs[j].value = j < checked.length ? checked[j].value : '';
+                    }
+                }
+                btn.closest('dialog').close();
+            });
+        })();
+    </script>
+}
